@@ -45,7 +45,7 @@ If something gets lost, run **Port → Run Project Setup** (`Scripts/Editor/Proj
 
 ## Rules that stop merge conflicts
 
-- Only Anadi edits `Ship.unity`, `MainMenu.unity` and `Results.unity`. Build your work as prefabs in your own sandbox scene, then ask Anadi to drop them in.
+- Only Anadi edits `Ship.unity`, `MainMenu.unity` and `Results.unity`. Build your work as prefabs in your own sandbox scene, then ask Anadi to drop them in. **Port → Assemble Ship Scene** does that: it puts Samprity's `ShipDeck`, a whole-deck camera, Rabib's player join, his station scripts on the deck's `Station_*` objects and the carry items for orders 2 and 10 into `Ship.unity`. Run it again whenever the deck is rebuilt.
 - Before you touch a shared prefab, say "taking X.prefab" in Discord, and "done" when you're finished.
 - Pull `main` before starting anything new. Never force-push `main`.
 - Merge into `main` at least every 3 hours, and 30 minutes before each milestone.

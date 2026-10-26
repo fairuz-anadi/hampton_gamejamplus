@@ -3,7 +3,8 @@ using UnityEngine;
 /// <summary>
 /// A pick-up/drop prop for one specific carry order. Only the crew member currently holding that
 /// order can pick it up; standing at the order's deliverTo station while carrying it counts as
-/// holding Interact there, so delivery uses the same work-progress path as any other station.
+/// delivering there, so delivery uses the same work-progress path as any other station (and needs
+/// only the carrier, even at a two-person station). When the order ends, the item goes back home.
 /// Owner: Rabib.
 /// </summary>
 public class CarryItem : MonoBehaviour
@@ -13,22 +14,41 @@ public class CarryItem : MonoBehaviour
     [SerializeField] Vector3 carryOffset = new Vector3(0f, 1.2f, 0.6f);
 
     Vector3 homePosition;
+    Quaternion homeRotation;
     Transform carrier;
     ICrewActor carrierActor;
     Station deliveryStation;
 
     public bool IsCarried => carrier != null;
+    public OrderData Order => order;
 
-    void Awake() => homePosition = transform.position;
+    void Awake()
+    {
+        homePosition = transform.position;
+        homeRotation = transform.rotation;
+    }
 
-    void OnEnable() => GameEvents.OrderIssued += OnOrderIssued;
-    void OnDisable() => GameEvents.OrderIssued -= OnOrderIssued;
+    void OnEnable()
+    {
+        GameEvents.OrderIssued += OnOrderIssued;
+        GameEvents.OrderResolved += OnOrderResolved;
+    }
+
+    void OnDisable()
+    {
+        GameEvents.OrderIssued -= OnOrderIssued;
+        GameEvents.OrderResolved -= OnOrderResolved;
+    }
 
     void OnOrderIssued(ActiveOrder active)
     {
-        if (active.Data != order) return;
-        Drop();
-        transform.position = homePosition;
+        if (active.Data == order) ReturnHome();
+    }
+
+    // Expired, refused or delivered: nobody should be left holding a dead order's item.
+    void OnOrderResolved(ActiveOrder active, Choice choice)
+    {
+        if (active.Data == order) ReturnHome();
     }
 
     void Update()
@@ -39,15 +59,15 @@ public class CarryItem : MonoBehaviour
 
         if (deliveryStation != null)
         {
-            bool inRange = Vector3.Distance(transform.position, deliveryStation.Position) <= pickupRange;
-            deliveryStation.Hold(carrierActor, inRange);
+            bool inRange = Vector3.Distance(carrier.position, deliveryStation.Position) <= pickupRange + 1f;
+            deliveryStation.HoldDelivery(carrierActor, inRange);
         }
     }
 
     public bool TryPickUp(ICrewActor actor, Transform actorTransform)
     {
         if (carrier != null) return false;
-        if (Vector3.Distance(transform.position, actorTransform.position) > pickupRange) return false;
+        if (Vector3.Distance(transform.position, actorTransform.position) > pickupRange + 1f) return false;
 
         var active = OrderDirector.Instance?.GetOrderFor(actor);
         if (active == null || active.Data != order) return false;
@@ -60,9 +80,15 @@ public class CarryItem : MonoBehaviour
 
     public void Drop()
     {
-        deliveryStation?.Hold(carrierActor, false);
+        deliveryStation?.HoldDelivery(carrierActor, false);
         carrier = null;
         carrierActor = null;
         deliveryStation = null;
+    }
+
+    void ReturnHome()
+    {
+        Drop();
+        transform.SetPositionAndRotation(homePosition, homeRotation);
     }
 }
