@@ -36,10 +36,11 @@ public static class RabibSandboxSetup
         EnsurePlayerPrefab();
         EnsurePlayerJoin();
         EnsureDebugSecondPlayer();
+        EnsureIcebergSequence();
 
         EditorSceneManager.SaveScene(scene);
         AssetDatabase.SaveAssets();
-        Debug.Log("[RabibSandboxSetup] Sandbox ready: bootstrap, deck, rooms, spawn point, 4 stations, 2 carry items, 4 room zones, player join (PlayerSlots-aware), debug keyboard P2.");
+        Debug.Log("[RabibSandboxSetup] Sandbox ready: bootstrap, deck, rooms, spawn point, 4 stations, 2 carry items, 4 room zones, player join (PlayerSlots-aware), debug keyboard P2, iceberg stub.");
     }
 
     /// <summary>Same as Build(), callable headlessly.</summary>
@@ -294,6 +295,12 @@ public static class RabibSandboxSetup
         }
 
         if (go.GetComponent<Interactor>() == null) go.AddComponent<Interactor>();
+    }
+
+    static void EnsureIcebergSequence()
+    {
+        if (Object.FindAnyObjectByType<IcebergSequence>() != null) return;
+        new GameObject("[IcebergSequence]").AddComponent<IcebergSequence>();
     }
 
     /// <summary>True if any component slot on this GameObject points at a script Unity can no longer resolve.</summary>
