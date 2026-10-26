@@ -15,6 +15,18 @@ GameJamPlus 2026/27 entry. A 2.5D co-op ship game in Unity, made by Anadi, Rabib
    | Riham | `riham-ai` | `Scenes/Sandbox/Riham_AI.unity` |
    | Samprity | `samprity-art` | `Scenes/Sandbox/Samprity_Art.unity` |
 
+## One-time project setup (Anadi, Phase 0)
+
+The repo only has `Assets/` until this is done. Teammates: wait for Anadi's "project is up" message before opening it.
+
+1. In Unity Hub, make a throwaway project from the **Universal 3D** template on `6000.6.7f1`, then close Unity.
+2. Copy its `Packages/`, `ProjectSettings/`, `Assets/Settings/` and `Assets/InputSystem_Actions.inputactions` (with its `.meta`) into the repo root. Don't copy `Library/`.
+3. Open the repo folder in Unity and run **Port → Add Team Packages** (ProBuilder, AI Navigation, Cinemachine, Input System). Wait for it to finish.
+4. Run **Port → Run Project Setup**. It sets Force Text, Visible Meta Files, 1920×1080 Fullscreen Window, Mono and Input System only. It also moves the URP settings into `_Project/Settings/URP`, creates the folders and the 7 scenes, and adds MainMenu, Ship and Results to Build Settings. Restart Unity when it asks.
+5. Commit `Packages/`, `ProjectSettings/` and `Assets/` and push to `main`.
+
+The script is `Scripts/Editor/ProjectSetup.cs`. Running it again only creates what's missing.
+
 ## Rules that stop merge conflicts
 
 - Only Anadi edits `Ship.unity`, `MainMenu.unity` and `Results.unity`. Build your work as prefabs in your own sandbox scene, then ask Anadi to drop them in.
