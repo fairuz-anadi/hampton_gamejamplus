@@ -7,7 +7,7 @@ using UnityEngine.InputSystem;
 /// fixed while a direction is held, so the follow camera turning behind the player doesn't bend the path.
 /// </summary>
 [RequireComponent(typeof(CharacterController), typeof(PlayerInput))]
-public class PlayerController : MonoBehaviour, ICrewActor
+public class PlayerController : MonoBehaviour, ICrewActor, IInteractSource, IRoomTarget
 {
     static readonly Color[] SeatColors =
     {
@@ -15,7 +15,7 @@ public class PlayerController : MonoBehaviour, ICrewActor
     };
 
     PlayerInput playerInput;
-    InputAction moveAction, reportAction, refuseAction;
+    InputAction moveAction, interactAction, reportAction, refuseAction;
     ThirdPersonMover mover;
 
     public int Seat => Mathf.Max(1, playerInput.playerIndex + 1);
@@ -24,11 +24,13 @@ public class PlayerController : MonoBehaviour, ICrewActor
     public Vector3 Position => transform.position;
     public string RoomId { get; private set; } = "Unknown";
     public bool IsLockedOut { get; private set; }
+    public bool InteractHeld => interactAction.IsPressed();
 
     void Awake()
     {
         playerInput = GetComponent<PlayerInput>();
         moveAction = playerInput.actions["Move"];
+        interactAction = playerInput.actions["Interact"];
         reportAction = playerInput.actions["Report"];
         refuseAction = playerInput.actions["Refuse"];
 
