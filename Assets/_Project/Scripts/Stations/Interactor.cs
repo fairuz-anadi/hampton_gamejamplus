@@ -12,7 +12,7 @@ public class Interactor : MonoBehaviour
     ICrewActor actor;
     IInteractSource interactSource;
     Station currentStation;
-    CarryItem carriedItem;
+    ICarryItem carriedItem;
     bool wasHeld;
 
     public IStation NearestStation { get; private set; }
@@ -86,14 +86,24 @@ public class Interactor : MonoBehaviour
         return best;
     }
 
-    CarryItem FindNearestCarryItem()
+    ICarryItem FindNearestCarryItem()
     {
-        CarryItem best = null;
+        ICarryItem best = null;
         float bestDist = range;
         foreach (var item in Object.FindObjectsByType<CarryItem>())
         {
             if (item.IsCarried) continue;
-            float dist = Vector3.Distance(transform.position, item.transform.position);
+            float dist = Vector3.Distance(transform.position, item.Position);
+            if (dist <= bestDist)
+            {
+                bestDist = dist;
+                best = item;
+            }
+        }
+        foreach (var item in Object.FindObjectsByType<IceWarningCarry>())
+        {
+            if (item.IsCarried) continue;
+            float dist = Vector3.Distance(transform.position, item.Position);
             if (dist <= bestDist)
             {
                 bestDist = dist;

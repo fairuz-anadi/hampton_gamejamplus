@@ -37,10 +37,11 @@ public static class RabibSandboxSetup
         EnsurePlayerJoin();
         EnsureDebugSecondPlayer();
         EnsureIcebergSequence();
+        EnsureIceWarningProps();
 
         EditorSceneManager.SaveScene(scene);
         AssetDatabase.SaveAssets();
-        Debug.Log("[RabibSandboxSetup] Sandbox ready: bootstrap, deck, rooms, spawn point, 4 stations, 2 carry items, 4 room zones, player join (PlayerSlots-aware), debug keyboard P2, iceberg stub.");
+        Debug.Log("[RabibSandboxSetup] Sandbox ready: bootstrap, deck, rooms, spawn point, 4 stations, 2 carry items, 4 room zones, player join (PlayerSlots-aware), debug keyboard P2, iceberg stub, 3 ice warning props.");
     }
 
     /// <summary>Same as Build(), callable headlessly.</summary>
@@ -301,6 +302,31 @@ public static class RabibSandboxSetup
     {
         if (Object.FindAnyObjectByType<IcebergSequence>() != null) return;
         new GameObject("[IcebergSequence]").AddComponent<IcebergSequence>();
+    }
+
+    static void EnsureIceWarningProps()
+    {
+        for (int n = 1; n <= 3; n++) EnsureIceWarningProp(n);
+    }
+
+    static void EnsureIceWarningProp(int warningNumber)
+    {
+        string goName = "IceWarning_" + warningNumber;
+        if (GameObject.Find(goName) != null) return;
+
+        var go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        go.name = goName;
+        go.transform.localScale = Vector3.one * 0.25f;
+        Object.DestroyImmediate(go.GetComponent<SphereCollider>());
+
+        var room = GameObject.Find("Rooms")?.transform.Find("Wireless");
+        Vector3 origin = room != null ? room.position : Vector3.zero;
+        go.transform.position = origin + new Vector3(0.4f * (warningNumber - 2), 0.9f, 0.4f);
+
+        var warn = go.AddComponent<IceWarningCarry>();
+        var so = new SerializedObject(warn);
+        so.FindProperty("warningNumber").intValue = warningNumber;
+        so.ApplyModifiedPropertiesWithoutUndo();
     }
 
     /// <summary>True if any component slot on this GameObject points at a script Unity can no longer resolve.</summary>
