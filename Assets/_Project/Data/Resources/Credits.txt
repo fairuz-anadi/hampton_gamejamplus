@@ -8,9 +8,11 @@ Samprity     Art, audio, UI and feel
 
 Made with Unity 6.
 
-Third-party assets
-(Add every asset here when you import it: name, author, license, link.)
-None yet.
+Third-party assets (all CC0 1.0, full list in CREDITS.md)
+KayKit Character Pack: Adventurers, Dungeon Remastered,
+Furniture Bits and Restaurant Bits by Kay Lousberg
+Universal Base Characters, Modular Character Outfits (Fantasy)
+and Universal Animation Library by Quaternius
 
 The ship and the Captain are fictional.
 In memory of everyone aboard the real ship in April 1912.
