@@ -10,11 +10,16 @@ public abstract class Station : MonoBehaviour, IStation
 {
     [SerializeField] float workDuration = 3f;
     [SerializeField] float repairDuration = 3f;
+    [Tooltip("The bulb that shows green/red. Left empty, a child named \"StatusLight\" is used (Samprity's deck), else the first renderer.")]
+    [SerializeField] Renderer statusLight;
 
-    readonly HashSet<ICrewActor> holders = new HashSet<ICrewActor>();
-    Renderer statusLight;
+    // Actor -> last frame they held Interact here. Anyone who stops refreshing (left, was disabled,
+    // got locked out) stops counting by the next frame, so one person can never pass a two-person chore.
+    readonly Dictionary<ICrewActor, int> holders = new Dictionary<ICrewActor, int>();
+    readonly Dictionary<ICrewActor, int> deliverers = new Dictionary<ICrewActor, int>();
     float workProgress;
     float repairProgress;
+    Color shownColor;
 
     public abstract StationType Type { get; }
     protected virtual int RequiredHolders => 1;
@@ -24,8 +29,19 @@ public abstract class Station : MonoBehaviour, IStation
     public bool IsBroken { get; private set; }
     public Vector3 Position => transform.position;
     public float Progress01 => IsBroken ? SafeDiv(repairProgress, repairDuration) : SafeDiv(workProgress, workDuration);
+    /// <summary>How many crew are working it right now (for prompts like "1/2").</summary>
+    public int ActiveHolders => CountFresh(holders);
+    public int NeededHolders => RequiredHolders;
 
-    void Awake() => statusLight = GetComponentInChildren<Renderer>();
+    void Awake()
+    {
+        if (statusLight == null)
+        {
+            var bulb = transform.Find("StatusLight");
+            statusLight = bulb != null ? bulb.GetComponent<Renderer>() : GetComponentInChildren<Renderer>();
+        }
+    }
+
     void OnEnable() => StationRegistry.Register(this);
     void OnDisable() => StationRegistry.Unregister(this);
 
@@ -35,12 +51,14 @@ public abstract class Station : MonoBehaviour, IStation
         workProgress = 0f;
     }
 
-    /// <summary>Interactor (and CarryItem, for deliveries) call this every frame an actor is in range.</summary>
-    public void Hold(ICrewActor actor, bool holding)
-    {
-        if (holding) holders.Add(actor);
-        else holders.Remove(actor);
-    }
+    /// <summary>Interactor calls this every frame an actor is in range.</summary>
+    public void Hold(ICrewActor actor, bool holding) => Mark(holders, actor, holding);
+
+    /// <summary>
+    /// CarryItem calls this while its carrier stands here with the item. A delivery only needs the carrier,
+    /// even at a two-person station (order 2 delivers the passenger list to the Wheel on the bridge).
+    /// </summary>
+    public void HoldDelivery(ICrewActor actor, bool inRange) => Mark(deliverers, actor, inRange);
 
     protected virtual void Update()
     {
@@ -51,7 +69,8 @@ public abstract class Station : MonoBehaviour, IStation
 
     void TickWork()
     {
-        if (IsDone || holders.Count < RequiredHolders) return;
+        if (IsDone) return;
+        if (CountFresh(holders) < RequiredHolders && CountFresh(deliverers) == 0) return;
 
         workProgress += Time.deltaTime;
         if (workProgress >= workDuration)
@@ -63,7 +82,7 @@ public abstract class Station : MonoBehaviour, IStation
 
     void TickRepair()
     {
-        if (holders.Count < RepairHolders) return;
+        if (CountFresh(holders) < RepairHolders) return;
 
         repairProgress += Time.deltaTime;
         if (repairProgress >= repairDuration) Repair();
@@ -77,6 +96,7 @@ public abstract class Station : MonoBehaviour, IStation
         IsBroken = true;
         repairProgress = 0f;
         holders.Clear();
+        deliverers.Clear();
         GameEvents.RaiseStationBroken(Type, null);
     }
 
@@ -89,13 +109,31 @@ public abstract class Station : MonoBehaviour, IStation
         GameEvents.RaiseStationRepaired(Type, null);
     }
 
+    static void Mark(Dictionary<ICrewActor, int> set, ICrewActor actor, bool on)
+    {
+        if (actor == null) return;
+        if (on) set[actor] = Time.frameCount;
+        else set.Remove(actor);
+    }
+
+    /// <summary>Counts actors who refreshed this frame or the last one (Update order between scripts varies).</summary>
+    static int CountFresh(Dictionary<ICrewActor, int> set)
+    {
+        int n = 0, frame = Time.frameCount;
+        foreach (var lastFrame in set.Values) if (frame - lastFrame <= 1) n++;
+        return n;
+    }
+
     void UpdateLight()
     {
         if (statusLight == null) return;
         var color = IsBroken ? new Color(0.25f, 0.08f, 0.08f) : (IsDone ? Color.green : Color.red);
+        if (color == shownColor) return;
+        shownColor = color;
         var mat = statusLight.material;
         if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", color);
         else mat.color = color;
+        if (mat.HasProperty("_EmissionColor")) mat.SetColor("_EmissionColor", color * 2f);
     }
 
     static float SafeDiv(float a, float b) => b <= 0f ? 1f : Mathf.Clamp01(a / b);

@@ -245,6 +245,12 @@ public static class RabibSandboxSetup
     {
         const string name = "[Debug] Keyboard P2";
         var go = GameObject.Find(name);
+        if (go != null && HasMissingScript(go))
+        {
+            Debug.LogWarning("[RabibSandboxSetup] '" + name + "' had a broken script reference (stale .meta guid) — recreating it.");
+            Object.DestroyImmediate(go);
+            go = null;
+        }
         if (go == null)
         {
             go = new GameObject(name);
@@ -268,5 +274,13 @@ public static class RabibSandboxSetup
         }
 
         if (go.GetComponent<Interactor>() == null) go.AddComponent<Interactor>();
+    }
+
+    /// <summary>True if any component slot on this GameObject points at a script Unity can no longer resolve.</summary>
+    static bool HasMissingScript(GameObject go)
+    {
+        foreach (var c in go.GetComponents<Component>())
+            if (c == null) return true;
+        return false;
     }
 }
