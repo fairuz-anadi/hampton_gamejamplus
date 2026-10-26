@@ -3,7 +3,7 @@ using UnityEngine.InputSystem;
 
 /// <summary>Human-controlled crew member: camera-relative movement, Report/Refuse. Owner: Rabib.</summary>
 [RequireComponent(typeof(CharacterController), typeof(PlayerInput))]
-public class PlayerController : MonoBehaviour, ICrewActor
+public class PlayerController : MonoBehaviour, ICrewActor, IInteractSource
 {
     static readonly Color[] SeatColors =
     {
@@ -15,7 +15,7 @@ public class PlayerController : MonoBehaviour, ICrewActor
 
     CharacterController controller;
     PlayerInput playerInput;
-    InputAction moveAction, reportAction, refuseAction;
+    InputAction moveAction, interactAction, reportAction, refuseAction;
     Camera deckCamera;
 
     public int Seat => Mathf.Max(1, playerInput.playerIndex + 1);
@@ -24,12 +24,14 @@ public class PlayerController : MonoBehaviour, ICrewActor
     public Vector3 Position => transform.position;
     public string RoomId { get; private set; } = "Unknown";
     public bool IsLockedOut { get; private set; }
+    public bool InteractHeld => interactAction.IsPressed();
 
     void Awake()
     {
         controller = GetComponent<CharacterController>();
         playerInput = GetComponent<PlayerInput>();
         moveAction = playerInput.actions["Move"];
+        interactAction = playerInput.actions["Interact"];
         reportAction = playerInput.actions["Report"];
         refuseAction = playerInput.actions["Refuse"];
     }

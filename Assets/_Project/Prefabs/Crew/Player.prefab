@@ -102,6 +102,7 @@ GameObject:
   - component: {fileID: 1641451706595565845}
   - component: {fileID: 7245274712883138906}
   - component: {fileID: 8337714699659889394}
+  - component: {fileID: 8478711791747824748}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -194,3 +195,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
   moveSpeed: 4
   turnSpeed: 12
+--- !u!114 &8478711791747824748
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2007884406191849612}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 74598ba9d534fc14b9f7860daa39b653, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Interactor
+  range: 2.5

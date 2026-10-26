@@ -10,7 +10,7 @@ using UnityEngine.InputSystem;
 /// into a release build. Owner: Rabib.
 /// </summary>
 [RequireComponent(typeof(CharacterController))]
-public class DebugSecondPlayer : MonoBehaviour, ICrewActor
+public class DebugSecondPlayer : MonoBehaviour, ICrewActor, IInteractSource
 {
     [SerializeField] float moveSpeed = 4f;
     [SerializeField] float turnSpeed = 12f;
@@ -26,7 +26,6 @@ public class DebugSecondPlayer : MonoBehaviour, ICrewActor
     public string RoomId { get; private set; } = "Unknown";
     public bool IsLockedOut { get; private set; }
 
-    /// <summary>Right Ctrl, raw. Nothing reads this yet until Step 3's Interactor exists.</summary>
     public bool InteractHeld => Keyboard.current != null && Keyboard.current.rightCtrlKey.isPressed;
 
     void Awake()

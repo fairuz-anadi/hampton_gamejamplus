@@ -30,13 +30,15 @@ public static class RabibSandboxSetup
         EnsureFloor();
         EnsureRoomAnchors();
         EnsureSpawnPoint();
+        EnsureStations();
+        EnsureCarryItems();
         EnsurePlayerPrefab();
         EnsurePlayerJoin();
         EnsureDebugSecondPlayer();
 
         EditorSceneManager.SaveScene(scene);
         AssetDatabase.SaveAssets();
-        Debug.Log("[RabibSandboxSetup] Sandbox ready: bootstrap, placeholder deck, 4 room anchors, spawn point, player join, debug keyboard P2.");
+        Debug.Log("[RabibSandboxSetup] Sandbox ready: bootstrap, deck, rooms, spawn point, 4 stations, 2 carry items, player join, debug keyboard P2.");
     }
 
     /// <summary>Same as Build(), callable headlessly.</summary>
@@ -81,11 +83,70 @@ public static class RabibSandboxSetup
 
     const string PlayerPrefabPath = "Assets/_Project/Prefabs/Crew/Player.prefab";
     const string InputActionsPath = "Assets/InputSystem_Actions.inputactions";
+    const string OrdersPath = "Assets/_Project/Data/Resources/Orders";
     const int MaxPlayers = 3;
+
+    static void EnsureStations()
+    {
+        EnsureStation<Boiler>("Boiler");
+        EnsureStation<Doors>("Doors");
+        EnsureStation<Wheel>("Wheel");
+        EnsureStation<Wireless>("Wireless");
+    }
+
+    static void EnsureStation<T>(string roomName) where T : Station
+    {
+        string goName = typeof(T).Name + "Station";
+        if (GameObject.Find(goName) != null) return;
+
+        var go = new GameObject(goName);
+        go.AddComponent<T>();
+
+        var room = GameObject.Find("Rooms")?.transform.Find(roomName);
+        go.transform.position = room != null ? room.position : Vector3.zero;
+
+        var visual = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        visual.name = "Visual";
+        visual.transform.SetParent(go.transform, false);
+        visual.transform.localPosition = new Vector3(0f, 0.5f, 0f);
+        visual.transform.localScale = new Vector3(1.2f, 1f, 1.2f);
+        Object.DestroyImmediate(visual.GetComponent<BoxCollider>());
+    }
+
+    static void EnsureCarryItems()
+    {
+        EnsureCarryItem("PassengerList", $"{OrdersPath}/02_PassengerList.asset", "Wireless");
+        EnsureCarryItem("CaptainsLog", $"{OrdersPath}/10_CaptainsLog.asset", "Wheel");
+    }
+
+    static void EnsureCarryItem(string objectName, string orderAssetPath, string homeRoomName)
+    {
+        if (GameObject.Find(objectName) != null) return;
+
+        var go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        go.name = objectName;
+        go.transform.localScale = Vector3.one * 0.3f;
+        Object.DestroyImmediate(go.GetComponent<SphereCollider>());
+
+        var room = GameObject.Find("Rooms")?.transform.Find(homeRoomName);
+        Vector3 origin = room != null ? room.position : Vector3.zero;
+        go.transform.position = origin + new Vector3(0f, 0.9f, 0f);
+
+        var item = go.AddComponent<CarryItem>();
+        var order = AssetDatabase.LoadAssetAtPath<OrderData>(orderAssetPath);
+        var so = new SerializedObject(item);
+        so.FindProperty("order").objectReferenceValue = order;
+        so.ApplyModifiedPropertiesWithoutUndo();
+    }
 
     static void EnsurePlayerPrefab()
     {
-        if (AssetDatabase.LoadAssetAtPath<GameObject>(PlayerPrefabPath) != null) return;
+        var existing = AssetDatabase.LoadAssetAtPath<GameObject>(PlayerPrefabPath);
+        if (existing != null)
+        {
+            PatchPrefabWithInteractor(existing, PlayerPrefabPath);
+            return;
+        }
 
         var actions = AssetDatabase.LoadAssetAtPath<InputActionAsset>(InputActionsPath);
 
@@ -107,9 +168,21 @@ public static class RabibSandboxSetup
         input.defaultActionMap = "Player";
 
         root.AddComponent<PlayerController>();
+        root.AddComponent<Interactor>();
 
         PrefabUtility.SaveAsPrefabAsset(root, PlayerPrefabPath);
         Object.DestroyImmediate(root);
+    }
+
+    /// <summary>Adds a missing component to an already-saved prefab asset (can't just AddComponent on the asset object).</summary>
+    static void PatchPrefabWithInteractor(GameObject prefabAsset, string prefabPath)
+    {
+        if (prefabAsset.GetComponent<Interactor>() != null) return;
+
+        var contents = PrefabUtility.LoadPrefabContents(prefabPath);
+        if (contents.GetComponent<Interactor>() == null) contents.AddComponent<Interactor>();
+        PrefabUtility.SaveAsPrefabAsset(contents, prefabPath);
+        PrefabUtility.UnloadPrefabContents(contents);
     }
 
     static void EnsurePlayerJoin()
@@ -134,25 +207,29 @@ public static class RabibSandboxSetup
     static void EnsureDebugSecondPlayer()
     {
         const string name = "[Debug] Keyboard P2";
-        if (GameObject.Find(name) != null) return;
+        var go = GameObject.Find(name);
+        if (go == null)
+        {
+            go = new GameObject(name);
+            var controller = go.AddComponent<CharacterController>();
+            controller.height = 1.8f;
+            controller.radius = 0.35f;
+            controller.center = new Vector3(0f, 0.9f, 0f);
 
-        var go = new GameObject(name);
-        var controller = go.AddComponent<CharacterController>();
-        controller.height = 1.8f;
-        controller.radius = 0.35f;
-        controller.center = new Vector3(0f, 0.9f, 0f);
+            var visual = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            visual.name = "Visual";
+            visual.transform.SetParent(go.transform, false);
+            visual.transform.localPosition = new Vector3(0f, 0.9f, 0f);
+            visual.transform.localScale = new Vector3(0.9f, 0.9f, 0.9f);
+            Object.DestroyImmediate(visual.GetComponent<CapsuleCollider>());
 
-        var visual = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-        visual.name = "Visual";
-        visual.transform.SetParent(go.transform, false);
-        visual.transform.localPosition = new Vector3(0f, 0.9f, 0f);
-        visual.transform.localScale = new Vector3(0.9f, 0.9f, 0.9f);
-        Object.DestroyImmediate(visual.GetComponent<CapsuleCollider>());
+            go.AddComponent<DebugSecondPlayer>();
 
-        go.AddComponent<DebugSecondPlayer>();
+            var spawn = GameObject.Find("PlayerSpawn");
+            Vector3 origin = spawn != null ? spawn.transform.position : Vector3.zero;
+            go.transform.position = origin + new Vector3(-1.2f, 0f, 0f);
+        }
 
-        var spawn = GameObject.Find("PlayerSpawn");
-        Vector3 origin = spawn != null ? spawn.transform.position : Vector3.zero;
-        go.transform.position = origin + new Vector3(-1.2f, 0f, 0f);
+        if (go.GetComponent<Interactor>() == null) go.AddComponent<Interactor>();
     }
 }
