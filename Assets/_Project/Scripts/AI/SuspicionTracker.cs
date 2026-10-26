@@ -67,11 +67,13 @@ public class SuspicionTracker : MonoBehaviour
     void OnStationBroken(StationType type, ICrewActor by)
     {
         var st = StationRegistry.Get(type);
-        string room = RoomZone.RoomOf(type);
+        if (st == null) return;
+        string room = Rooms.At(st.Position);
+        bool useRoom = room != "" && room != "Deck";
         foreach (var c in CrewRegistry.All)
         {
-            bool near = (room != "" && c.RoomId == room) ||
-                        (st != null && BotMover.FlatDistance(c.Position, st.Position) <= nearRadius);
+            bool near = (useRoom && Rooms.At(c.Position) == room) ||
+                        BotMover.FlatDistance(c.Position, st.Position) <= nearRadius;
             if (near) Add(c.Seat, nearBrokenWeight, $"{CrewRegistry.SeatName(c.Seat)} was near the {type} when it broke");
         }
     }

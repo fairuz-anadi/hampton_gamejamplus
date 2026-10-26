@@ -28,7 +28,12 @@ public static class CrewAISystems
     {
         var roster = Object.FindAnyObjectByType<CrewRoster>();
         var go = roster != null ? roster.gameObject : new GameObject("[CrewAI]");
-        if (roster == null) go.AddComponent<CrewRoster>();
+        if (roster == null)
+        {
+            roster = go.AddComponent<CrewRoster>();
+            // The AI sandbox has no players: let bots crew all four seats.
+            roster.reserveHumanSeats = SceneManager.GetActiveScene().name != SandboxScene;
+        }
         if (Object.FindAnyObjectByType<SuspicionTracker>() == null) go.AddComponent<SuspicionTracker>();
         if (Object.FindAnyObjectByType<CaptainDirector>() == null) go.AddComponent<CaptainDirector>();
         return go;

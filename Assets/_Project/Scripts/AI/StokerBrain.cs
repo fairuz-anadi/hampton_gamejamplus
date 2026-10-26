@@ -4,42 +4,32 @@ using UnityEngine;
 /// <summary>
 /// The imposter. Lives on one bot, picked at random each run by CrewRoster. Owner: Riham.
 ///
-/// Rules (from the plan):
-///   - Does nothing in Part 1. A 40 s cooldown (30 s while the Captain is suspicious), plus a little jitter.
+/// Rules (numbers live in MeterRules):
+///   - Only in Part 2 and 3. A 40 s cooldown (30 s while the Captain is suspicious), plus a little jitter.
 ///   - Only acts when no human is in the same room. 3 sabotages per run.
 ///   - A burst of speaker static 2.5 s before each one (StaticBurst), the learnable clue.
-///   Jam a station:        it breaks until someone repairs it. Safety -6.
-///   Hide an ice warning:  the Wireless desk asks ConsumeHiddenWarning() when a warning is due. Safety -8 then.
+///   Jam a station:        Station.Break(); it stays broken until someone repairs it. Safety -6.
+///   Hide an ice warning:  IceWarnings.HideNext(); the warning never arrives (IceWarnings charges Safety -8 then).
 ///   False report:         reports someone else's red station as done, so it counts as their fake. Crew -6.
 /// </summary>
 public class StokerBrain : MonoBehaviour
 {
-    [SerializeField, Tooltip("0 = no limit")] int maxSabotages = 3;
     [SerializeField] Vector2 firstDelayInPart2 = new Vector2(12f, 25f);
     [SerializeField] Vector2 cooldownJitter = new Vector2(0f, 8f);
-    [SerializeField] float staticLead = 2.5f;
     [SerializeField] float giveUpAfter = 20f;
-
-    [SerializeField] MeterDelta jamCost = new MeterDelta(0, -6, 0);
-    [SerializeField] MeterDelta falseReportCost = new MeterDelta(0, 0, -6);
 
     public enum SabotageKind { None, Jam, HideWarning, FalseReport }
 
     /// <summary>Speaker static just before a sabotage. Samprity: play the static sound here.</summary>
     public static event System.Action<StokerBrain> StaticBurst;
-    /// <summary>A sabotage happened. Riham's SuspicionTracker and the results screen read this.</summary>
-    public static event System.Action<StokerBrain, SabotageKind, int> Sabotaged; // int = station type or victim seat
+    /// <summary>A sabotage happened. The int is the station type, warning number or framed seat.</summary>
+    public static event System.Action<StokerBrain, SabotageKind, int> Sabotaged;
 
     /// <summary>Seat that's being framed right now, while OrderDirector resolves the false report. 0 otherwise.</summary>
     public static int FramingSeat { get; private set; }
 
     /// <summary>What the Stoker did this run, in plain words, for the results screen.</summary>
     public static readonly List<string> Log = new List<string>(8);
-
-    static readonly MeterDelta HiddenWarningCost = new MeterDelta(0, -8, 0);
-
-    static int hiddenPending;
-    static int warningsSeen;
 
     BotBrain bot;
     int uses;
@@ -57,20 +47,6 @@ public class StokerBrain : MonoBehaviour
 
     void Awake() => bot = GetComponent<BotBrain>();
 
-    void OnEnable()
-    {
-        GameEvents.IceWarningArrived += OnWarningSeen;
-        GameEvents.IceWarningLost += OnWarningSeen;
-    }
-
-    void OnDisable()
-    {
-        GameEvents.IceWarningArrived -= OnWarningSeen;
-        GameEvents.IceWarningLost -= OnWarningSeen;
-    }
-
-    void OnWarningSeen(int n) => warningsSeen = Mathf.Max(warningsSeen, n);
-
     public void ResetForRun()
     {
         uses = 0;
@@ -83,8 +59,6 @@ public class StokerBrain : MonoBehaviour
     public static void ResetRun()
     {
         Log.Clear();
-        hiddenPending = 0;
-        warningsSeen = 0;
         FramingSeat = 0;
     }
 
@@ -96,35 +70,19 @@ public class StokerBrain : MonoBehaviour
         burstAt = -1f;
     }
 
-    /// <summary>
-    /// Rabib's Wireless desk calls this when ice warning n is about to arrive.
-    /// Returns true if the Stoker hid it: don't show it, the numbering will have a gap.
-    /// </summary>
-    public static bool ConsumeHiddenWarning(int number)
-    {
-        warningsSeen = Mathf.Max(warningsSeen, number);
-        if (hiddenPending <= 0) return false;
-        hiddenPending--;
-        MeterSystem.Instance?.Apply(HiddenWarningCost);
-        Log.Add($"Hid ice warning MSG {number}");
-        return true;
-    }
-
     // ---------- Called by BotBrain when the bot has no order of its own ----------
 
     /// <summary>Returns true while the Stoker is using the bot this tick.</summary>
     public bool TickSabotage()
     {
-        var gm = GameManager.Instance;
-        int part = gm != null ? gm.Part : 2;
-        if (part < 2 || part > 3 || Time.time < pausedUntil || bot.IsLockedOut)
+        if (!MeterRules.StokerActive || Time.time < pausedUntil || bot.IsLockedOut)
         {
             current = SabotageKind.None;
             burstAt = -1f;
-            if (part < 2) nextActionAt = -1f;
+            if (!MeterRules.StokerActive) nextActionAt = -1f;
             return false;
         }
-        if (maxSabotages > 0 && uses >= maxSabotages) return false;
+        if (uses >= MeterRules.StokerSabotagesPerRun) return false;
 
         if (nextActionAt < 0f) nextActionAt = Time.time + Random.Range(firstDelayInPart2.x, firstDelayInPart2.y);
         if (current == SabotageKind.None)
@@ -138,14 +96,9 @@ public class StokerBrain : MonoBehaviour
         if (Time.time - startedAt > giveUpAfter) { Abort(6f); return false; }
 
         // Walk to the scene of the crime (a false report can be done from anywhere).
-        string room = bot.RoomId;
-        if (current != SabotageKind.FalseReport)
-        {
-            if (!bot.ReachStation(target)) return true;
-            room = RoomZone.RoomOf(target);
-        }
+        if (current != SabotageKind.FalseReport && !bot.ReachStation(target)) return true;
 
-        if (room == "" ? HumanClose() : RoomZone.HumanIn(room))
+        if (Rooms.HumanNear(bot.Position))
         {
             Abort(6f);
             return false;
@@ -157,38 +110,24 @@ public class StokerBrain : MonoBehaviour
             StaticBurst?.Invoke(this);
             return true;
         }
-        if (Time.time - burstAt < staticLead) return true;
+        if (Time.time - burstAt < MeterRules.StokerStaticWarningSeconds) return true;
 
         Execute();
         return false;
     }
 
-    /// <summary>Without room zones, treat any human within 6 m as "in the same room".</summary>
-    bool HumanClose()
-    {
-        foreach (var c in CrewRegistry.All)
-            if (!c.IsBot && BotMover.FlatDistance(c.Position, bot.Position) < 6f) return true;
-        return false;
-    }
-
     bool Choose()
     {
-        var options = new List<(SabotageKind action, StationType station, float weight)>(6);
+        var options = new List<(SabotageKind kind, StationType station, float weight)>(6);
 
-        bool anyStation = false;
         foreach (var st in StationRegistry.All)
         {
-            anyStation = true;
-            if (st.IsBroken) continue;
-            if (RoomZone.HumanIn(RoomZone.RoomOf(st.Type))) continue;
+            if (st.IsBroken || !(st is Station)) continue;
+            if (Rooms.HumanNear(st.Position)) continue;
             options.Add((SabotageKind.Jam, st.Type, 1f));
         }
-        if (!anyStation)
-            options.Add((SabotageKind.Jam, (StationType)Random.Range(0, 4), 1f)); // test scene with no stations
 
-        var gm = GameManager.Instance;
-        bool part2 = gm == null || gm.Part == 2;
-        if (part2 && hiddenPending == 0 && warningsSeen < 3)
+        if (WarningLeftToHide())
             options.Add((SabotageKind.HideWarning, StationType.Wireless, 1.2f));
 
         if (FindVictim() != null)
@@ -199,17 +138,24 @@ public class StokerBrain : MonoBehaviour
         float total = 0f;
         foreach (var o in options) total += o.weight;
         float pick = Random.value * total;
+        var chosen = options[options.Count - 1];
         foreach (var o in options)
         {
             pick -= o.weight;
-            if (pick > 0f) continue;
-            current = o.action;
-            target = o.station;
-            return true;
+            if (pick <= 0f) { chosen = o; break; }
         }
-        current = options[0].action;
-        target = options[0].station;
+        current = chosen.kind;
+        target = chosen.station;
         return true;
+    }
+
+    static bool WarningLeftToHide()
+    {
+        var iw = IceWarnings.Instance;
+        if (iw == null) return false;
+        for (int n = 1; n <= iw.Count; n++)
+            if (iw.StatusOf(n) == IceWarnings.Status.Pending) return true;
+        return false;
     }
 
     /// <summary>Someone else with an active order whose station is still red. Prefers whoever is far from it.</summary>
@@ -239,15 +185,17 @@ public class StokerBrain : MonoBehaviour
         switch (current)
         {
             case SabotageKind.Jam:
-                if (StationRegistry.Get(target) is ICrewWorkStation ws) ws.Sabotage(bot);
-                else GameEvents.RaiseStationBroken(target, bot);
-                meters?.Apply(jamCost);
+                if (!(StationRegistry.Get(target) is Station st) || st.IsBroken) { Abort(3f); return; }
+                bot.StopWorking();
+                st.Break();
+                meters?.Apply(MeterRules.SabotageJamStation);
                 Log.Add($"Jammed the {target}");
                 break;
 
             case SabotageKind.HideWarning:
-                hiddenPending++;
-                Log.Add("Pocketed the next ice warning");
+                detail = IceWarnings.Instance != null ? IceWarnings.Instance.HideNext() : 0;
+                if (detail == 0) { Abort(3f); return; }
+                Log.Add($"Pocketed ice warning MSG {detail} before it reached the desk");
                 break;
 
             case SabotageKind.FalseReport:
@@ -257,7 +205,7 @@ public class StokerBrain : MonoBehaviour
                 FramingSeat = detail;
                 try { OrderDirector.Instance.Report(victim.Assignee); }
                 finally { FramingSeat = 0; }
-                meters?.Apply(falseReportCost);
+                meters?.Apply(MeterRules.SabotageFalseReport);
                 Log.Add($"Reported {CrewRegistry.SeatName(detail)}'s order done behind their back");
                 break;
         }

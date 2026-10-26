@@ -19,6 +19,11 @@ public class BotMover : MonoBehaviour
     bool hasTarget;
     bool useNavMesh;
 
+    Animator animator;
+    int speedHash;
+    bool hasSpeedParam;
+    Vector3 lastFramePos;
+
     Vector3 lastSample;
     float sampleAt;
     float stuckFor;
@@ -34,6 +39,14 @@ public class BotMover : MonoBehaviour
         agent.angularSpeed = 720f;
         agent.acceleration = 20f;
         agent.autoBraking = true;
+
+        // Samprity's crew characters walk with a "Speed" float, same as ThirdPersonMover.
+        animator = GetComponentInChildren<Animator>();
+        speedHash = Animator.StringToHash("Speed");
+        if (animator != null && animator.runtimeAnimatorController != null)
+            foreach (var p in animator.parameters)
+                if (p.nameHash == speedHash && p.type == AnimatorControllerParameterType.Float) hasSpeedParam = true;
+        lastFramePos = transform.position;
     }
 
     void Start() => SnapToNavMesh();
@@ -94,6 +107,7 @@ public class BotMover : MonoBehaviour
 
     void Update()
     {
+        UpdateAnimator();
         if (!hasTarget) return;
 
         if (HasArrived)
@@ -128,13 +142,22 @@ public class BotMover : MonoBehaviour
         }
     }
 
+    void UpdateAnimator()
+    {
+        if (!hasSpeedParam || Time.deltaTime <= 0f) return;
+        float moved = FlatDistance(transform.position, lastFramePos) / Time.deltaTime;
+        lastFramePos = transform.position;
+        animator.SetFloat(speedHash, moved, 0.08f, Time.deltaTime);
+    }
+
     void Unstick()
     {
         stuckFor = 0f;
         var dir = target - transform.position;
         dir.y = 0f;
         var nudge = transform.position + Vector3.ClampMagnitude(dir, warpStep);
-        if (NavMesh.SamplePosition(nudge, out var hit, 2f, NavMesh.AllAreas))
+        // Only along the deck: warping up onto a crate would strand the bot there.
+        if (NavMesh.SamplePosition(nudge, out var hit, 2f, NavMesh.AllAreas) && Mathf.Abs(hit.position.y - transform.position.y) < 0.5f)
         {
             agent.Warp(hit.position);
             agent.SetDestination(target);

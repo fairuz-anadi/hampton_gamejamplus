@@ -9,8 +9,8 @@ using UnityEngine.AI;
 ///
 /// Spawned automatically in gameplay scenes by CrewAISystems. Anadi can also drop one into Ship.unity
 /// to set spawn points and a bot prefab.
-/// Rabib: players just register with CrewRegistry using seats 1-3. The roster notices within half a second
-/// and removes the bot that held that seat. Call CrewRoster.RequestHelp(player, station, true) when Q is
+/// Seats 1..PlayerSlots.HumanCount are kept for the humans who joined; bots get the rest.
+/// Rabib: players register with CrewRegistry using those seats. Call CrewRoster.RequestHelp(player, station, true) when Q is
 /// pressed, or raise GameEvents.HelpCalled, either works.
 /// </summary>
 public class CrewRoster : MonoBehaviour
@@ -19,10 +19,13 @@ public class CrewRoster : MonoBehaviour
 
     public static CrewRoster Instance { get; private set; }
 
-    [Tooltip("Optional. Needs a NavMeshAgent; BotMover and BotBrain are added if missing. Empty = coloured capsule.")]
-    [SerializeField] GameObject botPrefab;
+    [Tooltip("Optional, one per seat (index 0 = seat 1), e.g. Samprity's Crew_1..Crew_4. Missing = a coloured capsule.\n" +
+             "A NavMeshAgent, BotMover and BotBrain are added if the prefab doesn't have them.")]
+    [SerializeField] GameObject[] botPrefabs = new GameObject[0];
     [Tooltip("Optional, one per seat (index 0 = seat 1). Empty = around this object.")]
     [SerializeField] Transform[] spawnPoints = new Transform[0];
+    [Tooltip("Keep seats 1..PlayerSlots.HumanCount for the players who joined on the menu. Off = bots take every seat no human has registered for (AI sandbox).")]
+    public bool reserveHumanSeats = true;
     [Tooltip("Bakes a NavMesh from the scene's colliders at start if there isn't one yet.")]
     [SerializeField] bool bakeNavMeshIfMissing = true;
 
@@ -32,14 +35,10 @@ public class CrewRoster : MonoBehaviour
     [SerializeField] float requestLifetime = 15f;
     [SerializeField] Vector2 repairDelay = new Vector2(3f, 6f);
 
-    /// <summary>Seat colours, index = seat. Rabib: use these for player capsules so seats match.</summary>
+    /// <summary>Seat colours, index = seat. Same as PlayerController's, so a seat looks the same for bots and humans.</summary>
     public static readonly Color[] SeatColors =
     {
-        Color.gray,
-        new Color(0.85f, 0.25f, 0.22f), // 1 red
-        new Color(0.22f, 0.5f, 0.9f),   // 2 blue
-        new Color(0.95f, 0.75f, 0.2f),  // 3 yellow
-        new Color(0.3f, 0.75f, 0.4f),   // 4 green
+        Color.gray, Color.red, new Color(0.25f, 0.55f, 1f), Color.green, Color.yellow,
     };
 
     class HelpRequest
@@ -113,7 +112,7 @@ public class CrewRoster : MonoBehaviour
     {
         for (int seat = 1; seat <= SeatCount; seat++)
         {
-            bool human = HumanInSeat(seat);
+            bool human = HumanInSeat(seat) || (reserveHumanSeats && seat <= PlayerSlots.HumanCount);
             if (human && bots[seat] != null)
             {
                 Destroy(bots[seat].gameObject);
@@ -151,9 +150,10 @@ public class CrewRoster : MonoBehaviour
     {
         var pos = SpawnPosition(seat);
         GameObject go;
-        if (botPrefab != null)
+        var prefab = seat - 1 < botPrefabs.Length ? botPrefabs[seat - 1] : null;
+        if (prefab != null)
         {
-            go = Instantiate(botPrefab, pos, Quaternion.identity, transform);
+            go = Instantiate(prefab, pos, Quaternion.identity, transform);
         }
         else
         {
@@ -161,7 +161,7 @@ public class CrewRoster : MonoBehaviour
             go.transform.SetParent(transform);
             go.transform.position = pos;
             var r = go.GetComponent<Renderer>();
-            if (r != null) r.material.color = SeatColors[seat];
+            if (r != null) r.material.SetColor("_BaseColor", SeatColors[seat]);
             var agentSetup = go.AddComponent<NavMeshAgent>();
             agentSetup.baseOffset = 1f;
             agentSetup.height = 2f;
@@ -181,10 +181,10 @@ public class CrewRoster : MonoBehaviour
         if (seat - 1 < spawnPoints.Length && spawnPoints[seat - 1] != null)
             return BotMover.OnNavMesh(spawnPoints[seat - 1].position);
 
-        // Default: each bot starts in a different room, falling back to a small circle around the roster.
-        string[] rooms = { "Boiler", "Corridor", "Wireless", "Bridge" };
-        var zone = RoomZone.Find(rooms[(seat - 1) % rooms.Length]);
-        if (zone != null) return BotMover.OnNavMesh(zone.RandomPoint(1f), 3f);
+        // Samprity's deck has Spawn_1..Spawn_4 markers.
+        var marker = GameObject.Find($"Spawn_{seat}");
+        if (marker != null) return BotMover.OnNavMesh(marker.transform.position, 3f);
+
         var offset = Quaternion.Euler(0f, seat * 90f, 0f) * Vector3.forward * 2f;
         return BotMover.OnNavMesh(transform.position + offset, 3f);
     }
@@ -211,7 +211,7 @@ public class CrewRoster : MonoBehaviour
         var surface = surfaceGo.AddComponent<NavMeshSurface>();
         surface.collectObjects = CollectObjects.All;
         surface.useGeometry = NavMeshCollectGeometry.PhysicsColliders;
-        surface.layerMask = ~(1 << RoomZone.IgnoreRaycastLayer);
+        surface.layerMask = ~(1 << 2); // skip Ignore Raycast
         surface.BuildNavMesh();
         Debug.Log("[CrewRoster] No NavMesh in the scene, so I baked one from the colliders. Bake a NavMeshSurface on the deck for the real thing.");
     }
@@ -316,7 +316,7 @@ public class CrewRoster : MonoBehaviour
             var o = od.GetOrderFor(c);
             var st = o != null && o.Data.needsTwo ? StationRegistry.Get(o.Data.CheckStation) : null;
             bool atStation = st != null && !od.IsStationDone(o) &&
-                             BotMover.FlatDistance(c.Position, st.Position) <= (st is ICrewWorkStation ws ? ws.InteractRange : 1.6f) + 0.3f;
+                             BotMover.FlatDistance(c.Position, st.Position) <= 2.5f;
 
             if (!atStation) { humanAtTwoPersonSince.Remove(c.Seat); continue; }
             if (!humanAtTwoPersonSince.TryGetValue(c.Seat, out float since))
