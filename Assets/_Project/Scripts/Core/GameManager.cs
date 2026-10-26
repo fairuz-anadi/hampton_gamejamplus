@@ -104,8 +104,8 @@ public class GameManager : MonoBehaviour
     public void FinishIceberg(float impactAngle)
     {
         if (State == GameState.Results) return;
-        RunRecord.ImpactAngle = impactAngle;
-        MeterSystem.Instance?.SnapshotToRecord();
+        var ending = EndingEvaluator.Resolve(impactAngle);
+        Debug.Log($"[GameManager] Impact {RunRecord.Impact} ({impactAngle:0}°), Safety {RunRecord.FinalShipSafety}: {ending}");
         var stoker = CrewRegistry.Stoker;
         if (stoker != null) RunRecord.StokerSeat = stoker.Seat;
         SetState(GameState.Results);

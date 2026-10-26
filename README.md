@@ -57,7 +57,7 @@ If something gets lost, run **Port → Run Project Setup** (`Scripts/Editor/Proj
 Assets/_Project/
   Art/        Models, Materials, Textures, Animations, UI, VFX   (Samprity)
   Audio/      Music, SFX, Voice, Mixer                           (Samprity)
-  Data/       Resources/Orders/ (the 12 orders), Endings/        (Anadi; text by Riham)
+  Data/       Resources/Orders/ (the 12 orders), Resources/Endings/ (the 3 endings)   (Anadi; text by Riham)
   Prefabs/    Crew, Stations, UI
   Scenes/     MainMenu, Ship, Results, Sandbox/
   Scripts/    Core + Debug + Editor (Anadi), Crew + Stations (Rabib), AI + Captain (Riham), UI + Audio (Samprity)
@@ -83,8 +83,10 @@ The systems spawn on their own when `Ship.unity`, or any scene whose name ends i
 | React to stations and ice warnings | `GameEvents.StationBroken`, `StationRepaired`, `HelpCalled`, `IceWarningArrived`, `IceWarningDelivered`, `IceWarningLost` |
 | Read the meters | `MeterSystem.Instance.CaptainTrust / ShipSafety / CrewTrust`, and `GameEvents.MetersChanged` |
 | Change the meters (sabotage, votes, ice warnings) | `MeterSystem.Instance.Apply(new MeterDelta(captain, safety, crew))` |
+| Use what the meters do (Riham, Samprity) | `MeterRules`: `StokerCooldown`, `BotHelpDelay`, `BotIgnoresHelpChance`, `BotRefusesOffOrderChance`, `CaptainSharesPrivateLines`, `CaptainSuspicious`, `ShipLeaking` |
+| Reopen the lifeboat store (Rabib) | Set `RunRecord.LifeboatStoreLocked = false` when two crew pull the Door levers. Obeying order 9 locks it. |
 | Run the iceberg scene (Rabib) | In `Awake`, set `GameManager.Instance.IcebergHandledExternally = true`. Start when the state becomes `Iceberg`, then call `GameManager.Instance.FinishIceberg(angle)` at impact. |
-| Build the results screen (Samprity) | Read `RunRecord`: `Choices`, the final meters, `ImpactAngle`, `StokerSeat`, `LifeboatStoreLocked`. |
+| Build the results screen (Samprity) | Read `RunRecord`: `Ending`, `Impact`, `Choices` (each has `Describe()`), the final meters, `StokerSeat`. Ending text is `EndingData.For(RunRecord.Ending)`, and `EndingEvaluator.FoundCount` gives "Endings found". `UI/ResultsScreen.cs` is a working placeholder to replace. |
 
 The orders are `OrderData` assets in `Data/Resources/Orders`, issued in file-name order (`01_…` to `12_…`). Create new ones from **Create → Port → Order**.
 
@@ -96,7 +98,7 @@ The orders are `OrderData` assets in `Data/Resources/Orders`, issued in file-nam
 | F2 | cycle meter presets | F6 | fake it |
 | F3 | jump to the iceberg | F7 | refuse it |
 | F4 | reveal the Stoker | F8 | restart the run |
-| F9 | hide or show the debug panel | | |
+| F9 | hide or show the debug panel | 1 / 2 / 3 | at the iceberg: hit head-on, glancing or scrape |
 
 ## Milestones (Dhaka time)
 

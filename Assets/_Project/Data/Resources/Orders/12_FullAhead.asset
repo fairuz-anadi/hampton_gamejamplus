@@ -21,6 +21,7 @@ MonoBehaviour:
   kind: 2
   needsTwo: 1
   timer: 25
+  locksLifeboats: 0
   obey:
     captainTrust: 6
     shipSafety: -12

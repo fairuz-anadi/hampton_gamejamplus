@@ -49,6 +49,12 @@ public static class CrewRegistry
         get { foreach (var c in crew) if (c.IsStoker) return c; return null; }
     }
 
+    static readonly string[] SeatNames = { "nobody", "Number One", "Number Two", "Number Three", "Number Four" };
+
+    /// <summary>"Number One" for seat 1, and so on.</summary>
+    public static string SeatName(int seat) =>
+        seat >= 0 && seat < SeatNames.Length ? SeatNames[seat] : "Number " + seat;
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     static void ResetStatics() => crew.Clear();
 }

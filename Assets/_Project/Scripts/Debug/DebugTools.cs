@@ -44,6 +44,13 @@ public class DebugTools : MonoBehaviour
         if (kb.f7Key.wasPressedThisFrame) ResolveOldest(Choice.Refuse);
         if (kb.f8Key.wasPressedThisFrame) GameManager.Instance?.StartRun();
         if (kb.f9Key.wasPressedThisFrame) visible = !visible;
+        if (GameManager.Instance != null && GameManager.Instance.State == GameState.Iceberg)
+        {
+            // Pick the impact to test each ending: 1 head-on, 2 glancing, 3 scrape.
+            if (kb.digit1Key.wasPressedThisFrame) GameManager.Instance.FinishIceberg(0f);
+            if (kb.digit2Key.wasPressedThisFrame) GameManager.Instance.FinishIceberg(30f);
+            if (kb.digit3Key.wasPressedThisFrame) GameManager.Instance.FinishIceberg(60f);
+        }
 #endif
     }
 #endif
@@ -109,6 +116,8 @@ public class DebugTools : MonoBehaviour
             GUILayout.Label(s != null ? $"Stoker: Seat {s.Seat}" : "Stoker: no crew registered", label);
         }
 
+        if (gm != null && gm.State == GameState.Iceberg)
+            GUILayout.Label("<b>Impact:</b> 1 head-on · 2 glancing · 3 scrape", Rich(label));
         GUILayout.Label("F1 skip part · F2 meters · F3 iceberg · F4 stoker\nF5 obey · F6 fake · F7 refuse · F8 restart · F9 hide", label);
         GUILayout.EndVertical();
         GUILayout.EndArea();

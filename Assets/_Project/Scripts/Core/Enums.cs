@@ -9,6 +9,11 @@ public enum Choice { Obey, Fake, Refuse, Expired }
 
 public enum GameState { Menu, Part1, Part2, Part3, Iceberg, Results }
 
+/// <summary>How the bow met the iceberg. Head-on is within 10°, glancing 10-45°, scrape above 45°.</summary>
+public enum ImpactKind { HeadOn, Glancing, Scrape }
+
+public enum Ending { WhatIf, ManySaved, CaptainWins }
+
 /// <summary>How much one choice moves each meter. Values are added, then clamped to 0..100.</summary>
 [System.Serializable]
 public struct MeterDelta
