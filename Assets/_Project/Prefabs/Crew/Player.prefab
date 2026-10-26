@@ -103,6 +103,7 @@ GameObject:
   - component: {fileID: 7245274712883138906}
   - component: {fileID: 8337714699659889394}
   - component: {fileID: 8478711791747824748}
+  - component: {fileID: 5529026153057338612}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -144,13 +145,13 @@ CharacterController:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Height: 1.8
-  m_Radius: 0.35
+  m_Height: 1.7
+  m_Radius: 0.32
   m_SlopeLimit: 45
   m_StepOffset: 0.3
-  m_SkinWidth: 0.08
+  m_SkinWidth: 0.04
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.9, z: 0}
+  m_Center: {x: 0, y: 0.85, z: 0}
 --- !u!114 &7245274712883138906
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -193,8 +194,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 86827c0c476c8e94dbed404893b958bb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
-  moveSpeed: 4
-  turnSpeed: 12
 --- !u!114 &8478711791747824748
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -208,3 +207,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Interactor
   range: 2.5
+--- !u!114 &5529026153057338612
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2007884406191849612}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bc93afe33e994ac4eb3584a2c3348e5f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ThirdPersonMover
+  moveSpeed: 3.4
+  acceleration: 18
+  deceleration: 24
+  rotationSpeed: 720
+  gravity: 20
+  followCamera: {fileID: 0}
+  relatchAngle: 20
+  deadZone: 0.15
+  readOwnInput: 1
+  moveAction: {fileID: 0}
+  animator: {fileID: 0}
+  speedParameter: Speed
