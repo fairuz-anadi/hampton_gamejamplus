@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a3c1e5d9b2f4c6e8a0d1f3b5c7e9a2d, type: 3}
+  m_Name: 06_FullSpeed
+  m_EditorClassIdentifier: 
+  part: 2
+  captainLine: "Keep her at full speed. We've a schedule to beat."
+  voice: {fileID: 0}
+  station: 0
+  isCarry: 0
+  deliverTo: 0
+  kind: 1
+  needsTwo: 1
+  timer: 30
+  obey:
+    captainTrust: 6
+    shipSafety: -12
+    crewTrust: 0
+  fake:
+    captainTrust: 3
+    shipSafety: 0
+    crewTrust: 0
+  refuse:
+    captainTrust: -12
+    shipSafety: 4
+    crewTrust: 4
+  expired:
+    captainTrust: -5
+    shipSafety: 0
+    crewTrust: 0
+  resultsLine: "Keep full speed through the ice field"
