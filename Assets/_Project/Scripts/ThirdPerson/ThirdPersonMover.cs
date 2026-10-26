@@ -5,7 +5,7 @@ using UnityEngine.InputSystem;
 
 /// <summary>
 /// Camera-relative walking on the deck plane (XZ). No jumping, sprinting or crouching. Owner: Samprity (prototype).
-/// Rabib: this is meant to fold into PlayerController. Feed it from PlayerInput with SetMoveInput and turn off readOwnInput.
+/// Rabib's PlayerController drives it: it calls UseExternalInput() and feeds each player's Move action into SetMoveInput.
 ///
 /// Why the "reference yaw": movement is camera-relative and the camera turns itself to sit behind the player.
 /// If W/A/S/D were read against the live camera every frame, holding A would curve forever and the camera would chase it.
@@ -101,6 +101,15 @@ public class ThirdPersonMover : MonoBehaviour
 
     /// <summary>x = right, y = forward, each -1..1. Use this from PlayerInput, bots or tests.</summary>
     public void SetMoveInput(Vector2 input) => moveInput = input;
+
+    /// <summary>Stop reading WASD/stick here; something else (PlayerController) feeds SetMoveInput.</summary>
+    public void UseExternalInput()
+    {
+        readOwnInput = false;
+#if ENABLE_INPUT_SYSTEM
+        ownMove?.Disable();
+#endif
+    }
 
     void Update()
     {
