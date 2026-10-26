@@ -11,8 +11,8 @@ using UnityEngine;
 /// the final meters and the ending for each kind of impact, so we can check every ending is reachable on purpose.
 ///   In the Editor:  Port > Balance Report (prints to the Console)
 ///   Headless:       -executeMethod BalanceReport.RunBatch [-balanceOut path.md]
-/// A "rough" voyage adds 3 Stoker sabotages (Safety -6, -8, -6) and 3 lost ice warnings (Safety -5 each).
-/// A "clean" one delivers all 3 ice warnings (Safety +5 each). Every second fake gets noticed (Captain -10).
+/// A "rough" voyage has the Stoker jam 2 stations and hide 1 ice warning, and the other 2 warnings get lost.
+/// A "clean" one delivers all 3 ice warnings. Every second fake gets noticed (Captain -10). Numbers come from MeterRules.
 /// </summary>
 public static class BalanceReport
 {
@@ -32,6 +32,12 @@ public static class BalanceReport
     };
 
     static readonly ImpactKind[] Impacts = { ImpactKind.HeadOn, ImpactKind.Glancing, ImpactKind.Scrape };
+
+    static readonly MeterDelta RoughVoyage =
+        MeterRules.SabotageJamStation + MeterRules.SabotageJamStation + MeterRules.SabotageHideIceWarning
+        + MeterRules.IceWarningLost + MeterRules.IceWarningLost;
+    static readonly MeterDelta CleanVoyage =
+        MeterRules.IceWarningDelivered + MeterRules.IceWarningDelivered + MeterRules.IceWarningDelivered;
 
     [MenuItem("Port/Balance Report")]
     public static void Run() => Debug.Log(Build(out _));
@@ -94,7 +100,7 @@ public static class BalanceReport
 
             // Part 2 events, applied once after order 11 so they land where they would in a real run.
             if (o.part == 2 && o == orders.Last(x => x.part == 2))
-                Apply(rough ? new MeterDelta(0, -6 - 8 - 6 - 15, 0) : new MeterDelta(0, 15, 0), ref captain, ref safety, ref crew);
+                Apply(rough ? RoughVoyage : CleanVoyage, ref captain, ref safety, ref crew);
         }
     }
 

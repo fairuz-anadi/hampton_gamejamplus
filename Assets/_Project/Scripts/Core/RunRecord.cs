@@ -53,6 +53,10 @@ public static class RunRecord
     public static int StokerSeat;
     public static float RunStartTime;
 
+    public static int IceWarningsDelivered;
+    public static int IceWarningsLost;
+    public static int IceWarningsHidden;
+
     /// <summary>False until the iceberg has been hit and the ending decided.</summary>
     public static bool HasEnding;
     public static Ending Ending;
@@ -66,6 +70,7 @@ public static class RunRecord
         LifeboatStoreLocked = false;
         StokerSeat = 0;
         RunStartTime = Time.time;
+        IceWarningsDelivered = IceWarningsLost = IceWarningsHidden = 0;
         HasEnding = false;
         Ending = Ending.CaptainWins;
     }
