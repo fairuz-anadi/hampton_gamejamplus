@@ -16,7 +16,6 @@ public class DebugSecondPlayer : MonoBehaviour, ICrewActor, IInteractSource, IRo
     [SerializeField] float turnSpeed = 12f;
 
     CharacterController controller;
-    Camera deckCamera;
     int seat;
 
     public int Seat => seat;
@@ -36,7 +35,6 @@ public class DebugSecondPlayer : MonoBehaviour, ICrewActor, IInteractSource, IRo
 
     void Start()
     {
-        deckCamera = Camera.main;
         ApplyDebugColor();
     }
 
@@ -68,10 +66,11 @@ public class DebugSecondPlayer : MonoBehaviour, ICrewActor, IInteractSource, IRo
 
         Vector3 forward = Vector3.forward;
         Vector3 right = Vector3.right;
-        if (deckCamera != null)
+        var cam = Camera.main;
+        if (cam != null)
         {
-            forward = Vector3.ProjectOnPlane(deckCamera.transform.forward, Vector3.up).normalized;
-            right = Vector3.ProjectOnPlane(deckCamera.transform.right, Vector3.up).normalized;
+            forward = Vector3.ProjectOnPlane(cam.transform.forward, Vector3.up).normalized;
+            right = Vector3.ProjectOnPlane(cam.transform.right, Vector3.up).normalized;
         }
 
         Vector3 moveDir = forward * input.y + right * input.x;
