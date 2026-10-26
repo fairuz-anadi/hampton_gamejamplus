@@ -9,6 +9,7 @@ using UnityEngine.InputSystem;
 ///   F3  jump to the iceberg          F7  refuse it
 ///   F4  reveal the Stoker            F8  restart (reloads the scene)
 ///   F9  show / hide this panel       1 / 2 / 3 at the iceberg: hit head-on, glancing or scrape
+///   F10 deliver the waiting ice warning    F11 Stoker hides the next ice warning
 /// </summary>
 public class DebugTools : MonoBehaviour
 {
@@ -47,6 +48,8 @@ public class DebugTools : MonoBehaviour
         if (kb.f7Key.wasPressedThisFrame) ResolveOldest(Choice.Refuse);
         if (kb.f8Key.wasPressedThisFrame) GameManager.Restart();
         if (kb.f9Key.wasPressedThisFrame) visible = !visible;
+        if (kb.f10Key.wasPressedThisFrame) DeliverWaitingWarning();
+        if (kb.f11Key.wasPressedThisFrame) Debug.Log($"[Debug] Stoker hid ice warning {IceWarnings.Instance?.HideNext()}");
         if (gm != null && gm.State == GameState.Iceberg)
         {
             if (kb.digit1Key.wasPressedThisFrame) gm.FinishIceberg(0f);
@@ -61,6 +64,14 @@ public class DebugTools : MonoBehaviour
         var p = Presets[presetIndex];
         MeterSystem.Instance?.Set(p.ct, p.ss, p.crew);
         Debug.Log($"[Debug] Meters set to '{p.name}'");
+    }
+
+    static void DeliverWaitingWarning()
+    {
+        var ice = IceWarnings.Instance;
+        if (ice == null) return;
+        for (int n = 1; n <= ice.Count; n++)
+            if (ice.Deliver(n)) return;
     }
 
     static void ResolveOldest(Choice c)
@@ -108,6 +119,19 @@ public class DebugTools : MonoBehaviour
         if (RunRecord.Choices.Count > 0)
             GUILayout.Label("Last: " + RunRecord.Choices[RunRecord.Choices.Count - 1].Describe(), label);
 
+        var ice = IceWarnings.Instance;
+        if (ice != null)
+        {
+            sb.Clear().Append("<b>Ice:</b>");
+            for (int n = 1; n <= ice.Count; n++)
+            {
+                var st = ice.StatusOf(n);
+                sb.Append($"  MSG {n} {st}");
+                if (st == IceWarnings.Status.Waiting) sb.Append($" {ice.TimeLeft(n):0}s");
+            }
+            GUILayout.Label(sb.ToString(), label);
+        }
+
         if (revealStoker)
         {
             var s = CrewRegistry.Stoker;
@@ -116,7 +140,7 @@ public class DebugTools : MonoBehaviour
 
         if (gm != null && gm.State == GameState.Iceberg)
             GUILayout.Label("<b>Impact:</b> 1 head-on · 2 glancing · 3 scrape", label);
-        GUILayout.Label("F1 skip part · F2 meters · F3 iceberg · F4 stoker\nF5 obey · F6 fake · F7 refuse · F8 restart · F9 hide", label);
+        GUILayout.Label("F1 skip part · F2 meters · F3 iceberg · F4 stoker\nF5 obey · F6 fake · F7 refuse · F8 restart · F9 hide\nF10 deliver ice warning · F11 Stoker hides one", label);
         GUILayout.EndVertical();
         GUILayout.EndArea();
     }

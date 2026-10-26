@@ -76,6 +76,7 @@ public class GameManager : MonoBehaviour
         StopAllCoroutines();
         RunRecord.Clear();
         MeterSystem.Instance?.ResetMeters();
+        IceWarnings.Instance?.ResetAll();
         var stoker = CrewRegistry.Stoker;
         RunRecord.StokerSeat = stoker != null ? stoker.Seat : 0;
         SetState(GameState.Part1);

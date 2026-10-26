@@ -58,6 +58,7 @@ public class ResultsScreen : MonoBehaviour
         GUILayout.Space(16f);
 
         GUILayout.Label($"Impact: {ImpactText()}    ·    Captain's Trust {RunRecord.FinalCaptainTrust}  ·  Ship Safety {RunRecord.FinalShipSafety}  ·  Crew Trust {RunRecord.FinalCrewTrust}", small);
+        GUILayout.Label($"Ice warnings: {RunRecord.IceWarningsDelivered} reached the bridge, {RunRecord.IceWarningsLost} lost, {RunRecord.IceWarningsHidden} never arrived.", small);
         if (RunRecord.LifeboatStoreLocked) GUILayout.Label("The lifeboat store was still locked.", small);
         GUILayout.Label(RunRecord.StokerSeat > 0
             ? $"The Stoker was {CrewRegistry.SeatName(RunRecord.StokerSeat)}."

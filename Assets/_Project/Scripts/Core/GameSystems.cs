@@ -40,6 +40,7 @@ public static class GameSystems
         var go = new GameObject("[GameSystems]");
         go.AddComponent<MeterSystem>();
         go.AddComponent<OrderDirector>();
+        go.AddComponent<IceWarnings>();
         go.AddComponent<GameManager>();
         go.AddComponent<PauseMenu>();
         if ((sceneName ?? SceneManager.GetActiveScene().name) == "Ship") go.AddComponent<IntroCard>();

@@ -86,6 +86,8 @@ The systems spawn on their own when `Ship.unity`, or any scene whose name ends i
 | React to stations and ice warnings | `GameEvents.StationBroken`, `StationRepaired`, `HelpCalled`, `IceWarningArrived`, `IceWarningDelivered`, `IceWarningLost` |
 | Read the meters | `MeterSystem.Instance.CaptainTrust / ShipSafety / CrewTrust`, and `GameEvents.MetersChanged` |
 | Change the meters (sabotage, votes, ice warnings) | `MeterSystem.Instance.Apply(new MeterDelta(captain, safety, crew))` |
+| Run the ice warnings (Rabib's Wireless desk, Riham's Stoker) | `IceWarnings` schedules MSG 1–3 at 3:20, 4:30 and 5:40 and applies the meters. Show one on `GameEvents.IceWarningArrived(n)`, call `IceWarnings.Instance.Deliver(n)` at the Bridge or `FileUnread(n)` at the desk, and use `TimeLeft(n)` for a countdown. The Stoker calls `HideNext()`. |
+| Use the plan's numbers for sabotage and the vote (Riham) | `MeterRules.SabotageJamStation`, `SabotageFalseReport`, `VoteCaughtStoker`, `VoteWrong`, `StokerActive`, `RepairSeconds`, `VoteSeconds`, `LockoutSeconds` and the rest. Apply them with `MeterSystem.Instance.Apply(...)`. |
 | Use what the meters do (Riham, Samprity) | `MeterRules`: `StokerCooldown`, `BotHelpDelay`, `BotIgnoresHelpChance`, `BotRefusesOffOrderChance`, `CaptainSharesPrivateLines`, `CaptainSuspicious`, `ShipLeaking` |
 | Spawn the players who joined (Rabib) | `PlayerSlots.Devices[i]` is seat `i + 1`'s device: `PlayerInput.Instantiate(prefab, playerIndex: i, pairWithDevice: device)`. With nobody joined (pressing Play in a scene), use `PlayerSlots.FirstDevice`. |
 | Fill the empty seats with bots (Riham) | `PlayerSlots.HumanCount` humans, `PlayerSlots.BotCount` bots. Pick the Stoker when the crew spawns: Restart and Play again reload the scene, so it re-rolls. |
@@ -105,6 +107,7 @@ The orders are `OrderData` assets in `Data/Resources/Orders`, issued in file-nam
 | F3 | jump to the iceberg | F7 | refuse it |
 | F4 | reveal the Stoker | F8 | restart (reloads the scene) |
 | F9 | hide or show the debug panel | 1 / 2 / 3 | at the iceberg: hit head-on, glancing or scrape |
+| F10 | deliver the waiting ice warning | F11 | the Stoker hides the next ice warning |
 
 ## Builds (Anadi)
 
