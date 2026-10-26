@@ -19,6 +19,38 @@ public static class MeterRules
     public const float SlowestHelpDelay = 6f;
     public const float ReluctantIgnoreChance = 0.25f;
 
+    // ---------- Plan numbers for systems built by others, so they're tuned in one place ----------
+
+    // Ice warnings (applied by IceWarnings)
+    public static readonly MeterDelta IceWarningDelivered = new MeterDelta(0, 5, 0);
+    public static readonly MeterDelta IceWarningLost = new MeterDelta(0, -5, 0);
+
+    // The Stoker (Riham). Inactive in Part 1, one sabotage per cooldown, only when no human is in the room.
+    public static readonly MeterDelta SabotageJamStation = new MeterDelta(0, -6, 0);
+    public static readonly MeterDelta SabotageHideIceWarning = new MeterDelta(0, -8, 0); // IceWarnings applies this one
+    public static readonly MeterDelta SabotageFalseReport = new MeterDelta(0, 0, -6);
+    public const int StokerFirstPart = 2;
+    public const int StokerSabotagesPerRun = 3;
+    public const float StokerStaticWarningSeconds = 2.5f; // speaker static before each sabotage
+    public const float RepairSeconds = 3f;
+
+    // Muster vote (Riham), first thing to cut
+    public static readonly MeterDelta VoteCaughtStoker = new MeterDelta(0, 0, 10);
+    public static readonly MeterDelta VoteWrong = new MeterDelta(0, 0, -15);
+    public const float VoteSeconds = 15f;
+    public const float LockoutSeconds = 60f;
+    public const float VoteCooldownSeconds = 90f;
+
+    /// <summary>True while the Stoker may sabotage: Part 2 and Part 3.</summary>
+    public static bool StokerActive
+    {
+        get
+        {
+            int part = GameManager.Instance != null ? GameManager.Instance.Part : 0;
+            return part >= StokerFirstPart && part <= 3;
+        }
+    }
+
     static int Captain => MeterSystem.Instance != null ? MeterSystem.Instance.CaptainTrust : 50;
     static int Safety => MeterSystem.Instance != null ? MeterSystem.Instance.ShipSafety : 80;
     static int Crew => MeterSystem.Instance != null ? MeterSystem.Instance.CrewTrust : 60;

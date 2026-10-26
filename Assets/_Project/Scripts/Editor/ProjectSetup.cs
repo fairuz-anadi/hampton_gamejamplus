@@ -26,7 +26,7 @@ public static class ProjectSetup
     {
         "Art/Models", "Art/Materials", "Art/Textures", "Art/Animations", "Art/UI", "Art/VFX",
         "Audio/Music", "Audio/SFX", "Audio/Voice", "Audio/Mixer",
-        "Data/Resources/Orders", "Data/Endings",
+        "Data/Resources/Orders", "Data/Resources/Endings",
         "Prefabs/Crew", "Prefabs/Stations", "Prefabs/UI",
         "Scenes/Sandbox",
         "Scripts/Core", "Scripts/Crew", "Scripts/Stations", "Scripts/AI", "Scripts/Captain",

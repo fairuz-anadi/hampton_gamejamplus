@@ -3,8 +3,8 @@ using UnityEngine.InputSystem;
 
 /// <summary>
 /// Main menu with local join. Spawned by GameSystems when the MainMenu scene loads. Owner: Anadi.
-///   Keyboard: Space joins or leaves, Enter starts.
-///   Gamepad:  A / ✕ joins, B / ○ leaves, Start starts.
+///   Keyboard: Space joins or leaves, Enter starts, C shows credits.
+///   Gamepad:  A / ✕ joins, B / ○ leaves, Start starts, Y / △ shows credits.
 /// 1-3 humans, bots fill the rest of the 4 seats. Starting with nobody joined puts that device in seat 1.
 /// Samprity: this draws with IMGUI as a placeholder. Restyle it, or build MenuUI on PlayerSlots and remove the MainMenu line in GameSystems.
 /// </summary>
@@ -26,18 +26,17 @@ public class MainMenuScreen : MonoBehaviour
 
     void Update()
     {
-        var kb = Keyboard.current;
         if (showCredits)
         {
-            bool back = kb != null && kb.escapeKey.wasPressedThisFrame;
-            foreach (var pad in Gamepad.all) back |= pad.buttonEast.wasPressedThisFrame;
-            if (back) showCredits = false;
+            if (MenuControls.Back() || MenuControls.Confirm()) showCredits = false;
             return;
         }
 
+        var kb = Keyboard.current;
         if (kb != null)
         {
             if (kb.spaceKey.wasPressedThisFrame) Toggle(kb);
+            if (kb.cKey.wasPressedThisFrame) showCredits = true;
             if (kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame) StartRun(kb);
         }
 
@@ -45,6 +44,7 @@ public class MainMenuScreen : MonoBehaviour
         {
             if (pad.buttonSouth.wasPressedThisFrame) PlayerSlots.Join(pad);
             if (pad.buttonEast.wasPressedThisFrame) PlayerSlots.Leave(pad);
+            if (pad.buttonNorth.wasPressedThisFrame) showCredits = true;
             if (pad.startButton.wasPressedThisFrame) StartRun(pad);
         }
     }
@@ -72,7 +72,7 @@ public class MainMenuScreen : MonoBehaviour
         {
             GUILayout.Label(credits != null ? credits.text : "Credits.txt is missing.", body);
             GUILayout.Space(20f);
-            if (GUILayout.Button("Back  (Esc / B)", button, GUILayout.Width(320f), GUILayout.Height(72f))) showCredits = false;
+            if (GUILayout.Button("Back  (Esc / B)", button, GUILayout.Width(360f), GUILayout.Height(72f))) showCredits = false;
             GUILayout.EndArea();
             return;
         }
@@ -91,13 +91,13 @@ public class MainMenuScreen : MonoBehaviour
         }
 
         GUILayout.Space(30f);
-        GUILayout.Label("Enter or Start to set sail. B leaves.", body);
+        GUILayout.Label("Enter or Start to set sail. B leaves your seat.", body);
         GUILayout.Space(12f);
-        if (GUILayout.Button("Start", button, GUILayout.Width(320f), GUILayout.Height(72f))) StartRun(Keyboard.current);
+        if (GUILayout.Button("Start  (Enter / Start)", button, GUILayout.Width(360f), GUILayout.Height(72f))) StartRun(Keyboard.current);
         GUILayout.Space(12f);
-        if (GUILayout.Button("Credits", button, GUILayout.Width(320f), GUILayout.Height(72f))) showCredits = true;
+        if (GUILayout.Button("Credits  (C / Y)", button, GUILayout.Width(360f), GUILayout.Height(72f))) showCredits = true;
         GUILayout.Space(12f);
-        if (GUILayout.Button("Quit", button, GUILayout.Width(320f), GUILayout.Height(72f))) PauseMenu.Quit();
+        if (GUILayout.Button("Quit", button, GUILayout.Width(360f), GUILayout.Height(72f))) PauseMenu.Quit();
         GUILayout.EndArea();
     }
 
