@@ -16,14 +16,15 @@ public class DebugSecondPlayer : MonoBehaviour, ICrewActor, IInteractSource, IRo
     [SerializeField] float turnSpeed = 12f;
 
     CharacterController controller;
-    Camera deckCamera;
     int seat;
 
     public int Seat => seat;
     public bool IsBot => false;
     public bool IsStoker => false;
     public Vector3 Position => transform.position;
-    public string RoomId { get; private set; } = "Unknown";
+    /// <summary>Samprity's deck room volumes when the scene has them (Ship.unity), else the last RoomZone entered.</summary>
+    public string RoomId => RoomVolume.All.Count > 0 ? RoomVolume.RoomAt(transform.position) : zoneRoom;
+    string zoneRoom = "Unknown";
     public bool IsLockedOut { get; private set; }
 
     public bool InteractHeld => Keyboard.current != null && Keyboard.current.rightCtrlKey.isPressed;
@@ -36,7 +37,6 @@ public class DebugSecondPlayer : MonoBehaviour, ICrewActor, IInteractSource, IRo
 
     void Start()
     {
-        deckCamera = Camera.main;
         ApplyDebugColor();
     }
 
@@ -68,10 +68,11 @@ public class DebugSecondPlayer : MonoBehaviour, ICrewActor, IInteractSource, IRo
 
         Vector3 forward = Vector3.forward;
         Vector3 right = Vector3.right;
-        if (deckCamera != null)
+        var cam = Camera.main;
+        if (cam != null)
         {
-            forward = Vector3.ProjectOnPlane(deckCamera.transform.forward, Vector3.up).normalized;
-            right = Vector3.ProjectOnPlane(deckCamera.transform.right, Vector3.up).normalized;
+            forward = Vector3.ProjectOnPlane(cam.transform.forward, Vector3.up).normalized;
+            right = Vector3.ProjectOnPlane(cam.transform.right, Vector3.up).normalized;
         }
 
         Vector3 moveDir = forward * input.y + right * input.x;
@@ -86,7 +87,7 @@ public class DebugSecondPlayer : MonoBehaviour, ICrewActor, IInteractSource, IRo
         }
     }
 
-    public void SetRoom(string roomId) => RoomId = roomId;
+    public void SetRoom(string roomId) => zoneRoom = roomId;
     public void SetLockedOut(bool locked) => IsLockedOut = locked;
 
     static int NextFreeSeat()

@@ -100,6 +100,7 @@ public class OrderDirector : MonoBehaviour
 
         // The final order starts Part 3, so let the earlier ones finish first.
         if (data.kind == OrderKind.Final && active.Count > 0) return;
+        if (StationsBusy(data)) return; // try again next frame, once the station is free
 
         var assignee = PickAssignee();
         if (assignee == null && CrewRegistry.All.Count > 0) return; // everyone is busy, try again next frame
@@ -159,12 +160,30 @@ public class OrderDirector : MonoBehaviour
         return choice;
     }
 
-    /// <summary>True when another crew member is in the same room as the faker.</summary>
+    /// <summary>True when another crew member is in the same real room as the faker. An unknown room proves nothing.</summary>
     static bool HasWitness(ICrewActor faker)
     {
-        if (string.IsNullOrEmpty(faker.RoomId)) return false;
+        if (!IsRealRoom(faker.RoomId)) return false;
         foreach (var c in CrewRegistry.All)
             if (c != faker && c.RoomId == faker.RoomId) return true;
+        return false;
+    }
+
+    static bool IsRealRoom(string roomId) =>
+        !string.IsNullOrEmpty(roomId) && roomId != "Unknown" && roomId != "Deck";
+
+    /// <summary>
+    /// True if an active order already uses one of this order's stations. Issuing it now would reset that
+    /// station and wipe the other order's progress (orders 8 and 9 both use the Doors, 10 and 11 both start at the Wheel).
+    /// </summary>
+    bool StationsBusy(OrderData data)
+    {
+        foreach (var o in active)
+        {
+            var d = o.Data;
+            if (d.station == data.station || d.CheckStation == data.station ||
+                d.station == data.CheckStation || d.CheckStation == data.CheckStation) return true;
+        }
         return false;
     }
 
