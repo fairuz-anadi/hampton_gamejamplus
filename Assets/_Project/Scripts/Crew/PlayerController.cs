@@ -3,7 +3,7 @@ using UnityEngine.InputSystem;
 
 /// <summary>Human-controlled crew member: camera-relative movement, Report/Refuse. Owner: Rabib.</summary>
 [RequireComponent(typeof(CharacterController), typeof(PlayerInput))]
-public class PlayerController : MonoBehaviour, ICrewActor, IInteractSource
+public class PlayerController : MonoBehaviour, ICrewActor, IInteractSource, IRoomTarget
 {
     static readonly Color[] SeatColors =
     {

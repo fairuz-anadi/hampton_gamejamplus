@@ -1,16 +1,16 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
 /// <summary>
 /// DEBUG ONLY: a second crew member driven by raw keys on the same keyboard (arrows to move,
 /// Right Ctrl/Shift/Enter for Interact/Report/Refuse), so 2-player flow is testable without a
 /// second device. Reads Keyboard.current directly, bypassing PlayerInput entirely, so it can't
-/// fight the real P1 Keyboard / P2-P3 Gamepad control schemes over device pairing. Never compiled
-/// into a release build. Owner: Rabib.
+/// fight the real P1 Keyboard / P2-P3 Gamepad control schemes over device pairing. Self-destructs
+/// outside debug builds. Takes the highest free seat (counting down from 4) so it stays clear of
+/// PlayerSlots humans, who always claim seats starting at 1. Owner: Rabib.
 /// </summary>
 [RequireComponent(typeof(CharacterController))]
-public class DebugSecondPlayer : MonoBehaviour, ICrewActor, IInteractSource
+public class DebugSecondPlayer : MonoBehaviour, ICrewActor, IInteractSource, IRoomTarget
 {
     [SerializeField] float moveSpeed = 4f;
     [SerializeField] float turnSpeed = 12f;
@@ -30,6 +30,7 @@ public class DebugSecondPlayer : MonoBehaviour, ICrewActor, IInteractSource
 
     void Awake()
     {
+        if (!Debug.isDebugBuild) { Destroy(this); return; }
         controller = GetComponent<CharacterController>();
     }
 
@@ -90,9 +91,9 @@ public class DebugSecondPlayer : MonoBehaviour, ICrewActor, IInteractSource
 
     static int NextFreeSeat()
     {
-        for (int s = 1; s <= 4; s++)
+        for (int s = 4; s >= 1; s--)
             if (CrewRegistry.BySeat(s) == null) return s;
-        return 4;
+        return 1;
     }
 
     void ApplyDebugColor()
@@ -105,4 +106,3 @@ public class DebugSecondPlayer : MonoBehaviour, ICrewActor, IInteractSource
         else mat.color = color;
     }
 }
-#endif

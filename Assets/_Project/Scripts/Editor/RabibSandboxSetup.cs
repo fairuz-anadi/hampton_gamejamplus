@@ -32,13 +32,14 @@ public static class RabibSandboxSetup
         EnsureSpawnPoint();
         EnsureStations();
         EnsureCarryItems();
+        EnsureRoomZones();
         EnsurePlayerPrefab();
         EnsurePlayerJoin();
         EnsureDebugSecondPlayer();
 
         EditorSceneManager.SaveScene(scene);
         AssetDatabase.SaveAssets();
-        Debug.Log("[RabibSandboxSetup] Sandbox ready: bootstrap, deck, rooms, spawn point, 4 stations, 2 carry items, player join, debug keyboard P2.");
+        Debug.Log("[RabibSandboxSetup] Sandbox ready: bootstrap, deck, rooms, spawn point, 4 stations, 2 carry items, 4 room zones, player join, debug keyboard P2.");
     }
 
     /// <summary>Same as Build(), callable headlessly.</summary>
@@ -136,6 +137,42 @@ public static class RabibSandboxSetup
         var order = AssetDatabase.LoadAssetAtPath<OrderData>(orderAssetPath);
         var so = new SerializedObject(item);
         so.FindProperty("order").objectReferenceValue = order;
+        so.ApplyModifiedPropertiesWithoutUndo();
+    }
+
+    /// <summary>Anchor name -> actual fiction room name (RoomId). Corridor holds the Doors station, Bridge holds the Wheel.</summary>
+    static readonly (string anchorName, string roomId)[] RoomZones =
+    {
+        ("Boiler",   "Boiler"),
+        ("Doors",    "Corridor"),
+        ("Wireless", "Wireless"),
+        ("Wheel",    "Bridge"),
+    };
+
+    static void EnsureRoomZones()
+    {
+        foreach (var (anchorName, roomId) in RoomZones)
+            EnsureRoomZone(anchorName, roomId);
+    }
+
+    static void EnsureRoomZone(string anchorName, string roomId)
+    {
+        string goName = "RoomZone_" + roomId;
+        if (GameObject.Find(goName) != null) return;
+
+        var anchor = GameObject.Find("Rooms")?.transform.Find(anchorName);
+        Vector3 origin = anchor != null ? anchor.position : Vector3.zero;
+
+        var go = new GameObject(goName);
+        go.transform.position = origin + new Vector3(0f, 1.5f, 0f);
+
+        var box = go.AddComponent<BoxCollider>();
+        box.isTrigger = true;
+        box.size = new Vector3(4f, 3f, 4f);
+
+        var zone = go.AddComponent<RoomZone>();
+        var so = new SerializedObject(zone);
+        so.FindProperty("roomId").stringValue = roomId;
         so.ApplyModifiedPropertiesWithoutUndo();
     }
 
