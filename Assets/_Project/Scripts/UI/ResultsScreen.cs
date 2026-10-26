@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Working results screen: ending, impact, final meters, the Stoker reveal, what each choice cost, and Play again.
@@ -76,11 +75,8 @@ public class ResultsScreen : MonoBehaviour
         GUILayout.EndHorizontal();
     }
 
-    static void Load(string scene)
-    {
-        if (Application.CanStreamedLevelBeLoaded(scene)) SceneManager.LoadScene(scene);
-        else Debug.LogWarning($"[ResultsScreen] Scene '{scene}' isn't in Build Settings.");
-    }
+    // Loading Ship again re-spawns the crew, so Play again always picks a new Stoker.
+    static void Load(string scene) => GameManager.LoadScene(scene);
 
     static string ImpactText()
     {
