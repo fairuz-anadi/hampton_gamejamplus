@@ -20,6 +20,9 @@ Made for GameJamPlus 2026/27 (GJ+ Bangladesh) by Anadi, Rabib, Riham and Samprit
 | Report done | R | Y / △ |
 | Refuse | X | B / ○ |
 | Call for help | Q | X / □ |
+| Pause | Esc | Start |
+
+On the main menu, press **Space** (keyboard) or **A** (gamepad) to take a seat, then **Enter** or **Start** to set sail. Up to 3 players can join, and bots fill the rest.
 
 ## Getting started
 
@@ -84,6 +87,9 @@ The systems spawn on their own when `Ship.unity`, or any scene whose name ends i
 | Read the meters | `MeterSystem.Instance.CaptainTrust / ShipSafety / CrewTrust`, and `GameEvents.MetersChanged` |
 | Change the meters (sabotage, votes, ice warnings) | `MeterSystem.Instance.Apply(new MeterDelta(captain, safety, crew))` |
 | Use what the meters do (Riham, Samprity) | `MeterRules`: `StokerCooldown`, `BotHelpDelay`, `BotIgnoresHelpChance`, `BotRefusesOffOrderChance`, `CaptainSharesPrivateLines`, `CaptainSuspicious`, `ShipLeaking` |
+| Spawn the players who joined (Rabib) | `PlayerSlots.Devices[i]` is seat `i + 1`'s device: `PlayerInput.Instantiate(prefab, playerIndex: i, pairWithDevice: device)`. With nobody joined (pressing Play in a scene), use `PlayerSlots.FirstDevice`. |
+| Fill the empty seats with bots (Riham) | `PlayerSlots.HumanCount` humans, `PlayerSlots.BotCount` bots. Pick the Stoker when the crew spawns: Restart and Play again reload the scene, so it re-rolls. |
+| Pause, restart, change scene | `PauseMenu.Instance.Toggle()`, `GameManager.Restart()`, `GameManager.LoadScene(name)`. Don't bind Esc or Start yourself: the pause menu already handles them. |
 | Reopen the lifeboat store (Rabib) | Set `RunRecord.LifeboatStoreLocked = false` when two crew pull the Door levers. Obeying order 9 locks it. |
 | Run the iceberg scene (Rabib) | In `Awake`, set `GameManager.Instance.IcebergHandledExternally = true`. Start when the state becomes `Iceberg`, then call `GameManager.Instance.FinishIceberg(angle)` at impact. |
 | Build the results screen (Samprity) | Read `RunRecord`: `Ending`, `Impact`, `Choices` (each has `Describe()`), the final meters, `StokerSeat`. Ending text is `EndingData.For(RunRecord.Ending)`, and `EndingEvaluator.FoundCount` gives "Endings found". `UI/ResultsScreen.cs` is a working placeholder to replace. |
@@ -97,14 +103,16 @@ The orders are `OrderData` assets in `Data/Resources/Orders`, issued in file-nam
 | F1 | skip to the next part | F5 | obey the oldest order |
 | F2 | cycle meter presets | F6 | fake it |
 | F3 | jump to the iceberg | F7 | refuse it |
-| F4 | reveal the Stoker | F8 | restart the run |
+| F4 | reveal the Stoker | F8 | restart (reloads the scene) |
 | F9 | hide or show the debug panel | 1 / 2 / 3 | at the iceberg: hit head-on, glancing or scrape |
 
 ## Builds (Anadi)
 
 Use **Port → Build Windows (Development)** at each milestone. Development builds keep the debug keys and panel. Use **Port → Build Windows (Release)** for RC2 and the submission, which drops them. Builds go to `Builds/`, which git ignores. When zipping a build, leave out the `..._BackUpThisFolder_ButDontShipItWithYourGame` folder.
 
-MainMenu, Ship and Results each have a working placeholder screen until the real menu and results UI land in Phase 3.
+MainMenu, Ship and Results each have a working placeholder screen (`UI/MainMenuScreen`, `UI/PauseMenu`, `UI/ResultsScreen`) for Samprity to restyle.
+
+**Balance:** run **Port → Balance Report** after changing any order's numbers. It plays the 12 orders through common strategies and prints the ending each impact gives, so you can check all 3 endings stay reachable.
 
 ## Milestones (Dhaka time)
 

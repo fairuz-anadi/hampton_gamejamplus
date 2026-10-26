@@ -42,7 +42,7 @@ public class DebugTools : MonoBehaviour
         if (kb.f5Key.wasPressedThisFrame) ResolveOldest(Choice.Obey);
         if (kb.f6Key.wasPressedThisFrame) ResolveOldest(Choice.Fake);
         if (kb.f7Key.wasPressedThisFrame) ResolveOldest(Choice.Refuse);
-        if (kb.f8Key.wasPressedThisFrame) GameManager.Instance?.StartRun();
+        if (kb.f8Key.wasPressedThisFrame) GameManager.Restart();
         if (kb.f9Key.wasPressedThisFrame) visible = !visible;
         if (GameManager.Instance != null && GameManager.Instance.State == GameState.Iceberg)
         {

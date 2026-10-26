@@ -1,13 +1,12 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
-#if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
-#endif
 
 /// <summary>
-/// Placeholder main menu: Start (or Enter) loads the ship, Quit closes the game.
-/// Spawned by GameSystems when the MainMenu scene loads. Owner: Anadi.
-/// Phase 3 replaces this with the real menu (join slots for 1-3 players, "bots fill the rest").
+/// Main menu with local join. Spawned by GameSystems when the MainMenu scene loads. Owner: Anadi.
+///   Keyboard: Space joins or leaves, Enter starts.
+///   Gamepad:  A / ✕ joins, B / ○ leaves, Start starts.
+/// 1-3 humans, bots fill the rest of the 4 seats. Starting with nobody joined puts that device in seat 1.
+/// Samprity: this draws with IMGUI as a placeholder. Restyle it, or build MenuUI on PlayerSlots and remove the MainMenu line in GameSystems.
 /// </summary>
 public class MainMenuScreen : MonoBehaviour
 {
@@ -15,17 +14,37 @@ public class MainMenuScreen : MonoBehaviour
 
     const float RefHeight = 1080f;
 
-    GUIStyle title, body, button;
+    GUIStyle title, body, slot, button;
 
-#if ENABLE_INPUT_SYSTEM
+    void Start() => PlayerSlots.Clear();
+
     void Update()
     {
         var kb = Keyboard.current;
-        if (kb != null && (kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame)) StartRun();
-        var pad = Gamepad.current;
-        if (pad != null && pad.startButton.wasPressedThisFrame) StartRun();
+        if (kb != null)
+        {
+            if (kb.spaceKey.wasPressedThisFrame) Toggle(kb);
+            if (kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame) StartRun(kb);
+        }
+
+        foreach (var pad in Gamepad.all)
+        {
+            if (pad.buttonSouth.wasPressedThisFrame) PlayerSlots.Join(pad);
+            if (pad.buttonEast.wasPressedThisFrame) PlayerSlots.Leave(pad);
+            if (pad.startButton.wasPressedThisFrame) StartRun(pad);
+        }
     }
-#endif
+
+    static void Toggle(InputDevice device)
+    {
+        if (!PlayerSlots.Leave(device)) PlayerSlots.Join(device);
+    }
+
+    void StartRun(InputDevice pressedBy)
+    {
+        if (PlayerSlots.Devices.Count == 0) PlayerSlots.Join(pressedBy);
+        GameManager.LoadScene(playScene);
+    }
 
     void OnGUI()
     {
@@ -34,29 +53,27 @@ public class MainMenuScreen : MonoBehaviour
         float w = Screen.width / s;
         EnsureStyles();
 
-        GUILayout.BeginArea(new Rect(w * 0.5f - 500f, 260f, 1000f, 600f));
+        GUILayout.BeginArea(new Rect(w * 0.5f - 520f, 140f, 1040f, 840f));
         GUILayout.Label("The Promised Port", title);
-        GUILayout.Label("Follow the Captain's orders. Bots fill any empty crew seats.", body);
-        GUILayout.Space(40f);
-        if (GUILayout.Button("Start  (Enter)", button, GUILayout.Width(320f), GUILayout.Height(72f))) StartRun();
-        GUILayout.Space(16f);
-        if (GUILayout.Button("Quit", button, GUILayout.Width(320f), GUILayout.Height(72f))) Quit();
+        GUILayout.Label("Follow the Captain's orders. 1-3 players, bots fill the rest of the crew.", body);
+        GUILayout.Space(30f);
+
+        for (int seat = 1; seat <= PlayerSlots.Seats; seat++)
+        {
+            string who;
+            if (seat <= PlayerSlots.Devices.Count) who = PlayerSlots.Devices[seat - 1].displayName;
+            else if (seat <= PlayerSlots.MaxPlayers) who = "bot  (press Space or A to join)";
+            else who = "bot";
+            GUILayout.Label($"{CrewRegistry.SeatName(seat)}:  {who}", slot);
+        }
+
+        GUILayout.Space(30f);
+        GUILayout.Label("Enter or Start to set sail. B leaves.", body);
+        GUILayout.Space(12f);
+        if (GUILayout.Button("Start", button, GUILayout.Width(320f), GUILayout.Height(72f))) StartRun(Keyboard.current);
+        GUILayout.Space(12f);
+        if (GUILayout.Button("Quit", button, GUILayout.Width(320f), GUILayout.Height(72f))) PauseMenu.Quit();
         GUILayout.EndArea();
-    }
-
-    void StartRun()
-    {
-        if (Application.CanStreamedLevelBeLoaded(playScene)) SceneManager.LoadScene(playScene);
-        else Debug.LogWarning($"[MainMenuScreen] Scene '{playScene}' isn't in Build Settings.");
-    }
-
-    static void Quit()
-    {
-#if UNITY_EDITOR
-        UnityEditor.EditorApplication.isPlaying = false;
-#else
-        Application.Quit();
-#endif
     }
 
     void EnsureStyles()
@@ -64,6 +81,7 @@ public class MainMenuScreen : MonoBehaviour
         if (title != null) return;
         title = new GUIStyle(GUI.skin.label) { fontSize = 80, fontStyle = FontStyle.Bold };
         body = new GUIStyle(GUI.skin.label) { fontSize = 30, wordWrap = true };
+        slot = new GUIStyle(GUI.skin.label) { fontSize = 34 };
         button = new GUIStyle(GUI.skin.button) { fontSize = 30 };
     }
 }
