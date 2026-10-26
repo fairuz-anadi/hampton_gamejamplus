@@ -19,7 +19,11 @@ public static class GameSystems
 
     static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        if (mode == LoadSceneMode.Single && IsGameplayScene(scene.name)) Ensure();
+        // Entering Play mode in the Editor reports an internal mode, not Single, so only skip additive loads.
+        if (mode == LoadSceneMode.Additive) return;
+        if (IsGameplayScene(scene.name)) Ensure();
+        else if (scene.name == "Results" && Object.FindAnyObjectByType<ResultsScreen>() == null)
+            new GameObject("[Results]").AddComponent<ResultsScreen>();
     }
 
     public static bool IsGameplayScene(string sceneName) =>

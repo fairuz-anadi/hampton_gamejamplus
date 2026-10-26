@@ -28,6 +28,8 @@ public class OrderDirector : MonoBehaviour
     [SerializeField, Range(0f, 1f)] float fakeNoticeChance = 0.5f;
     [SerializeField] Vector2 fakeNoticeDelay = new Vector2(15f, 40f);
     [SerializeField] MeterDelta fakeNoticedPenalty = new MeterDelta(-10, 0, 0);
+    [Tooltip("A crewmate in the same room sees the red light when someone fakes a report.")]
+    [SerializeField] MeterDelta fakeWitnessedPenalty = new MeterDelta(0, 0, -5);
 
     readonly List<ActiveOrder> active = new List<ActiveOrder>(4);
     int nextIndex;
@@ -142,7 +144,21 @@ public class OrderDirector : MonoBehaviour
         if (o == null) return null;
         var choice = IsStationDone(o) ? Choice.Obey : Choice.Fake;
         Resolve(o, choice);
+        if (choice == Choice.Fake && HasWitness(actor))
+        {
+            RunRecord.Choices[RunRecord.Choices.Count - 1].fakeWitnessed = true;
+            MeterSystem.Instance?.Apply(fakeWitnessedPenalty);
+        }
         return choice;
+    }
+
+    /// <summary>True when another crew member is in the same room as the faker.</summary>
+    static bool HasWitness(ICrewActor faker)
+    {
+        if (string.IsNullOrEmpty(faker.RoomId)) return false;
+        foreach (var c in CrewRegistry.All)
+            if (c != faker && c.RoomId == faker.RoomId) return true;
+        return false;
     }
 
     public bool Refuse(ICrewActor actor)
@@ -183,6 +199,8 @@ public class OrderDirector : MonoBehaviour
             timeInRun = Time.time - RunRecord.RunStartTime,
         };
         RunRecord.Choices.Add(entry);
+
+        if (choice == Choice.Obey && o.Data.locksLifeboats) RunRecord.LifeboatStoreLocked = true;
 
         if (choice == Choice.Fake && Random.value < fakeNoticeChance)
             StartCoroutine(NoticeFakeLater(o, entry));

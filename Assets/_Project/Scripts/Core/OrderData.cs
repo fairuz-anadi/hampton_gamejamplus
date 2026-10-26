@@ -29,6 +29,9 @@ public class OrderData : ScriptableObject
 
     [Min(5f)] public float timer = 30f;
 
+    [Tooltip("Obeying locks the lifeboat store (order 9). Any two crew can reopen it at the Door levers.")]
+    public bool locksLifeboats;
+
     [Header("Meter changes per choice")]
     public MeterDelta obey;
     public MeterDelta fake;
