@@ -1,8 +1,8 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Working results screen: ending, impact, final meters, the Stoker reveal, what each choice cost, and Play again.
+/// Works with mouse, keyboard (left/right + Enter) and gamepad (d-pad + A, B for the main menu).
 /// Spawned by GameSystems when the Results scene loads. Owner: Anadi.
 /// Samprity: this is a placeholder drawn with IMGUI. Build the styled ResultsUI from the same RunRecord data,
 /// then remove the Results line in GameSystems.OnSceneLoaded.
@@ -16,12 +16,23 @@ public class ResultsScreen : MonoBehaviour
 
     EndingData endingData;
     Vector2 scroll;
+    int selected; // 0 Play again, 1 Main menu
     GUIStyle title, body, small, button;
 
     void Start()
     {
         if (RunRecord.HasEnding) endingData = EndingData.For(RunRecord.Ending);
     }
+
+    void Update()
+    {
+        selected = MenuControls.Move(selected, 2, vertical: false);
+        if (MenuControls.Confirm()) Choose(selected);
+        else if (MenuControls.Back()) Choose(1);
+    }
+
+    // Loading Ship again re-spawns the crew, so Play again always picks a new Stoker.
+    void Choose(int item) => GameManager.LoadScene(item == 0 ? playScene : menuScene);
 
     void OnGUI()
     {
@@ -47,6 +58,7 @@ public class ResultsScreen : MonoBehaviour
         GUILayout.Space(16f);
 
         GUILayout.Label($"Impact: {ImpactText()}    ·    Captain's Trust {RunRecord.FinalCaptainTrust}  ·  Ship Safety {RunRecord.FinalShipSafety}  ·  Crew Trust {RunRecord.FinalCrewTrust}", small);
+        GUILayout.Label($"Ice warnings: {RunRecord.IceWarningsDelivered} reached the bridge, {RunRecord.IceWarningsLost} lost, {RunRecord.IceWarningsHidden} never arrived.", small);
         if (RunRecord.LifeboatStoreLocked) GUILayout.Label("The lifeboat store was still locked.", small);
         GUILayout.Label(RunRecord.StokerSeat > 0
             ? $"The Stoker was {CrewRegistry.SeatName(RunRecord.StokerSeat)}."
@@ -70,16 +82,10 @@ public class ResultsScreen : MonoBehaviour
     void Buttons()
     {
         GUILayout.BeginHorizontal();
-        if (GUILayout.Button("Play again", button, GUILayout.Width(260f), GUILayout.Height(64f))) Load(playScene);
+        if (MenuControls.Button("Play again", button, selected == 0, GUILayout.Width(280f), GUILayout.Height(64f))) Choose(0);
         GUILayout.Space(20f);
-        if (GUILayout.Button("Main menu", button, GUILayout.Width(260f), GUILayout.Height(64f))) Load(menuScene);
+        if (MenuControls.Button("Main menu", button, selected == 1, GUILayout.Width(280f), GUILayout.Height(64f))) Choose(1);
         GUILayout.EndHorizontal();
-    }
-
-    static void Load(string scene)
-    {
-        if (Application.CanStreamedLevelBeLoaded(scene)) SceneManager.LoadScene(scene);
-        else Debug.LogWarning($"[ResultsScreen] Scene '{scene}' isn't in Build Settings.");
     }
 
     static string ImpactText()

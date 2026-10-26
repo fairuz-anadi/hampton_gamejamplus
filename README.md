@@ -20,6 +20,9 @@ Made for GameJamPlus 2026/27 (GJ+ Bangladesh) by Anadi, Rabib, Riham and Samprit
 | Report done | R | Y / △ |
 | Refuse | X | B / ○ |
 | Call for help | Q | X / □ |
+| Pause | Esc | Start |
+
+On the main menu, press **Space** (keyboard) or **A** (gamepad) to take a seat, then **Enter** or **Start** to set sail. Up to 3 players can join, and bots fill the rest. **C** or **Y** shows the credits. Every menu works without a mouse: arrows or the d-pad to choose, **Enter** or **A** to pick, **Esc** or **B** to go back.
 
 ## Getting started
 
@@ -83,7 +86,12 @@ The systems spawn on their own when `Ship.unity`, or any scene whose name ends i
 | React to stations and ice warnings | `GameEvents.StationBroken`, `StationRepaired`, `HelpCalled`, `IceWarningArrived`, `IceWarningDelivered`, `IceWarningLost` |
 | Read the meters | `MeterSystem.Instance.CaptainTrust / ShipSafety / CrewTrust`, and `GameEvents.MetersChanged` |
 | Change the meters (sabotage, votes, ice warnings) | `MeterSystem.Instance.Apply(new MeterDelta(captain, safety, crew))` |
+| Run the ice warnings (Rabib's Wireless desk, Riham's Stoker) | `IceWarnings` schedules MSG 1–3 at 3:20, 4:30 and 5:40 and applies the meters. Show one on `GameEvents.IceWarningArrived(n)`, call `IceWarnings.Instance.Deliver(n)` at the Bridge or `FileUnread(n)` at the desk, and use `TimeLeft(n)` for a countdown. The Stoker calls `HideNext()`. |
+| Use the plan's numbers for sabotage and the vote (Riham) | `MeterRules.SabotageJamStation`, `SabotageFalseReport`, `VoteCaughtStoker`, `VoteWrong`, `StokerActive`, `RepairSeconds`, `VoteSeconds`, `LockoutSeconds` and the rest. Apply them with `MeterSystem.Instance.Apply(...)`. |
 | Use what the meters do (Riham, Samprity) | `MeterRules`: `StokerCooldown`, `BotHelpDelay`, `BotIgnoresHelpChance`, `BotRefusesOffOrderChance`, `CaptainSharesPrivateLines`, `CaptainSuspicious`, `ShipLeaking` |
+| Spawn the players who joined (Rabib) | `PlayerSlots.Devices[i]` is seat `i + 1`'s device: `PlayerInput.Instantiate(prefab, playerIndex: i, pairWithDevice: device)`. With nobody joined (pressing Play in a scene), use `PlayerSlots.FirstDevice`. |
+| Fill the empty seats with bots (Riham) | `PlayerSlots.HumanCount` humans, `PlayerSlots.BotCount` bots. Pick the Stoker when the crew spawns: Restart and Play again reload the scene, so it re-rolls. |
+| Pause, restart, change scene | `PauseMenu.Instance.Toggle()`, `GameManager.Restart()`, `GameManager.LoadScene(name)`. Don't bind Esc or Start yourself: the pause menu already handles them. |
 | Reopen the lifeboat store (Rabib) | Set `RunRecord.LifeboatStoreLocked = false` when two crew pull the Door levers. Obeying order 9 locks it. |
 | Run the iceberg scene (Rabib) | In `Awake`, set `GameManager.Instance.IcebergHandledExternally = true`. Start when the state becomes `Iceberg`, then call `GameManager.Instance.FinishIceberg(angle)` at impact. |
 | Build the results screen (Samprity) | Read `RunRecord`: `Ending`, `Impact`, `Choices` (each has `Describe()`), the final meters, `StokerSeat`. Ending text is `EndingData.For(RunRecord.Ending)`, and `EndingEvaluator.FoundCount` gives "Endings found". `UI/ResultsScreen.cs` is a working placeholder to replace. |
@@ -97,8 +105,17 @@ The orders are `OrderData` assets in `Data/Resources/Orders`, issued in file-nam
 | F1 | skip to the next part | F5 | obey the oldest order |
 | F2 | cycle meter presets | F6 | fake it |
 | F3 | jump to the iceberg | F7 | refuse it |
-| F4 | reveal the Stoker | F8 | restart the run |
+| F4 | reveal the Stoker | F8 | restart (reloads the scene) |
 | F9 | hide or show the debug panel | 1 / 2 / 3 | at the iceberg: hit head-on, glancing or scrape |
+| F10 | deliver the waiting ice warning | F11 | the Stoker hides the next ice warning |
+
+## Builds (Anadi)
+
+Use **Port → Build Windows (Development)** at each milestone. Development builds keep the debug keys and panel. Use **Port → Build Windows (Release)** for RC1, RC2 and the submission. It drops the debug keys, sets the version to 1.0, adds a `README.txt` (controls and player count), and packs `Builds/ThePromisedPort_Windows_v1.0.zip` without the Burst `..._ButDontShipItWithYourGame` folder. Builds go to `Builds/`, which git ignores.
+
+MainMenu, Ship and Results each have a working placeholder screen (`UI/MainMenuScreen` with credits, `UI/IntroCard`, `UI/PauseMenu`, `UI/ResultsScreen`) for Samprity to restyle. They share keyboard and gamepad navigation through `UI/MenuControls`. The intro card shows once per session at the start of Ship and holds the first order until a player dismisses it.
+
+**Balance:** run **Port → Balance Report** after changing any order's numbers. It plays the 12 orders through common strategies and prints the ending each impact gives, so you can check all 3 endings stay reachable.
 
 ## Milestones (Dhaka time)
 
@@ -114,6 +131,6 @@ If a milestone slips by more than an hour, go straight to the cut list. Don't pu
 
 ## Assets and credits
 
-Only CC0 or properly licensed third-party assets (for example Kenney packs, or CC0 sounds from Freesound or OpenGameArt). Add every one to `CREDITS.md` when you import it. All game code is written during the jam.
+Only CC0 or properly licensed third-party assets (for example Kenney packs, or CC0 sounds from Freesound or OpenGameArt). Add every one to `Data/Resources/Credits.txt` when you import it, since that file is the in-game credits screen. All game code is written during the jam.
 
 The full team plan is `The_Promised_Port_Plan.html`, shared in the team chat.

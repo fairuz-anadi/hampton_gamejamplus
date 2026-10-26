@@ -29,10 +29,12 @@ public static class GameEvents
     public static event Action<StationType, ICrewActor> StationRepaired;
     public static event Action<ICrewActor, StationType> HelpCalled;
 
-    // Ice warnings (raised by the Wireless desk), argument = warning number 1-3
+    // Ice warnings (raised by IceWarnings), argument = warning number 1-3
     public static event Action<int> IceWarningArrived;
     public static event Action<int> IceWarningDelivered;
     public static event Action<int> IceWarningLost;
+    /// <summary>The Stoker hid this warning: it never showed up. Players only notice the gap in the numbering.</summary>
+    public static event Action<int> IceWarningHidden;
 
     public static void RaiseStateChanged(GameState s) => StateChanged?.Invoke(s);
     public static void RaisePartChanged(int part) => PartChanged?.Invoke(part);
@@ -47,6 +49,7 @@ public static class GameEvents
     public static void RaiseIceWarningArrived(int n) => IceWarningArrived?.Invoke(n);
     public static void RaiseIceWarningDelivered(int n) => IceWarningDelivered?.Invoke(n);
     public static void RaiseIceWarningLost(int n) => IceWarningLost?.Invoke(n);
+    public static void RaiseIceWarningHidden(int n) => IceWarningHidden?.Invoke(n);
 
     /// <summary>Clears every listener when play mode starts, in case domain reload is turned off.</summary>
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -56,6 +59,6 @@ public static class GameEvents
         OrderIssued = null; OrderResolved = null; FakeNoticed = null;
         MetersChanged = null;
         StationBroken = null; StationRepaired = null; HelpCalled = null;
-        IceWarningArrived = null; IceWarningDelivered = null; IceWarningLost = null;
+        IceWarningArrived = null; IceWarningDelivered = null; IceWarningLost = null; IceWarningHidden = null;
     }
 }

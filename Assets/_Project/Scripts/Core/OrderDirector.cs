@@ -19,8 +19,11 @@ public class OrderDirector : MonoBehaviour
     [Tooltip("Leave empty to load every OrderData in Resources/Orders, sorted by file name.")]
     [SerializeField] List<OrderData> orders = new List<OrderData>();
 
-    [Header("Pacing (concept: a new order every 20-30 s)")]
-    [SerializeField] Vector2 issueInterval = new Vector2(20f, 30f);
+    [Header("Pacing (plan: Part 1 ends ~2:30, Part 2 ~6:30)")]
+    [Tooltip("Seconds before a Part 1 or Part 3 order.")]
+    [SerializeField] Vector2 issueInterval = new Vector2(25f, 30f);
+    [Tooltip("Seconds before a Part 2 order. Longer, so the 3 ice warnings (3:20, 4:30, 5:40) land in Part 2.")]
+    [SerializeField] Vector2 offPartInterval = new Vector2(35f, 45f);
     [SerializeField] float firstOrderDelay = 5f;
     [SerializeField, Range(1, 4)] int maxActive = 2;
 
@@ -63,6 +66,7 @@ public class OrderDirector : MonoBehaviour
 
     public void Begin()
     {
+        StopAllCoroutines(); // no "fake noticed" left over from a previous run
         active.Clear();
         nextIndex = 0;
         nextId = 1;
@@ -111,20 +115,28 @@ public class OrderDirector : MonoBehaviour
             StationRegistry.Get(data.deliverTo)?.PrepareForOrder(order);
 
         GameEvents.RaiseOrderIssued(order);
-        nextIssueAt = Time.time + Random.Range(issueInterval.x, issueInterval.y);
+        nextIssueAt = Time.time + NextInterval();
     }
 
-    /// <summary>Round-robin over seats that have no active order and aren't locked out.</summary>
+    /// <summary>The gap before the next order depends on which part that order belongs to.</summary>
+    float NextInterval()
+    {
+        var range = nextIndex < orders.Count && orders[nextIndex].part == 2 ? offPartInterval : issueInterval;
+        return Random.Range(range.x, range.y);
+    }
+
+    /// <summary>Round-robin over seats that have no active order and aren't locked out. Copes with gaps in seat numbers.</summary>
     ICrewActor PickAssignee()
     {
-        var crew = CrewRegistry.All;
+        var crew = CrewRegistry.All; // sorted by seat
         if (crew.Count == 0) return null;
-        for (int step = 1; step <= crew.Count; step++)
+        int start = 0;
+        while (start < crew.Count && crew[start].Seat <= lastSeat) start++;
+        for (int i = 0; i < crew.Count; i++)
         {
-            int seat = (lastSeat + step - 1) % crew.Count + 1;
-            var c = CrewRegistry.BySeat(seat);
-            if (c == null || c.IsLockedOut || GetOrderFor(c) != null) continue;
-            lastSeat = seat;
+            var c = crew[(start + i) % crew.Count];
+            if (c.IsLockedOut || GetOrderFor(c) != null) continue;
+            lastSeat = c.Seat;
             return c;
         }
         return null;
@@ -143,12 +155,7 @@ public class OrderDirector : MonoBehaviour
         var o = GetOrderFor(actor);
         if (o == null) return null;
         var choice = IsStationDone(o) ? Choice.Obey : Choice.Fake;
-        Resolve(o, choice);
-        if (choice == Choice.Fake && HasWitness(actor))
-        {
-            RunRecord.Choices[RunRecord.Choices.Count - 1].fakeWitnessed = true;
-            MeterSystem.Instance?.Apply(fakeWitnessedPenalty);
-        }
+        Resolve(o, choice, witnessed: choice == Choice.Fake && HasWitness(actor));
         return choice;
     }
 
@@ -176,8 +183,11 @@ public class OrderDirector : MonoBehaviour
         return st == null || (st.IsDone && !st.IsBroken);
     }
 
-    /// <summary>Resolves an order with a specific choice. Use Report/Refuse in gameplay; this is for debug and bots.</summary>
-    public void Resolve(ActiveOrder o, Choice choice)
+    /// <summary>
+    /// Resolves an order with a specific choice. Use Report/Refuse in gameplay; this is for debug and bots.
+    /// witnessed: a crewmate saw the red light during a fake, which also costs Crew Trust.
+    /// </summary>
+    public void Resolve(ActiveOrder o, Choice choice, bool witnessed = false)
     {
         if (o == null || o.IsResolved) return;
         o.IsResolved = true;
@@ -185,6 +195,7 @@ public class OrderDirector : MonoBehaviour
         active.Remove(o);
 
         var delta = o.Data.DeltaFor(choice);
+        if (witnessed) delta += fakeWitnessedPenalty;
         MeterSystem.Instance?.Apply(delta);
 
         var entry = new ChoiceEntry
@@ -197,6 +208,7 @@ public class OrderDirector : MonoBehaviour
             choice = choice,
             delta = delta,
             timeInRun = Time.time - RunRecord.RunStartTime,
+            fakeWitnessed = witnessed,
         };
         RunRecord.Choices.Add(entry);
 
