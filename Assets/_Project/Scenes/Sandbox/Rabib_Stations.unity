@@ -1612,8 +1612,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d0fb89ee7d8687c4ea1f88ce7e239c52, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DebugSecondPlayer
-  moveSpeed: 4
-  turnSpeed: 12
 --- !u!143 &1839010690
 CharacterController:
   m_ObjectHideFlags: 0

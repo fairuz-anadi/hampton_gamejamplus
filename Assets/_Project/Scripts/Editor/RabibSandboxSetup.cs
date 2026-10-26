@@ -36,10 +36,11 @@ public static class RabibSandboxSetup
         EnsurePlayerPrefab();
         EnsurePlayerJoin();
         EnsureDebugSecondPlayer();
+        EnsureIcebergSequence();
 
         EditorSceneManager.SaveScene(scene);
         AssetDatabase.SaveAssets();
-        Debug.Log("[RabibSandboxSetup] Sandbox ready: bootstrap, deck, rooms, spawn point, 4 stations, 2 carry items, 4 room zones, player join, debug keyboard P2.");
+        Debug.Log("[RabibSandboxSetup] Sandbox ready: bootstrap, deck, rooms, spawn point, 4 stations, 2 carry items, 4 room zones, player join (PlayerSlots-aware), debug keyboard P2, iceberg stub.");
     }
 
     /// <summary>Same as Build(), callable headlessly.</summary>
@@ -86,6 +87,19 @@ public static class RabibSandboxSetup
     const string InputActionsPath = "Assets/InputSystem_Actions.inputactions";
     const string OrdersPath = "Assets/_Project/Data/Resources/Orders";
     const int MaxPlayers = 3;
+
+    // Matches Samprity's MovementPrototypeBuilder.BuildPlayer() / CrewCharacterBuilder (CrewHeight).
+    const float CrewHeight = 1.7f;
+    const float CrewHalfHeight = CrewHeight / 2f;
+
+    static void ApplyCrewCharacterControllerTuning(CharacterController cc)
+    {
+        cc.height = CrewHeight;
+        cc.radius = 0.32f;
+        cc.center = new Vector3(0f, CrewHalfHeight, 0f);
+        cc.skinWidth = 0.04f;
+        cc.stepOffset = 0.3f;
+    }
 
     static void EnsureStations()
     {
@@ -181,7 +195,7 @@ public static class RabibSandboxSetup
         var existing = AssetDatabase.LoadAssetAtPath<GameObject>(PlayerPrefabPath);
         if (existing != null)
         {
-            PatchPrefabWithInteractor(existing, PlayerPrefabPath);
+            PatchPlayerPrefab(existing, PlayerPrefabPath);
             return;
         }
 
@@ -189,15 +203,13 @@ public static class RabibSandboxSetup
 
         var root = new GameObject("Player");
         var controller = root.AddComponent<CharacterController>();
-        controller.height = 1.8f;
-        controller.radius = 0.35f;
-        controller.center = new Vector3(0f, 0.9f, 0f);
+        ApplyCrewCharacterControllerTuning(controller);
 
         var visual = GameObject.CreatePrimitive(PrimitiveType.Capsule);
         visual.name = "Visual";
         visual.transform.SetParent(root.transform, false);
-        visual.transform.localPosition = new Vector3(0f, 0.9f, 0f);
-        visual.transform.localScale = new Vector3(0.9f, 0.9f, 0.9f);
+        visual.transform.localPosition = new Vector3(0f, CrewHalfHeight, 0f);
+        visual.transform.localScale = new Vector3(0.7f, CrewHalfHeight, 0.7f);
         Object.DestroyImmediate(visual.GetComponent<CapsuleCollider>());
 
         var input = root.AddComponent<PlayerInput>();
@@ -206,18 +218,28 @@ public static class RabibSandboxSetup
 
         root.AddComponent<PlayerController>();
         root.AddComponent<Interactor>();
+        root.AddComponent<ThirdPersonMover>();
 
         PrefabUtility.SaveAsPrefabAsset(root, PlayerPrefabPath);
         Object.DestroyImmediate(root);
     }
 
-    /// <summary>Adds a missing component to an already-saved prefab asset (can't just AddComponent on the asset object).</summary>
-    static void PatchPrefabWithInteractor(GameObject prefabAsset, string prefabPath)
+    /// <summary>
+    /// Brings an already-saved Player prefab up to date: Interactor, ThirdPersonMover, and Samprity's
+    /// CharacterController tuning (MovementPrototypeBuilder.BuildPlayer / CrewCharacterBuilder). Can't just
+    /// AddComponent on the asset object, so this edits a loaded prefab-contents instance instead.
+    /// </summary>
+    static void PatchPlayerPrefab(GameObject prefabAsset, string prefabPath)
     {
-        if (prefabAsset.GetComponent<Interactor>() != null) return;
+        bool needsInteractor = prefabAsset.GetComponent<Interactor>() == null;
+        bool needsMover = prefabAsset.GetComponent<ThirdPersonMover>() == null;
+        if (!needsInteractor && !needsMover) return;
 
         var contents = PrefabUtility.LoadPrefabContents(prefabPath);
-        if (contents.GetComponent<Interactor>() == null) contents.AddComponent<Interactor>();
+        if (needsInteractor) contents.AddComponent<Interactor>();
+        if (needsMover) contents.AddComponent<ThirdPersonMover>();
+        var cc = contents.GetComponent<CharacterController>();
+        if (cc != null) ApplyCrewCharacterControllerTuning(cc);
         PrefabUtility.SaveAsPrefabAsset(contents, prefabPath);
         PrefabUtility.UnloadPrefabContents(contents);
     }
@@ -255,18 +277,17 @@ public static class RabibSandboxSetup
         {
             go = new GameObject(name);
             var controller = go.AddComponent<CharacterController>();
-            controller.height = 1.8f;
-            controller.radius = 0.35f;
-            controller.center = new Vector3(0f, 0.9f, 0f);
+            ApplyCrewCharacterControllerTuning(controller);
 
             var visual = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             visual.name = "Visual";
             visual.transform.SetParent(go.transform, false);
-            visual.transform.localPosition = new Vector3(0f, 0.9f, 0f);
-            visual.transform.localScale = new Vector3(0.9f, 0.9f, 0.9f);
+            visual.transform.localPosition = new Vector3(0f, CrewHalfHeight, 0f);
+            visual.transform.localScale = new Vector3(0.7f, CrewHalfHeight, 0.7f);
             Object.DestroyImmediate(visual.GetComponent<CapsuleCollider>());
 
             go.AddComponent<DebugSecondPlayer>();
+            go.AddComponent<ThirdPersonMover>();
 
             var spawn = GameObject.Find("PlayerSpawn");
             Vector3 origin = spawn != null ? spawn.transform.position : Vector3.zero;
@@ -274,6 +295,12 @@ public static class RabibSandboxSetup
         }
 
         if (go.GetComponent<Interactor>() == null) go.AddComponent<Interactor>();
+    }
+
+    static void EnsureIcebergSequence()
+    {
+        if (Object.FindAnyObjectByType<IcebergSequence>() != null) return;
+        new GameObject("[IcebergSequence]").AddComponent<IcebergSequence>();
     }
 
     /// <summary>True if any component slot on this GameObject points at a script Unity can no longer resolve.</summary>

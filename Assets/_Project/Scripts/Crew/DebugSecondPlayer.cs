@@ -6,16 +6,15 @@ using UnityEngine.InputSystem;
 /// Right Ctrl/Shift/Enter for Interact/Report/Refuse), so 2-player flow is testable without a
 /// second device. Reads Keyboard.current directly, bypassing PlayerInput entirely, so it can't
 /// fight the real P1 Keyboard / P2-P3 Gamepad control schemes over device pairing. Self-destructs
-/// outside debug builds. Takes the highest free seat (counting down from 4) so it stays clear of
-/// PlayerSlots humans, who always claim seats starting at 1. Owner: Rabib.
+/// outside debug builds, and goes inactive entirely once PlayerSlots has real players (it must not
+/// take a seat from them). Walking goes through ThirdPersonMover, same as every real player, fed by
+/// the same raw arrow-key input. Takes the highest free seat (counting down from 4) so it stays
+/// clear of PlayerSlots humans, who always claim seats starting at 1. Owner: Rabib.
 /// </summary>
 [RequireComponent(typeof(CharacterController))]
 public class DebugSecondPlayer : MonoBehaviour, ICrewActor, IInteractSource, IRoomTarget
 {
-    [SerializeField] float moveSpeed = 4f;
-    [SerializeField] float turnSpeed = 12f;
-
-    CharacterController controller;
+    ThirdPersonMover mover;
     int seat;
 
     public int Seat => seat;
@@ -32,7 +31,10 @@ public class DebugSecondPlayer : MonoBehaviour, ICrewActor, IInteractSource, IRo
     void Awake()
     {
         if (!Debug.isDebugBuild) { Destroy(this); return; }
-        controller = GetComponent<CharacterController>();
+        if (PlayerSlots.Devices.Count > 0) { gameObject.SetActive(false); return; }
+
+        if (!TryGetComponent(out mover)) mover = gameObject.AddComponent<ThirdPersonMover>();
+        mover.UseExternalInput();
     }
 
     void Start()
@@ -53,38 +55,15 @@ public class DebugSecondPlayer : MonoBehaviour, ICrewActor, IInteractSource, IRo
         var kb = Keyboard.current;
         if (kb == null) return;
 
-        Move(kb);
-        if (kb.rightShiftKey.wasPressedThisFrame) OrderDirector.Instance?.Report(this);
-        if (kb.enterKey.wasPressedThisFrame) OrderDirector.Instance?.Refuse(this);
-    }
-
-    void Move(Keyboard kb)
-    {
         Vector2 input = Vector2.zero;
         if (kb.upArrowKey.isPressed) input.y += 1f;
         if (kb.downArrowKey.isPressed) input.y -= 1f;
         if (kb.rightArrowKey.isPressed) input.x += 1f;
         if (kb.leftArrowKey.isPressed) input.x -= 1f;
+        mover.SetMoveInput(input);
 
-        Vector3 forward = Vector3.forward;
-        Vector3 right = Vector3.right;
-        var cam = Camera.main;
-        if (cam != null)
-        {
-            forward = Vector3.ProjectOnPlane(cam.transform.forward, Vector3.up).normalized;
-            right = Vector3.ProjectOnPlane(cam.transform.right, Vector3.up).normalized;
-        }
-
-        Vector3 moveDir = forward * input.y + right * input.x;
-        if (moveDir.sqrMagnitude > 1f) moveDir.Normalize();
-
-        controller.Move((moveDir * moveSpeed + Vector3.down * 2f) * Time.deltaTime);
-
-        if (moveDir.sqrMagnitude > 0.0001f)
-        {
-            var targetRotation = Quaternion.LookRotation(moveDir, Vector3.up);
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, turnSpeed * Time.deltaTime);
-        }
+        if (kb.rightShiftKey.wasPressedThisFrame) OrderDirector.Instance?.Report(this);
+        if (kb.enterKey.wasPressedThisFrame) OrderDirector.Instance?.Refuse(this);
     }
 
     public void SetRoom(string roomId) => zoneRoom = roomId;
