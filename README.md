@@ -100,6 +100,12 @@ The orders are `OrderData` assets in `Data/Resources/Orders`, issued in file-nam
 | F4 | reveal the Stoker | F8 | restart the run |
 | F9 | hide or show the debug panel | 1 / 2 / 3 | at the iceberg: hit head-on, glancing or scrape |
 
+## Builds (Anadi)
+
+Use **Port → Build Windows (Development)** at each milestone. Development builds keep the debug keys and panel. Use **Port → Build Windows (Release)** for RC2 and the submission, which drops them. Builds go to `Builds/`, which git ignores. When zipping a build, leave out the `..._BackUpThisFolder_ButDontShipItWithYourGame` folder.
+
+MainMenu, Ship and Results each have a working placeholder screen until the real menu and results UI land in Phase 3.
+
 ## Milestones (Dhaka time)
 
 | When | Milestone |

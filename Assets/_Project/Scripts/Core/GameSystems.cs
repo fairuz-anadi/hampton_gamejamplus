@@ -24,6 +24,8 @@ public static class GameSystems
         if (IsGameplayScene(scene.name)) Ensure();
         else if (scene.name == "Results" && Object.FindAnyObjectByType<ResultsScreen>() == null)
             new GameObject("[Results]").AddComponent<ResultsScreen>();
+        else if (scene.name == "MainMenu" && Object.FindAnyObjectByType<MainMenuScreen>() == null)
+            new GameObject("[MainMenu]").AddComponent<MainMenuScreen>();
     }
 
     public static bool IsGameplayScene(string sceneName) =>
