@@ -21,13 +21,14 @@ MonoBehaviour:
   kind: 1
   needsTwo: 1
   timer: 30
+  locksLifeboats: 0
   obey:
     captainTrust: 6
     shipSafety: -12
     crewTrust: 0
   fake:
     captainTrust: 3
-    shipSafety: 0
+    shipSafety: -4
     crewTrust: 0
   refuse:
     captainTrust: -12
@@ -35,6 +36,6 @@ MonoBehaviour:
     crewTrust: 4
   expired:
     captainTrust: -5
-    shipSafety: 0
+    shipSafety: -6
     crewTrust: 0
   resultsLine: "Keep full speed through the ice field"

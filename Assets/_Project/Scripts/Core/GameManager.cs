@@ -15,8 +15,8 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance { get; private set; }
 
     [SerializeField] bool startRunOnPlay = true;
-    [Tooltip("How long Part 3's monologue runs before the iceberg scene.")]
-    [SerializeField] float truthSeconds = 8f;
+    [Tooltip("How long Part 3's monologue runs before the iceberg scene. Riham sets this to the real length.")]
+    [SerializeField] float truthSeconds = 30f;
     [Tooltip("Used only while there is no IcebergSequence in the scene.")]
     [SerializeField] float placeholderIcebergSeconds = 5f;
     [SerializeField] string resultsScene = "Results";
@@ -50,6 +50,25 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         if (startRunOnPlay) StartRun();
+    }
+
+    /// <summary>
+    /// Restart from the pause menu, F8 or Play again: reloads the scene, so the crew re-spawns and a new Stoker is picked.
+    /// </summary>
+    public static void Restart()
+    {
+        string scene = SceneManager.GetActiveScene().name;
+        if (Application.CanStreamedLevelBeLoaded(scene)) { LoadScene(scene); return; }
+        // Sandbox scenes aren't in Build Settings, so just restart the run in place there.
+        Time.timeScale = 1f;
+        Instance?.StartRun();
+    }
+
+    public static void LoadScene(string sceneName)
+    {
+        Time.timeScale = 1f;
+        if (Application.CanStreamedLevelBeLoaded(sceneName)) SceneManager.LoadScene(sceneName);
+        else Debug.LogWarning($"[GameManager] Scene '{sceneName}' isn't in Build Settings.");
     }
 
     public void StartRun()
@@ -104,8 +123,8 @@ public class GameManager : MonoBehaviour
     public void FinishIceberg(float impactAngle)
     {
         if (State == GameState.Results) return;
-        RunRecord.ImpactAngle = impactAngle;
-        MeterSystem.Instance?.SnapshotToRecord();
+        var ending = EndingEvaluator.Resolve(impactAngle);
+        Debug.Log($"[GameManager] Impact {RunRecord.Impact} ({impactAngle:0}°), Safety {RunRecord.FinalShipSafety}: {ending}");
         var stoker = CrewRegistry.Stoker;
         if (stoker != null) RunRecord.StokerSeat = stoker.Seat;
         SetState(GameState.Results);

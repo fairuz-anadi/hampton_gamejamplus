@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-/// Spawns the core systems (GameManager, MeterSystem, OrderDirector, debug tools) when a gameplay
+/// Spawns the core systems (GameManager, MeterSystem, OrderDirector, pause menu, debug tools) when a gameplay
 /// scene loads, so nobody has to edit a scene to add them. That keeps Ship.unity merge-free.
 ///
 /// Gameplay scenes: "Ship" and any sandbox ending in "_Systems".
@@ -19,7 +19,14 @@ public static class GameSystems
 
     static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        if (mode == LoadSceneMode.Single && IsGameplayScene(scene.name)) Ensure();
+        // Entering Play mode in the Editor reports an internal mode, not Single, so only skip additive loads.
+        if (mode == LoadSceneMode.Additive) return;
+        Time.timeScale = 1f; // never carry a pause into the next scene
+        if (IsGameplayScene(scene.name)) Ensure();
+        else if (scene.name == "Results" && Object.FindAnyObjectByType<ResultsScreen>() == null)
+            new GameObject("[Results]").AddComponent<ResultsScreen>();
+        else if (scene.name == "MainMenu" && Object.FindAnyObjectByType<MainMenuScreen>() == null)
+            new GameObject("[MainMenu]").AddComponent<MainMenuScreen>();
     }
 
     public static bool IsGameplayScene(string sceneName) =>
@@ -33,9 +40,10 @@ public static class GameSystems
         go.AddComponent<MeterSystem>();
         go.AddComponent<OrderDirector>();
         go.AddComponent<GameManager>();
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        go.AddComponent<DebugTools>();
-#endif
+        go.AddComponent<PauseMenu>();
+        if (SceneManager.GetActiveScene().name == "Ship") go.AddComponent<IntroCard>();
+        // Debug keys exist in the Editor and Development builds only, never in the release zip.
+        if (Debug.isDebugBuild) go.AddComponent<DebugTools>();
         return go;
     }
 }
