@@ -1,7 +1,12 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-/// <summary>Local co-op join: keyboard + up to 2 gamepads. Owner: Rabib.</summary>
+/// <summary>
+/// Local co-op join. If players already joined through the main menu (PlayerSlots), spawns exactly
+/// those devices with PlayerInput.Instantiate and disables further joining. Otherwise (playing a
+/// scene directly, nobody joined) falls back to join-by-button so the sandbox still works alone.
+/// Owner: Rabib.
+/// </summary>
 [RequireComponent(typeof(PlayerInputManager))]
 public class PlayerJoin : MonoBehaviour
 {
@@ -12,14 +17,33 @@ public class PlayerJoin : MonoBehaviour
     {
         var manager = GetComponent<PlayerInputManager>();
         manager.playerPrefab = playerPrefab;
-        manager.joinBehavior = PlayerJoinBehavior.JoinPlayersWhenButtonIsPressed;
-        manager.onPlayerJoined += OnPlayerJoined;
+
+        if (PlayerSlots.Devices.Count == 0)
+        {
+            manager.joinBehavior = PlayerJoinBehavior.JoinPlayersWhenButtonIsPressed;
+            manager.onPlayerJoined += OnPlayerJoined;
+            return;
+        }
+
+        manager.DisableJoining();
+        for (int i = 0; i < PlayerSlots.Devices.Count; i++)
+            SpawnFromSlot(i, PlayerSlots.Devices[i]);
     }
 
-    void OnPlayerJoined(PlayerInput input)
+    void SpawnFromSlot(int playerIndex, InputDevice device)
+    {
+        string scheme = device is Keyboard ? "Keyboard" : "Gamepad";
+        // PlayerInput.Instantiate bypasses PlayerInputManager's own join flow, so onPlayerJoined never fires for it.
+        var input = PlayerInput.Instantiate(playerPrefab, playerIndex: playerIndex, controlScheme: scheme, pairWithDevice: device);
+        PositionAt(input, playerIndex);
+    }
+
+    void OnPlayerJoined(PlayerInput input) => PositionAt(input, input.playerIndex);
+
+    void PositionAt(PlayerInput input, int playerIndex)
     {
         var spawn = GameObject.Find("PlayerSpawn");
         Vector3 origin = spawn != null ? spawn.transform.position : Vector3.zero;
-        input.transform.position = origin + spawnOffset * input.playerIndex;
+        input.transform.position = origin + spawnOffset * playerIndex;
     }
 }
