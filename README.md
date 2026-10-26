@@ -108,9 +108,9 @@ The orders are `OrderData` assets in `Data/Resources/Orders`, issued in file-nam
 
 ## Builds (Anadi)
 
-Use **Port → Build Windows (Development)** at each milestone. Development builds keep the debug keys and panel. Use **Port → Build Windows (Release)** for RC2 and the submission, which drops them. Builds go to `Builds/`, which git ignores. When zipping a build, leave out the `..._BackUpThisFolder_ButDontShipItWithYourGame` folder.
+Use **Port → Build Windows (Development)** at each milestone. Development builds keep the debug keys and panel. Use **Port → Build Windows (Release)** for RC1, RC2 and the submission. It drops the debug keys, sets the version to 1.0, adds a `README.txt` (controls and player count), and packs `Builds/ThePromisedPort_Windows_v1.0.zip` without the Burst `..._ButDontShipItWithYourGame` folder. Builds go to `Builds/`, which git ignores.
 
-MainMenu, Ship and Results each have a working placeholder screen (`UI/MainMenuScreen`, `UI/PauseMenu`, `UI/ResultsScreen`) for Samprity to restyle.
+MainMenu, Ship and Results each have a working placeholder screen (`UI/MainMenuScreen` with credits, `UI/IntroCard`, `UI/PauseMenu`, `UI/ResultsScreen`) for Samprity to restyle. The intro card shows once per session at the start of Ship and holds the first order until a player dismisses it.
 
 **Balance:** run **Port → Balance Report** after changing any order's numbers. It plays the 12 orders through common strategies and prints the ending each impact gives, so you can check all 3 endings stay reachable.
 
@@ -128,6 +128,6 @@ If a milestone slips by more than an hour, go straight to the cut list. Don't pu
 
 ## Assets and credits
 
-Only CC0 or properly licensed third-party assets (for example Kenney packs, or CC0 sounds from Freesound or OpenGameArt). Add every one to `CREDITS.md` when you import it. All game code is written during the jam.
+Only CC0 or properly licensed third-party assets (for example Kenney packs, or CC0 sounds from Freesound or OpenGameArt). Add every one to `Data/Resources/Credits.txt` when you import it, since that file is the in-game credits screen. All game code is written during the jam.
 
 The full team plan is `The_Promised_Port_Plan.html`, shared in the team chat.

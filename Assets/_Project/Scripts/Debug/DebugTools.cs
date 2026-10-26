@@ -29,7 +29,12 @@ public class DebugTools : MonoBehaviour
     GUIStyle box, label;
     readonly StringBuilder sb = new StringBuilder(512);
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    void Awake()
+    {
+        // Belt and braces: GameSystems only adds this in debug builds, but never let it run in a release build.
+        if (!Debug.isDebugBuild) Destroy(this);
+    }
+
     void Update()
     {
 #if ENABLE_INPUT_SYSTEM
@@ -53,7 +58,6 @@ public class DebugTools : MonoBehaviour
         }
 #endif
     }
-#endif
 
     void CyclePreset()
     {

@@ -43,6 +43,7 @@ public class PauseMenu : MonoBehaviour
     public void Toggle()
     {
         if (IsPaused) Resume();
+        else if (IntroCard.IsShowing) return;
         else if (GameManager.Instance == null || GameManager.Instance.State != GameState.Results) Pause();
     }
 

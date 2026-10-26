@@ -15,12 +15,26 @@ public class MainMenuScreen : MonoBehaviour
     const float RefHeight = 1080f;
 
     GUIStyle title, body, slot, button;
+    TextAsset credits;
+    bool showCredits;
 
-    void Start() => PlayerSlots.Clear();
+    void Start()
+    {
+        PlayerSlots.Clear();
+        credits = Resources.Load<TextAsset>("Credits");
+    }
 
     void Update()
     {
         var kb = Keyboard.current;
+        if (showCredits)
+        {
+            bool back = kb != null && kb.escapeKey.wasPressedThisFrame;
+            foreach (var pad in Gamepad.all) back |= pad.buttonEast.wasPressedThisFrame;
+            if (back) showCredits = false;
+            return;
+        }
+
         if (kb != null)
         {
             if (kb.spaceKey.wasPressedThisFrame) Toggle(kb);
@@ -54,6 +68,15 @@ public class MainMenuScreen : MonoBehaviour
         EnsureStyles();
 
         GUILayout.BeginArea(new Rect(w * 0.5f - 520f, 140f, 1040f, 840f));
+        if (showCredits)
+        {
+            GUILayout.Label(credits != null ? credits.text : "Credits.txt is missing.", body);
+            GUILayout.Space(20f);
+            if (GUILayout.Button("Back  (Esc / B)", button, GUILayout.Width(320f), GUILayout.Height(72f))) showCredits = false;
+            GUILayout.EndArea();
+            return;
+        }
+
         GUILayout.Label("The Promised Port", title);
         GUILayout.Label("Follow the Captain's orders. 1-3 players, bots fill the rest of the crew.", body);
         GUILayout.Space(30f);
@@ -71,6 +94,8 @@ public class MainMenuScreen : MonoBehaviour
         GUILayout.Label("Enter or Start to set sail. B leaves.", body);
         GUILayout.Space(12f);
         if (GUILayout.Button("Start", button, GUILayout.Width(320f), GUILayout.Height(72f))) StartRun(Keyboard.current);
+        GUILayout.Space(12f);
+        if (GUILayout.Button("Credits", button, GUILayout.Width(320f), GUILayout.Height(72f))) showCredits = true;
         GUILayout.Space(12f);
         if (GUILayout.Button("Quit", button, GUILayout.Width(320f), GUILayout.Height(72f))) PauseMenu.Quit();
         GUILayout.EndArea();

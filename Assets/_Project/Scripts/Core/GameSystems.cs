@@ -41,9 +41,9 @@ public static class GameSystems
         go.AddComponent<OrderDirector>();
         go.AddComponent<GameManager>();
         go.AddComponent<PauseMenu>();
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        go.AddComponent<DebugTools>();
-#endif
+        if (SceneManager.GetActiveScene().name == "Ship") go.AddComponent<IntroCard>();
+        // Debug keys exist in the Editor and Development builds only, never in the release zip.
+        if (Debug.isDebugBuild) go.AddComponent<DebugTools>();
         return go;
     }
 }

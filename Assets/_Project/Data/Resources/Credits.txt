@@ -1,0 +1,16 @@
+THE PROMISED PORT
+GameJamPlus 2026/27 · GJ+ Bangladesh
+
+Anadi        Systems, builds and production
+Rabib        Players, stations and the iceberg
+Riham        Crew AI, the Captain and writing
+Samprity     Art, audio, UI and feel
+
+Made with Unity 6.
+
+Third-party assets
+(Add every asset here when you import it: name, author, license, link.)
+None yet.
+
+The ship and the Captain are fictional.
+In memory of everyone aboard the real ship in April 1912.
