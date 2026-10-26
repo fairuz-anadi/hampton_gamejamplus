@@ -29,7 +29,12 @@ public class DebugTools : MonoBehaviour
     GUIStyle box, label;
     readonly StringBuilder sb = new StringBuilder(512);
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    void Awake()
+    {
+        // Belt and braces: GameSystems only adds this in debug builds, but never let it run in a release build.
+        if (!Debug.isDebugBuild) Destroy(this);
+    }
+
     void Update()
     {
 #if ENABLE_INPUT_SYSTEM
@@ -42,7 +47,7 @@ public class DebugTools : MonoBehaviour
         if (kb.f5Key.wasPressedThisFrame) ResolveOldest(Choice.Obey);
         if (kb.f6Key.wasPressedThisFrame) ResolveOldest(Choice.Fake);
         if (kb.f7Key.wasPressedThisFrame) ResolveOldest(Choice.Refuse);
-        if (kb.f8Key.wasPressedThisFrame) GameManager.Instance?.StartRun();
+        if (kb.f8Key.wasPressedThisFrame) GameManager.Restart();
         if (kb.f9Key.wasPressedThisFrame) visible = !visible;
         if (GameManager.Instance != null && GameManager.Instance.State == GameState.Iceberg)
         {
@@ -53,7 +58,6 @@ public class DebugTools : MonoBehaviour
         }
 #endif
     }
-#endif
 
     void CyclePreset()
     {
