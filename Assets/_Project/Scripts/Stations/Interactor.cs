@@ -25,9 +25,14 @@ public class Interactor : MonoBehaviour
 
     void Update()
     {
-        bool holding = interactSource != null && interactSource.InteractHeld;
+        // Locked out by a muster vote: can still walk, but can't work any station for 60 s (plan).
+        bool lockedOut = actor != null && actor.IsLockedOut;
+        bool holding = !lockedOut && interactSource != null && interactSource.InteractHeld;
         bool justPressed = holding && !wasHeld;
         wasHeld = holding;
+
+        // The item went home on its own (its order ended), so we're empty-handed again.
+        if (carriedItem != null && !carriedItem.IsCarried) carriedItem = null;
 
         if (carriedItem != null)
         {
@@ -85,7 +90,7 @@ public class Interactor : MonoBehaviour
     {
         CarryItem best = null;
         float bestDist = range;
-        foreach (var item in Object.FindObjectsByType<CarryItem>(FindObjectsSortMode.None))
+        foreach (var item in Object.FindObjectsByType<CarryItem>())
         {
             if (item.IsCarried) continue;
             float dist = Vector3.Distance(transform.position, item.transform.position);
@@ -107,7 +112,10 @@ public class Interactor : MonoBehaviour
         var screen = cam.WorldToScreenPoint(transform.position + Vector3.up * 2.2f);
         if (screen.z <= 0f) return;
 
-        string text = carriedItem != null ? "[Interact] Drop" : $"[Hold Interact] {NearestStation.Type}";
-        GUI.Label(new Rect(screen.x - 50, Screen.height - screen.y, 160, 20), text);
+        string text;
+        if (carriedItem != null) text = "[Interact] Drop";
+        else if (NearestStation is Station s && s.NeededHolders > 1) text = $"[Hold Interact] {s.Type} {s.ActiveHolders}/{s.NeededHolders}";
+        else text = $"[Hold Interact] {NearestStation.Type}";
+        GUI.Label(new Rect(screen.x - 80, Screen.height - screen.y, 220, 20), text);
     }
 }

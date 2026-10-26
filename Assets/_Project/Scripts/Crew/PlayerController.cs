@@ -22,7 +22,9 @@ public class PlayerController : MonoBehaviour, ICrewActor, IInteractSource, IRoo
     public bool IsBot => false;
     public bool IsStoker => false;
     public Vector3 Position => transform.position;
-    public string RoomId { get; private set; } = "Unknown";
+    /// <summary>Samprity's deck room volumes when the scene has them (Ship.unity), else the last RoomZone entered.</summary>
+    public string RoomId => RoomVolume.All.Count > 0 ? RoomVolume.RoomAt(transform.position) : zoneRoom;
+    string zoneRoom = "Unknown";
     public bool IsLockedOut { get; private set; }
     public bool InteractHeld => interactAction.IsPressed();
 
@@ -54,7 +56,7 @@ public class PlayerController : MonoBehaviour, ICrewActor, IInteractSource, IRoo
         if (refuseAction.WasPerformedThisFrame()) OrderDirector.Instance?.Refuse(this);
     }
 
-    public void SetRoom(string roomId) => RoomId = roomId;
+    public void SetRoom(string roomId) => zoneRoom = roomId;
     public void SetLockedOut(bool locked) => IsLockedOut = locked;
 
     void ApplySeatColor()
