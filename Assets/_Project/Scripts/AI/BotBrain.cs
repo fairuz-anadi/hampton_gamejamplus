@@ -154,6 +154,9 @@ public class BotBrain : MonoBehaviour, ICrewActor
 
     void Update()
     {
+        // Stations only count holders who refresh every frame, like a player holding Interact.
+        if (workingAt != null) workingAt.Hold(this, true);
+
         if (Time.time < nextThink) return;
         nextThink = Time.time + thinkInterval;
         Think();
@@ -316,8 +319,8 @@ public class BotBrain : MonoBehaviour, ICrewActor
     }
 
     /// <summary>
-    /// Carry orders with a real CarryItem in the scene: walk to the nearest loose item by the pick-up station
-    /// and grab it. CarryItem itself refuses items that belong to another order. Returns true while fetching.
+    /// Carry orders with a real CarryItem in the scene: walk to this order's item and grab it.
+    /// Returns true while fetching. Without an item, the bot just works the pick-up station for a moment.
     /// </summary>
     bool TryFetchCarryItem(ActiveOrder o)
     {
@@ -325,15 +328,8 @@ public class BotBrain : MonoBehaviour, ICrewActor
 
         if (fetching == null)
         {
-            var pickup = StationRegistry.Get(o.Data.station);
-            Vector3 from = pickup != null ? pickup.Position : transform.position;
-            float best = 6f;
             foreach (var item in FindObjectsByType<CarryItem>())
-            {
-                if (item.IsCarried) continue;
-                float d = BotMover.FlatDistance(item.transform.position, from);
-                if (d < best) { best = d; fetching = item; }
-            }
+                if (!item.IsCarried && item.Order == o.Data) { fetching = item; break; }
             if (fetching == null) return false; // nothing to carry, use the plain station route
         }
 
@@ -349,7 +345,7 @@ public class BotBrain : MonoBehaviour, ICrewActor
         Mover.Stop();
         if (fetching.TryPickUp(this, transform)) carrying = fetching;
         fetching = null;
-        carryStage = 1; // picked up, or it wasn't ours: either way head for the delivery station
+        carryStage = 1; // CarryItem now holds the delivery station for us when we get there
         return false;
     }
 
@@ -450,14 +446,12 @@ public class BotBrain : MonoBehaviour, ICrewActor
         return n;
     }
 
-    /// <summary>Holds every tick, because a station drops all its holders when it breaks or gets repaired.</summary>
+    /// <summary>Starts holding Interact at a station. Update keeps the hold fresh every frame until StopWorking.</summary>
     void StartWorking(Station st)
     {
-        if (workingAt != st)
-        {
-            StopWorking();
-            workingAt = st;
-        }
+        if (workingAt == st) return;
+        StopWorking();
+        workingAt = st;
         st.Hold(this, true);
     }
 
