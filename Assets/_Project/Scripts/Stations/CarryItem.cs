@@ -7,7 +7,7 @@ using UnityEngine;
 /// only the carrier, even at a two-person station). When the order ends, the item goes back home.
 /// Owner: Rabib.
 /// </summary>
-public class CarryItem : MonoBehaviour
+public class CarryItem : MonoBehaviour, ICarryItem
 {
     [SerializeField] OrderData order;
     [SerializeField] float pickupRange = 1.5f;
@@ -20,6 +20,7 @@ public class CarryItem : MonoBehaviour
     Station deliveryStation;
 
     public bool IsCarried => carrier != null;
+    public Vector3 Position => transform.position;
     public OrderData Order => order;
 
     void Awake()
