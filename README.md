@@ -22,7 +22,7 @@ Made for GameJamPlus 2026/27 (GJ+ Bangladesh) by Anadi, Rabib, Riham and Samprit
 | Call for help | Q | X / □ |
 | Pause | Esc | Start |
 
-On the main menu, press **Space** (keyboard) or **A** (gamepad) to take a seat, then **Enter** or **Start** to set sail. Up to 3 players can join, and bots fill the rest.
+On the main menu, press **Space** (keyboard) or **A** (gamepad) to take a seat, then **Enter** or **Start** to set sail. Up to 3 players can join, and bots fill the rest. **C** or **Y** shows the credits. Every menu works without a mouse: arrows or the d-pad to choose, **Enter** or **A** to pick, **Esc** or **B** to go back.
 
 ## Getting started
 
@@ -110,7 +110,7 @@ The orders are `OrderData` assets in `Data/Resources/Orders`, issued in file-nam
 
 Use **Port → Build Windows (Development)** at each milestone. Development builds keep the debug keys and panel. Use **Port → Build Windows (Release)** for RC1, RC2 and the submission. It drops the debug keys, sets the version to 1.0, adds a `README.txt` (controls and player count), and packs `Builds/ThePromisedPort_Windows_v1.0.zip` without the Burst `..._ButDontShipItWithYourGame` folder. Builds go to `Builds/`, which git ignores.
 
-MainMenu, Ship and Results each have a working placeholder screen (`UI/MainMenuScreen` with credits, `UI/IntroCard`, `UI/PauseMenu`, `UI/ResultsScreen`) for Samprity to restyle. The intro card shows once per session at the start of Ship and holds the first order until a player dismisses it.
+MainMenu, Ship and Results each have a working placeholder screen (`UI/MainMenuScreen` with credits, `UI/IntroCard`, `UI/PauseMenu`, `UI/ResultsScreen`) for Samprity to restyle. They share keyboard and gamepad navigation through `UI/MenuControls`. The intro card shows once per session at the start of Ship and holds the first order until a player dismisses it.
 
 **Balance:** run **Port → Balance Report** after changing any order's numbers. It plays the 12 orders through common strategies and prints the ending each impact gives, so you can check all 3 endings stay reachable.
 

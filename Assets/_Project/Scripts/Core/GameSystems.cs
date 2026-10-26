@@ -22,7 +22,7 @@ public static class GameSystems
         // Entering Play mode in the Editor reports an internal mode, not Single, so only skip additive loads.
         if (mode == LoadSceneMode.Additive) return;
         Time.timeScale = 1f; // never carry a pause into the next scene
-        if (IsGameplayScene(scene.name)) Ensure();
+        if (IsGameplayScene(scene.name)) Ensure(scene.name);
         else if (scene.name == "Results" && Object.FindAnyObjectByType<ResultsScreen>() == null)
             new GameObject("[Results]").AddComponent<ResultsScreen>();
         else if (scene.name == "MainMenu" && Object.FindAnyObjectByType<MainMenuScreen>() == null)
@@ -32,7 +32,8 @@ public static class GameSystems
     public static bool IsGameplayScene(string sceneName) =>
         sceneName == "Ship" || sceneName.EndsWith("_Systems");
 
-    public static GameObject Ensure()
+    /// <summary>Spawns the systems once. The "how to play" card only appears in Ship, never in sandboxes.</summary>
+    public static GameObject Ensure(string sceneName = null)
     {
         if (GameManager.Instance != null) return GameManager.Instance.gameObject;
 
@@ -41,7 +42,7 @@ public static class GameSystems
         go.AddComponent<OrderDirector>();
         go.AddComponent<GameManager>();
         go.AddComponent<PauseMenu>();
-        if (SceneManager.GetActiveScene().name == "Ship") go.AddComponent<IntroCard>();
+        if ((sceneName ?? SceneManager.GetActiveScene().name) == "Ship") go.AddComponent<IntroCard>();
         // Debug keys exist in the Editor and Development builds only, never in the release zip.
         if (Debug.isDebugBuild) go.AddComponent<DebugTools>();
         return go;

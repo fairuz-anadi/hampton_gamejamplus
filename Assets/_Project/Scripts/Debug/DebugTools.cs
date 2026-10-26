@@ -1,16 +1,14 @@
 using System.Text;
 using UnityEngine;
-#if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
-#endif
 
 /// <summary>
 /// Debug HUD and keys. Only exists in the Editor and in Development builds. Owner: Anadi.
 ///   F1  skip to the next part        F5  obey the oldest active order
 ///   F2  cycle meter presets          F6  fake it
 ///   F3  jump to the iceberg          F7  refuse it
-///   F4  reveal the Stoker            F8  restart the run
-///   F9  show / hide this panel
+///   F4  reveal the Stoker            F8  restart (reloads the scene)
+///   F9  show / hide this panel       1 / 2 / 3 at the iceberg: hit head-on, glancing or scrape
 /// </summary>
 public class DebugTools : MonoBehaviour
 {
@@ -37,26 +35,24 @@ public class DebugTools : MonoBehaviour
 
     void Update()
     {
-#if ENABLE_INPUT_SYSTEM
         var kb = Keyboard.current;
         if (kb == null) return;
-        if (kb.f1Key.wasPressedThisFrame) GameManager.Instance?.DebugSkipPart();
+        var gm = GameManager.Instance;
+        if (kb.f1Key.wasPressedThisFrame) gm?.DebugSkipPart();
         if (kb.f2Key.wasPressedThisFrame) CyclePreset();
-        if (kb.f3Key.wasPressedThisFrame) GameManager.Instance?.StartIceberg();
+        if (kb.f3Key.wasPressedThisFrame) gm?.StartIceberg();
         if (kb.f4Key.wasPressedThisFrame) revealStoker = !revealStoker;
         if (kb.f5Key.wasPressedThisFrame) ResolveOldest(Choice.Obey);
         if (kb.f6Key.wasPressedThisFrame) ResolveOldest(Choice.Fake);
         if (kb.f7Key.wasPressedThisFrame) ResolveOldest(Choice.Refuse);
         if (kb.f8Key.wasPressedThisFrame) GameManager.Restart();
         if (kb.f9Key.wasPressedThisFrame) visible = !visible;
-        if (GameManager.Instance != null && GameManager.Instance.State == GameState.Iceberg)
+        if (gm != null && gm.State == GameState.Iceberg)
         {
-            // Pick the impact to test each ending: 1 head-on, 2 glancing, 3 scrape.
-            if (kb.digit1Key.wasPressedThisFrame) GameManager.Instance.FinishIceberg(0f);
-            if (kb.digit2Key.wasPressedThisFrame) GameManager.Instance.FinishIceberg(30f);
-            if (kb.digit3Key.wasPressedThisFrame) GameManager.Instance.FinishIceberg(60f);
+            if (kb.digit1Key.wasPressedThisFrame) gm.FinishIceberg(0f);
+            else if (kb.digit2Key.wasPressedThisFrame) gm.FinishIceberg(30f);
+            else if (kb.digit3Key.wasPressedThisFrame) gm.FinishIceberg(60f);
         }
-#endif
     }
 
     void CyclePreset()
@@ -78,7 +74,7 @@ public class DebugTools : MonoBehaviour
     {
         if (!visible) return;
         box ??= new GUIStyle(GUI.skin.box) { alignment = TextAnchor.UpperLeft, fontSize = 13, padding = new RectOffset(10, 10, 8, 8) };
-        label ??= new GUIStyle(GUI.skin.label) { fontSize = 12 };
+        label ??= new GUIStyle(GUI.skin.label) { fontSize = 12, richText = true };
 
         var gm = GameManager.Instance;
         var ms = MeterSystem.Instance;
@@ -87,7 +83,7 @@ public class DebugTools : MonoBehaviour
         GUILayout.BeginArea(new Rect(10, 10, 360, Screen.height - 20));
         GUILayout.BeginVertical(box);
 
-        GUILayout.Label($"<b>State:</b> {(gm != null ? gm.State.ToString() : "-")}", Rich(label));
+        GUILayout.Label($"<b>State:</b> {(gm != null ? gm.State.ToString() : "-")}", label);
         if (ms != null)
         {
             Bar("Captain's Trust", ms.CaptainTrust, new Color(0.85f, 0.65f, 0.3f));
@@ -101,33 +97,29 @@ public class DebugTools : MonoBehaviour
             sb.Append($"<b>Orders:</b> {od.NextIndex}/{od.Orders.Count} issued, next in {od.SecondsToNext:0}s\n");
             foreach (var o in od.Active)
             {
-                string who = o.Assignee != null ? $"Seat {o.Assignee.Seat}{(o.Assignee.IsBot ? " (bot)" : "")}" : "nobody";
+                string who = o.Assignee != null ? CrewRegistry.SeatName(o.Assignee.Seat) + (o.Assignee.IsBot ? " (bot)" : "") : "nobody";
                 string light = od.IsStationDone(o) ? "green" : "red";
-                sb.Append($"  #{o.Number} {o.Data.resultsLine}\n     {who} · {o.TimeLeft:0}s · {o.Data.CheckStation} {light}\n");
+                string off = o.Data.IsOff ? " <b>OFF</b>" : "";
+                sb.Append($"  #{o.Number} {o.Data.resultsLine}{off}\n     {who} · {o.TimeLeft:0}s · {o.Data.CheckStation} {light}\n");
             }
-            GUILayout.Label(sb.ToString(), Rich(label));
+            GUILayout.Label(sb.ToString(), label);
         }
 
         if (RunRecord.Choices.Count > 0)
-        {
-            var last = RunRecord.Choices[RunRecord.Choices.Count - 1];
-            GUILayout.Label($"Last: #{last.orderNumber} {last.choice} ({last.delta})", label);
-        }
+            GUILayout.Label("Last: " + RunRecord.Choices[RunRecord.Choices.Count - 1].Describe(), label);
 
         if (revealStoker)
         {
             var s = CrewRegistry.Stoker;
-            GUILayout.Label(s != null ? $"Stoker: Seat {s.Seat}" : "Stoker: no crew registered", label);
+            GUILayout.Label(s != null ? $"Stoker: {CrewRegistry.SeatName(s.Seat)}" : "Stoker: no crew registered", label);
         }
 
         if (gm != null && gm.State == GameState.Iceberg)
-            GUILayout.Label("<b>Impact:</b> 1 head-on · 2 glancing · 3 scrape", Rich(label));
+            GUILayout.Label("<b>Impact:</b> 1 head-on · 2 glancing · 3 scrape", label);
         GUILayout.Label("F1 skip part · F2 meters · F3 iceberg · F4 stoker\nF5 obey · F6 fake · F7 refuse · F8 restart · F9 hide", label);
         GUILayout.EndVertical();
         GUILayout.EndArea();
     }
-
-    static GUIStyle Rich(GUIStyle s) { s.richText = true; return s; }
 
     void Bar(string name, int value, Color color)
     {

@@ -123,16 +123,14 @@ public class GameManager : MonoBehaviour
     public void FinishIceberg(float impactAngle)
     {
         if (State == GameState.Results) return;
+        StopAllCoroutines();
+        OrderDirector.Instance?.Stop();
         var ending = EndingEvaluator.Resolve(impactAngle);
         Debug.Log($"[GameManager] Impact {RunRecord.Impact} ({impactAngle:0}°), Safety {RunRecord.FinalShipSafety}: {ending}");
         var stoker = CrewRegistry.Stoker;
         if (stoker != null) RunRecord.StokerSeat = stoker.Seat;
         SetState(GameState.Results);
-
-        if (Application.CanStreamedLevelBeLoaded(resultsScene))
-            SceneManager.LoadScene(resultsScene);
-        else
-            Debug.Log("[GameManager] Results scene isn't in Build Settings yet, staying here.");
+        LoadScene(resultsScene);
     }
 
     void SetState(GameState next)
