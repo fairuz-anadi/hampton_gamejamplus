@@ -151,6 +151,7 @@ MonoBehaviour:
   workDuration: 3
   repairDuration: 3
   statusLight: {fileID: 0}
+  unlockSeconds: 3
 --- !u!4 &63833542
 Transform:
   m_ObjectHideFlags: 0
@@ -884,7 +885,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3d95a368959e24742b3f09e3cf7638ad, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::IcebergSequence
-  delaySeconds: 5
+  steerSeconds: 30
+  startAngle: 35
+  perSteererRate: 3
+  pull: 0.05
+  deadzone: 0.2
+  startSide: 0
+  bowPoint: {fileID: 0}
+  bowAheadOfWheel: 7
+  startAhead: 10
+  impactAhead: 2
+  icebergSize: {x: 5, y: 5, z: 4}
+  icebergColor: {r: 0.93, g: 0.97, b: 1, a: 1}
 --- !u!4 &712032743
 Transform:
   m_ObjectHideFlags: 0
