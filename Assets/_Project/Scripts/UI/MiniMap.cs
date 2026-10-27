@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -26,6 +27,7 @@ public class MiniMap : MonoBehaviour
     [SerializeField] CanvasGroup fadeGroup;
     [SerializeField] RectTransform mapArea;
     [SerializeField] RectTransform[] roomZones;
+    [SerializeField] RectTransform[] roomLabels;
     [SerializeField] StationGlyph[] stationGlyphs;
     [SerializeField] Image highlightRing;
     [SerializeField] RectTransform bridgeMarker;
@@ -128,13 +130,17 @@ public class MiniMap : MonoBehaviour
         return new Vector2(Mathf.Lerp(pad, size.x - pad, u), Mathf.Lerp(pad, size.y - pad, v));
     }
 
-    /// <summary>Room footprints never move, so this runs once from Start(), not every frame.</summary>
+    /// <summary>Room footprints never move, so this runs once from Start(), not every frame. A label that would
+    /// overlap one already placed stays hidden — its zone tint still shows, just without the unreadable text.</summary>
     void PlaceRoomZones()
     {
         if (roomZones == null) return;
+        var placedLabels = new List<Rect>(RoomIds.Length);
+
         for (int i = 0; i < RoomIds.Length && i < roomZones.Length; i++)
         {
             var zone = roomZones[i];
+            var label = roomLabels != null && i < roomLabels.Length ? roomLabels[i] : null;
             if (zone == null) continue;
 
             RoomVolume found = null;
@@ -142,7 +148,12 @@ public class MiniMap : MonoBehaviour
                 if (RoomVolume.All[j] != null && RoomVolume.All[j].roomId == RoomIds[i]) { found = RoomVolume.All[j]; break; }
 
             var col = found != null ? found.GetComponent<BoxCollider>() : null;
-            if (col == null) { zone.gameObject.SetActive(false); continue; }
+            if (col == null)
+            {
+                zone.gameObject.SetActive(false);
+                if (label != null) label.gameObject.SetActive(false);
+                continue;
+            }
 
             var b = col.bounds;
             Vector2 c0 = ToLocal(new Vector3(b.min.x, 0f, b.min.z), 0f);
@@ -150,7 +161,31 @@ public class MiniMap : MonoBehaviour
             zone.gameObject.SetActive(true);
             zone.anchoredPosition = (c0 + c1) * 0.5f;
             zone.sizeDelta = new Vector2(Mathf.Abs(c1.x - c0.x), Mathf.Abs(c1.y - c0.y));
+
+            if (label == null) continue;
+            label.gameObject.SetActive(true);
+            Rect labelRect = LabelRect(zone, label);
+            bool overlaps = false;
+            for (int j = 0; j < placedLabels.Count; j++)
+                if (labelRect.Overlaps(placedLabels[j])) { overlaps = true; break; }
+            if (overlaps) label.gameObject.SetActive(false);
+            else placedLabels.Add(labelRect);
         }
+    }
+
+    /// <summary>The label's AABB in mapArea-local space. Both `zone` and `label` are point-anchored (never
+    /// stretched) by MiniMapBuilder, so this reads their real anchor/pivot/size instead of assuming numbers that
+    /// could silently drift out of sync with the builder.</summary>
+    static Rect LabelRect(RectTransform zone, RectTransform label)
+    {
+        Vector2 anchorInZone = new Vector2(
+            (label.anchorMin.x - 0.5f) * zone.sizeDelta.x,
+            (label.anchorMin.y - 0.5f) * zone.sizeDelta.y);
+        Vector2 centreInZone = anchorInZone + label.anchoredPosition + new Vector2(
+            label.sizeDelta.x * (0.5f - label.pivot.x),
+            label.sizeDelta.y * (0.5f - label.pivot.y));
+        Vector2 centre = zone.anchoredPosition + centreInZone;
+        return new Rect(centre - label.sizeDelta * 0.5f, label.sizeDelta);
     }
 
     /// <summary>Stations don't move either, so their glyphs are positioned once. Only the highlight ring is dynamic.</summary>

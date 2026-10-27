@@ -23,20 +23,21 @@ public static class MiniMapBuilder
     // Samprity's HUD palette (HudBuilder.cs: Cream, Gold), read-only, reused for a matching look.
     static readonly Color Cream = new Color(0.96f, 0.92f, 0.82f);
     static readonly Color Gold = new Color(0.95f, 0.78f, 0.42f);
-    static readonly Color Navy = new Color(0.05f, 0.08f, 0.15f, 0.95f);
-    static readonly Color MutedGold = new Color(0.72f, 0.62f, 0.4f, 0.9f);
+    static readonly Color Navy = new Color(0.13f, 0.18f, 0.28f, 0.95f);
+    static readonly Color GlyphGold = new Color(0.88f, 0.72f, 0.4f, 0.95f);
     static readonly Color DarkOutline = new Color(0.03f, 0.04f, 0.07f, 0.9f);
     static readonly Color ShadowColor = new Color(0f, 0f, 0f, 0.55f);
     static readonly Color IceWarnColor = new Color(0.95f, 0.78f, 0.25f, 1f);
 
-    // Order here must match MiniMap.RoomIds exactly.
+    // Order here must match MiniMap.RoomIds exactly. Alpha raised so tints are distinguishable against the
+    // lightened hull fill below; always these fixed per-room values, never state-based.
     static readonly (string id, Color tint)[] RoomTints =
     {
-        ("Boiler",   new Color(0.55f, 0.26f, 0.16f, 0.26f)),
-        ("Corridor", new Color(0.5f, 0.5f, 0.56f, 0.16f)),
-        ("Wireless", new Color(0.24f, 0.4f, 0.6f, 0.22f)),
-        ("Bridge",   new Color(0.7f, 0.58f, 0.3f, 0.24f)),
-        ("Bow",      new Color(0.75f, 0.84f, 0.9f, 0.18f)),
+        ("Boiler",   new Color(0.6f, 0.28f, 0.17f, 0.42f)),
+        ("Corridor", new Color(0.52f, 0.52f, 0.58f, 0.3f)),
+        ("Wireless", new Color(0.26f, 0.42f, 0.62f, 0.38f)),
+        ("Bridge",   new Color(0.72f, 0.6f, 0.32f, 0.4f)),
+        ("Bow",      new Color(0.78f, 0.86f, 0.92f, 0.32f)),
     };
 
     const float RootWidth = 184f, RootHeight = 284f;
@@ -46,6 +47,7 @@ public static class MiniMapBuilder
 
     struct CrewPart { public RectTransform root; public Image dot; public RectTransform arrow; public Image ring; }
     struct IcePart { public RectTransform root; public Image core; public Image glow; }
+    struct RoomPart { public RectTransform root; public RectTransform label; }
 
     [MenuItem("Rabib/Build MiniMap")]
     public static void Build()
@@ -103,9 +105,9 @@ public static class MiniMapBuilder
         fillShadow.useGraphicAlpha = false;
 
         // Room zones (pool order must match MiniMap.RoomIds).
-        var roomZoneRoots = new RectTransform[RoomTints.Length];
+        var roomParts = new RoomPart[RoomTints.Length];
         for (int i = 0; i < RoomTints.Length; i++)
-            roomZoneRoots[i] = BuildRoomZone(fill.transform, RoomTints[i].id, RoomTints[i].tint, roundedRect);
+            roomParts[i] = BuildRoomZone(fill.transform, RoomTints[i].id, RoomTints[i].tint, roundedRect);
 
         // Station glyphs (pool order must match the StationType enum: Boiler, Wheel, Doors, Wireless).
         var stationGlyphRoots = new RectTransform[4];
@@ -114,7 +116,9 @@ public static class MiniMapBuilder
         stationGlyphRoots[2] = BuildGlyphDoors(fill.transform, roundedRect);
         stationGlyphRoots[3] = BuildGlyphWireless(fill.transform, circle);
 
-        var highlightRing = Img(fill.transform, "Highlight", ring, Gold, Vector2.zero, Vector2.one, Vector2.zero, new Vector2(10f, 10f), Image.Type.Simple);
+        // Point-anchored (not stretched) and a fixed small size: this sits ON the station glyph it highlights,
+        // not stretched to fill the whole hull — that was the earlier "huge ring outside the hull" bug.
+        var highlightRing = Img(fill.transform, "Highlight", ring, Gold, Vector2.zero, Vector2.zero, Vector2.zero, new Vector2(20f, 20f), Image.Type.Simple);
         highlightRing.gameObject.SetActive(false);
 
         var bridgeRoot = BuildBridgeMarker(fill.transform, triangle);
@@ -128,13 +132,13 @@ public static class MiniMapBuilder
             iceParts[i] = BuildIceIcon(fill.transform, "IceWarning_" + (i + 1), circle, ring);
 
         var mini = root.AddComponent<MiniMap>();
-        WireMiniMap(mini, fadeGroup, fill.rectTransform, highlightRing, bridgeRoot, roomZoneRoots, stationGlyphRoots, crewParts, iceParts);
+        WireMiniMap(mini, fadeGroup, fill.rectTransform, highlightRing, bridgeRoot, roomParts, stationGlyphRoots, crewParts, iceParts);
 
         return root;
     }
 
     static void WireMiniMap(MiniMap mini, CanvasGroup fadeGroup, RectTransform mapArea, Image highlightRing, RectTransform bridgeRoot,
-        RectTransform[] roomZoneRoots, RectTransform[] stationGlyphRoots, CrewPart[] crewParts, IcePart[] iceParts)
+        RoomPart[] roomParts, RectTransform[] stationGlyphRoots, CrewPart[] crewParts, IcePart[] iceParts)
     {
         var so = new SerializedObject(mini);
         so.FindProperty("fadeGroup").objectReferenceValue = fadeGroup;
@@ -143,9 +147,14 @@ public static class MiniMapBuilder
         so.FindProperty("bridgeMarker").objectReferenceValue = bridgeRoot;
 
         var roomProp = so.FindProperty("roomZones");
-        roomProp.arraySize = roomZoneRoots.Length;
-        for (int i = 0; i < roomZoneRoots.Length; i++)
-            roomProp.GetArrayElementAtIndex(i).objectReferenceValue = roomZoneRoots[i];
+        roomProp.arraySize = roomParts.Length;
+        var roomLabelProp = so.FindProperty("roomLabels");
+        roomLabelProp.arraySize = roomParts.Length;
+        for (int i = 0; i < roomParts.Length; i++)
+        {
+            roomProp.GetArrayElementAtIndex(i).objectReferenceValue = roomParts[i].root;
+            roomLabelProp.GetArrayElementAtIndex(i).objectReferenceValue = roomParts[i].label;
+        }
 
         var stationProp = so.FindProperty("stationGlyphs");
         stationProp.arraySize = stationGlyphRoots.Length;
@@ -178,50 +187,58 @@ public static class MiniMapBuilder
 
     // ---------- Composite icons ----------
 
-    static RectTransform BuildRoomZone(Transform parent, string roomId, Color tint, Sprite roundedRect)
+    static RoomPart BuildRoomZone(Transform parent, string roomId, Color tint, Sprite roundedRect)
     {
         var root = Box(parent, "Room_" + roomId, Vector2.zero, Vector2.zero, new Vector2(20f, 20f), new Vector2(0.5f, 0.5f));
         Img(root, "Tint", roundedRect, tint, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, Image.Type.Simple);
-        Txt(root, "Label", regular, 9, new Color(Cream.r, Cream.g, Cream.b, 0.75f), Spaced(roomId.ToUpperInvariant()), true);
+
+        // Left-edge anchored (not centred/stretched) and sized to its own text, not the zone, so MiniMap.cs can
+        // test real label rects against each other and hide whichever one would overlap a neighbour.
+        var label = Txt(root, "Label", regular, 15, Cream, Spaced(roomId.ToUpperInvariant()),
+            new Vector2(0f, 0.5f), new Vector2(3f, 0f), new Vector2(80f, 20f), TextAnchor.MiddleLeft);
+        var outline = label.gameObject.AddComponent<Outline>();
+        outline.effectColor = DarkOutline;
+        outline.effectDistance = new Vector2(1.3f, -1.3f);
+
         root.gameObject.SetActive(false);
-        return root;
+        return new RoomPart { root = root, label = label.rectTransform };
     }
 
     static RectTransform BuildGlyphBoiler(Transform parent, Sprite triangle)
     {
-        var root = Box(parent, "Glyph_Boiler", Vector2.zero, Vector2.zero, new Vector2(16f, 16f), new Vector2(0.5f, 0.5f));
-        Img(root, "Flame", triangle, MutedGold, Vector2.zero, Vector2.one, Vector2.zero, new Vector2(-4f, -2f), Image.Type.Simple);
+        var root = Box(parent, "Glyph_Boiler", Vector2.zero, Vector2.zero, new Vector2(22f, 22f), new Vector2(0.5f, 0.5f));
+        Img(root, "Flame", triangle, GlyphGold, Vector2.zero, Vector2.one, Vector2.zero, new Vector2(-5f, -3f), Image.Type.Simple);
         root.gameObject.SetActive(false);
         return root;
     }
 
     static RectTransform BuildGlyphWheel(Transform parent, Sprite ring, Sprite circle)
     {
-        var root = Box(parent, "Glyph_Wheel", Vector2.zero, Vector2.zero, new Vector2(16f, 16f), new Vector2(0.5f, 0.5f));
-        Img(root, "Rim", ring, MutedGold, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, Image.Type.Simple);
-        var spokeA = Img(root, "SpokeA", null, MutedGold, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(14f, 2f), Image.Type.Simple);
+        var root = Box(parent, "Glyph_Wheel", Vector2.zero, Vector2.zero, new Vector2(22f, 22f), new Vector2(0.5f, 0.5f));
+        Img(root, "Rim", ring, GlyphGold, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, Image.Type.Simple);
+        var spokeA = Img(root, "SpokeA", null, GlyphGold, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(19f, 3f), Image.Type.Simple);
         spokeA.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 0f);
-        var spokeB = Img(root, "SpokeB", null, MutedGold, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(14f, 2f), Image.Type.Simple);
+        var spokeB = Img(root, "SpokeB", null, GlyphGold, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(19f, 3f), Image.Type.Simple);
         spokeB.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 90f);
-        Img(root, "Hub", circle, MutedGold, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(5f, 5f), Image.Type.Simple);
+        Img(root, "Hub", circle, GlyphGold, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(7f, 7f), Image.Type.Simple);
         root.gameObject.SetActive(false);
         return root;
     }
 
     static RectTransform BuildGlyphDoors(Transform parent, Sprite roundedRect)
     {
-        var root = Box(parent, "Glyph_Doors", Vector2.zero, Vector2.zero, new Vector2(14f, 18f), new Vector2(0.5f, 0.5f));
-        Img(root, "Body", roundedRect, MutedGold, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, Image.Type.Simple);
-        Img(root, "Seam", null, DarkOutline, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(1.5f, 14f), Image.Type.Simple);
+        var root = Box(parent, "Glyph_Doors", Vector2.zero, Vector2.zero, new Vector2(18f, 22f), new Vector2(0.5f, 0.5f));
+        Img(root, "Body", roundedRect, GlyphGold, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, Image.Type.Simple);
+        Img(root, "Seam", null, DarkOutline, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(2f, 18f), Image.Type.Simple);
         root.gameObject.SetActive(false);
         return root;
     }
 
     static RectTransform BuildGlyphWireless(Transform parent, Sprite circle)
     {
-        var root = Box(parent, "Glyph_Wireless", Vector2.zero, Vector2.zero, new Vector2(10f, 18f), new Vector2(0.5f, 0.5f));
-        Img(root, "Pole", null, MutedGold, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 7f), new Vector2(2f, 14f), Image.Type.Simple);
-        Img(root, "Node", circle, MutedGold, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -3f), new Vector2(6f, 6f), Image.Type.Simple);
+        var root = Box(parent, "Glyph_Wireless", Vector2.zero, Vector2.zero, new Vector2(14f, 22f), new Vector2(0.5f, 0.5f));
+        Img(root, "Pole", null, GlyphGold, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 8.5f), new Vector2(2.5f, 17f), Image.Type.Simple);
+        Img(root, "Node", circle, GlyphGold, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -3.5f), new Vector2(7f, 7f), Image.Type.Simple);
         root.gameObject.SetActive(false);
         return root;
     }
