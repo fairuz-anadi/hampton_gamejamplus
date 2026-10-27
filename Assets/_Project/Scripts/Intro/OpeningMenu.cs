@@ -20,6 +20,9 @@ public class OpeningMenu : MonoBehaviour
     public Font italicFont;
     public Sprite diamond;
     public Sprite speakerIcon;
+    [Tooltip("The title lockup (Tools/make_title_logo.py). Without it the title is set in the title font.")]
+    public Sprite titleLogo;
+    public Sprite keycap, disc;
 
     [Header("Sounds")]
     public AudioClip hoverSound;
@@ -36,6 +39,7 @@ public class OpeningMenu : MonoBehaviour
     RectTransform barTop, barBottom;
     Image fade;
     Text subtitleSpeaker, subtitleLine, crewStrip, credits;
+    GameObject creditsPanel, padHints, keyHints;
     Image subtitleIcon;
     Button beginButton;
     AudioSource uiAudio;
@@ -44,7 +48,7 @@ public class OpeningMenu : MonoBehaviour
     Coroutine fadeRoutine, subtitleRoutine;
 
     public bool SettingsOpen { get; private set; }
-    public bool CreditsOpen => credits != null && credits.gameObject.activeSelf;
+    public bool CreditsOpen => creditsPanel != null && creditsPanel.activeSelf;
 
     // ---------- Building ----------
 
@@ -115,61 +119,120 @@ public class OpeningMenu : MonoBehaviour
         b.navigation = new Navigation { mode = Navigation.Mode.None };
     }
 
+    // Layout, in 1920x1080 reference pixels: the title lockup on the left, the menu right-aligned on the right with
+    // a brass band behind the selected item, a fading rule and button hints under it.
+    const float Margin = 160f, ColumnWidth = 560f;
+
     void BuildMenu(RectTransform root)
     {
         menuGroup = Group(root, "Menu", Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
         var m = (RectTransform)menuGroup.transform;
 
-        // A soft shadow down the left, so the type reads over the lit deck without boxing the scene in.
-        var shade = new GameObject("Shade", typeof(RectTransform), typeof(RawImage)).GetComponent<RawImage>();
-        shade.transform.SetParent(m, false);
-        shade.texture = Gradient();
-        shade.color = new Color(0.02f, 0.025f, 0.04f, 0.88f);
-        shade.raycastTarget = false;
-        var st = shade.rectTransform;
-        st.anchorMin = Vector2.zero; st.anchorMax = new Vector2(0.62f, 1f);
-        st.offsetMin = st.offsetMax = Vector2.zero;
+        // Darker round the edges and under the title, so the type reads over the lit deck without boxing it in.
+        Stretch(Raw(m, "Vignette", Vignette(), new Color(0.01f, 0.012f, 0.02f, 0.92f)).rectTransform, Vector2.zero, Vector2.one);
+        Stretch(Raw(m, "Shade", Gradient(), new Color(0.02f, 0.025f, 0.04f, 0.68f)).rectTransform, Vector2.zero, new Vector2(0.5f, 1f));
+        Stretch(Raw(m, "ShadeRight", Ramp(0f, 0.75f), new Color(0.02f, 0.025f, 0.04f, 0.8f)).rectTransform, new Vector2(0.55f, 0f), Vector2.one);
 
-        titleGroup = Group(m, "Title", new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(150f + 430f, -250f), new Vector2(860f, 300f));
+        // Title lockup, left of centre and a little low (clear of the newcomer at the furnace), the tagline under it.
+        const float logoW = 760f;
+        titleGroup = Group(m, "Title", new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(Margin - 40f + logoW * 0.5f, -30f), new Vector2(logoW, 400f));
         var tt = (RectTransform)titleGroup.transform;
-        Label(tt, "Overline", bodyFont, 22, Brass, "A   T A L E   O F   T H E   S E A", TextAnchor.MiddleLeft, new Vector2(0f, 1f), new Vector2(430f, -24f), new Vector2(860f, 30f));
-        var title = Label(tt, "Title", titleFont, 104, Cream, "THE PROMISED PORT", TextAnchor.MiddleLeft, new Vector2(0f, 1f), new Vector2(550f, -112f), new Vector2(1100f, 130f));
-        title.horizontalOverflow = HorizontalWrapMode.Overflow;
-        AddShadow(title.gameObject, 0.6f);
-        // Brass rule with a diamond, like a ship's nameboard.
-        var rule = Panel(tt, "Rule", new Color(Brass.r, Brass.g, Brass.b, 0.8f), new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 0.5f));
-        Place(rule.rectTransform, new Vector2(0f, 1f), new Vector2(0f, -188f), new Vector2(520f, 2f), new Vector2(0f, 0.5f));
-        var gem = new GameObject("Diamond", typeof(RectTransform), typeof(Image)).GetComponent<Image>();
-        gem.transform.SetParent(tt, false);
-        gem.sprite = diamond; gem.color = Brass;
-        Place(gem.rectTransform, new Vector2(0f, 1f), new Vector2(530f, -188f), new Vector2(16f, 16f));
-        Label(tt, "Subtitle", italicFont, 36, DimCream, "Every voyage begins with trust.", TextAnchor.MiddleLeft, new Vector2(0f, 1f), new Vector2(430f, -236f), new Vector2(860f, 50f));
+        if (titleLogo != null)
+        {
+            var logo = new GameObject("Logo", typeof(RectTransform), typeof(Image)).GetComponent<Image>();
+            logo.transform.SetParent(tt, false);
+            logo.sprite = titleLogo;
+            logo.preserveAspect = true;
+            logo.raycastTarget = false;
+            float h = logoW * titleLogo.rect.height / titleLogo.rect.width;
+            Place(logo.rectTransform, new Vector2(0f, 1f), new Vector2(logoW * 0.5f, -h * 0.5f), new Vector2(logoW, h));
+            var tagline = Label(tt, "Tagline", italicFont, 32, DimCream, "Every voyage begins with trust.", TextAnchor.MiddleLeft, new Vector2(0f, 1f), new Vector2(logoW * 0.5f + 30f, -h - 30f), new Vector2(logoW, 46f));
+            AddShadow(tagline.gameObject, 0.7f);
+        }
+        else
+        {
+            var title = Label(tt, "Title", titleFont, 104, Cream, "THE PROMISED PORT", TextAnchor.MiddleLeft, new Vector2(0f, 1f), new Vector2(550f, -112f), new Vector2(1100f, 130f));
+            AddShadow(title.gameObject, 0.6f);
+            Label(tt, "Tagline", italicFont, 34, DimCream, "Every voyage begins with trust.", TextAnchor.MiddleLeft, new Vector2(0f, 1f), new Vector2(440f, -200f), new Vector2(880f, 48f));
+        }
 
-        mainButtons = Group(m, "Buttons", new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(150f + 260f, -110f), new Vector2(520f, 260f));
+        // The menu: right-aligned, a little below centre.
+        mainButtons = Group(m, "Buttons", new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-Margin - ColumnWidth * 0.5f, -70f), new Vector2(ColumnWidth, 300f));
         var bt = (RectTransform)mainButtons.transform;
-        beginButton = TextButton(bt, "BeginVoyage", "BEGIN VOYAGE", 44, new Vector2(0f, 80f), new Vector2(520f, 70f), OnBeginClicked);
-        var settings = TextButton(bt, "Settings", "SETTINGS", 34, new Vector2(0f, 0f), new Vector2(520f, 58f), () => OpenSettings(true));
-        var quit = TextButton(bt, "Quit", "QUIT", 34, new Vector2(0f, -66f), new Vector2(520f, 58f), () => { Click(); Quit?.Invoke(); });
-        Chain(beginButton, settings, quit);
+        beginButton = TextButton(bt, "BeginVoyage", "Begin Voyage", 42, new Vector2(0f, 105f), new Vector2(ColumnWidth, 60f), OnBeginClicked);
+        var settings = TextButton(bt, "Settings", "Settings", 42, new Vector2(0f, 45f), new Vector2(ColumnWidth, 60f), () => OpenSettings(true));
+        var creditsButton = TextButton(bt, "Credits", "Credits", 42, new Vector2(0f, -15f), new Vector2(ColumnWidth, 60f), ToggleCredits);
+        var quit = TextButton(bt, "Quit", "Quit", 42, new Vector2(0f, -75f), new Vector2(ColumnWidth, 60f), () => { Click(); Quit?.Invoke(); });
+        Chain(beginButton, settings, creditsButton, quit);
 
-        crewStrip = Label(m, "Crew", bodyFont, 22, DimCream, "", TextAnchor.MiddleLeft, new Vector2(0f, 0f), new Vector2(150f + 520f, 70f), new Vector2(1040f, 34f));
-        var creditsLink = TextButton(m, "CreditsLink", "Credits", 22, Vector2.zero, new Vector2(160f, 36f), ToggleCredits, withMarker: false);
-        Place((RectTransform)creditsLink.transform, new Vector2(1f, 0f), new Vector2(-110f, 66f), new Vector2(160f, 36f));
-        creditsLink.navigation = new Navigation { mode = Navigation.Mode.None };
+        // Rule and hints under the column, shared by the menu, settings and credits.
+        var foot = (RectTransform)new GameObject("Footer", typeof(RectTransform)).transform;
+        foot.SetParent(m, false);
+        Place(foot, new Vector2(1f, 0.5f), new Vector2(-Margin - ColumnWidth * 0.5f, -255f), new Vector2(ColumnWidth, 80f));
+        var rule = Raw(foot, "Rule", Ramp(0f, 1f), new Color(Cream.r, Cream.g, Cream.b, 0.7f));
+        Place(rule.rectTransform, new Vector2(0.5f, 1f), new Vector2(10f, 0f), new Vector2(ColumnWidth - 20f, 2f));
+        keyHints = Hints(foot, keycap, "Esc", "Back", "Enter", "Select");
+        padHints = Hints(foot, disc, "B", "Back", "A", "Select");
+
+        Label(m, "Mark", italicFont, 20, new Color(DimCream.r, DimCream.g, DimCream.b, 0.6f), "A GameJam+ 26/27 voyage", TextAnchor.MiddleRight,
+            new Vector2(1f, 0f), new Vector2(-Margin - 200f, 48f), new Vector2(400f, 30f));
+        crewStrip = Label(m, "Crew", bodyFont, 22, DimCream, "", TextAnchor.MiddleLeft, new Vector2(0f, 0f), new Vector2(Margin + 520f, 48f), new Vector2(1040f, 34f));
+
+        // Credits: in the right column, in place of the menu.
+        creditsPanel = new GameObject("Credits", typeof(RectTransform), typeof(Image));
+        creditsPanel.transform.SetParent(m, false);
+        var cp = (RectTransform)creditsPanel.transform;
+        var cpBack = creditsPanel.GetComponent<Image>();
+        cpBack.color = new Color(0.02f, 0.025f, 0.04f, 0.7f);
+        cpBack.raycastTarget = false;
+        Place(cp, new Vector2(1f, 0.5f), new Vector2(-Margin - 400f, 60f), new Vector2(800f, 560f));
         var creditsAsset = Resources.Load<TextAsset>("Credits");
-        credits = Label(m, "CreditsText", bodyFont, 22, Cream, creditsAsset != null ? creditsAsset.text : "Credits.txt is missing.", TextAnchor.UpperLeft, new Vector2(1f, 0.5f), new Vector2(-520f, 0f), new Vector2(860f, 760f));
-        credits.horizontalOverflow = HorizontalWrapMode.Wrap;
-        credits.gameObject.AddComponent<Outline>().effectColor = new Color(0f, 0f, 0f, 0.6f);
-        credits.gameObject.SetActive(false);
+        credits = Label(cp, "Text", bodyFont, 22, Cream, creditsAsset != null ? creditsAsset.text : "Credits.txt is missing.", TextAnchor.UpperLeft, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(740f, 520f));
+        creditsPanel.SetActive(false);
 
         BuildSettings(m);
     }
 
+    /// <summary>"[key] Back   [key] Select", right-aligned under the rule.</summary>
+    GameObject Hints(RectTransform parent, Sprite cap, string backKey, string back, string selectKey, string select)
+    {
+        var row = (RectTransform)new GameObject("Hints", typeof(RectTransform)).transform;
+        row.SetParent(parent, false);
+        Place(row, new Vector2(0.5f, 1f), new Vector2(0f, -34f), new Vector2(ColumnWidth, 40f));
+        float x = -10f; // from the column's right edge, working leftwards
+        foreach (var (key, label) in new[] { (selectKey, select), (backKey, back) })
+        {
+            var t = Label(row, label, bodyFont, 28, Cream, label, TextAnchor.MiddleRight, new Vector2(1f, 0.5f), new Vector2(x - 70f, 0f), new Vector2(140f, 36f));
+            AddShadow(t.gameObject, 0.6f);
+            float w = t.preferredWidth;
+            float capW = Mathf.Max(34f, 18f + key.Length * 12f);
+            var capImg = new GameObject("Key", typeof(RectTransform), typeof(Image)).GetComponent<Image>();
+            capImg.transform.SetParent(row, false);
+            capImg.sprite = cap;
+            capImg.type = cap != null && cap.border != Vector4.zero ? Image.Type.Sliced : Image.Type.Simple;
+            capImg.color = new Color(Cream.r, Cream.g, Cream.b, 0.92f);
+            capImg.raycastTarget = false;
+            Place(capImg.rectTransform, new Vector2(1f, 0.5f), new Vector2(x - w - 12f - capW * 0.5f, 0f), new Vector2(capW, 34f));
+            // The cap sprites are outlines: the key's letters go inside in the same cream.
+            Label(capImg.rectTransform, "Glyph", bodyFont, 20, Cream, key, TextAnchor.MiddleCenter, new Vector2(0.5f, 0.5f), new Vector2(0f, 1f), new Vector2(capW, 34f));
+            x -= w + 12f + capW + 36f;
+        }
+        return row.gameObject;
+    }
+
+    void Update()
+    {
+        // Hints for what the player holds: a controller's buttons when one is plugged in, else the keyboard's.
+        bool pad = Gamepad.current != null;
+        if (padHints != null && padHints.activeSelf != pad) padHints.SetActive(pad);
+        if (keyHints != null && keyHints.activeSelf == pad) keyHints.SetActive(!pad);
+    }
+
     void BuildSettings(RectTransform m)
     {
-        settingsGroup = Group(m, "Settings", new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(150f + 330f, -120f), new Vector2(660f, 520f));
+        settingsGroup = Group(m, "Settings", new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-Margin - 330f, 40f), new Vector2(660f, 520f));
         var s = (RectTransform)settingsGroup.transform;
-        Label(s, "Heading", titleFont, 40, Cream, "SETTINGS", TextAnchor.MiddleLeft, new Vector2(0f, 1f), new Vector2(330f, -26f), new Vector2(660f, 52f));
+        Label(s, "Heading", titleFont, 40, Cream, "Settings", TextAnchor.MiddleRight, new Vector2(0f, 1f), new Vector2(330f, -26f), new Vector2(660f, 52f));
 
         var rows = new List<Selectable>();
         float y = -96f;
@@ -182,8 +245,8 @@ public class OpeningMenu : MonoBehaviour
         rows.Add(quality);
         rows.Add(SliderRow(s, "Fullscreen", ref y, GameSettings.Fullscreen ? 1f : 0f, v => GameSettings.Fullscreen = v > 0.5f, v => v > 0.5f ? "On" : "Off", 0f, 1f, true));
         y -= 14f;
-        var back = TextButton(s, "Back", "BACK", 34, Vector2.zero, new Vector2(520f, 58f), () => OpenSettings(false));
-        Place((RectTransform)back.transform, new Vector2(0f, 1f), new Vector2(260f, y), new Vector2(520f, 58f));
+        var back = TextButton(s, "Back", "Back", 38, Vector2.zero, new Vector2(660f, 56f), () => OpenSettings(false));
+        Place((RectTransform)back.transform, new Vector2(0f, 1f), new Vector2(330f, y), new Vector2(660f, 56f));
         rows.Add(back);
         Chain(rows.ToArray());
         settingsGroupFirst = rows[0];
@@ -301,7 +364,7 @@ public class OpeningMenu : MonoBehaviour
     public void ShowMenu(bool show, bool instant = false)
     {
         interactive = show;
-        if (!show) { OpenSettings(false, silent: true); if (credits != null) credits.gameObject.SetActive(false); }
+        if (!show) { OpenSettings(false, silent: true); if (creditsPanel != null) creditsPanel.SetActive(false); }
         if (instant)
         {
             SetGroup(menuGroup, show);
@@ -369,7 +432,10 @@ public class OpeningMenu : MonoBehaviour
     public void ToggleCredits()
     {
         Click();
-        credits.gameObject.SetActive(!credits.gameObject.activeSelf);
+        bool open = !creditsPanel.activeSelf;
+        creditsPanel.SetActive(open);
+        SetGroup(mainButtons, !open && interactive);
+        if (!open && interactive) StartCoroutine(SelectNextFrame(beginButton));
     }
 
     /// <summary>Esc / B while a sub-panel is open. True if it closed something.</summary>
@@ -391,6 +457,10 @@ public class OpeningMenu : MonoBehaviour
 
     // ---------- Helpers ----------
 
+    /// <summary>
+    /// A menu item: right-aligned type over an invisible hit box. With a marker, a brass band fades in behind it, with
+    /// a diamond at the band's left end, while it's hovered or selected (MenuButtonFx).
+    /// </summary>
     Button TextButton(RectTransform parent, string name, string text, int size, Vector2 pos, Vector2 box, UnityEngine.Events.UnityAction onClick, bool withMarker = true)
     {
         var go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button), typeof(MenuButtonFx));
@@ -398,26 +468,32 @@ public class OpeningMenu : MonoBehaviour
         Place((RectTransform)go.transform, new Vector2(0f, 0.5f), pos + new Vector2(box.x * 0.5f, 0f), box);
         var hit = go.GetComponent<Image>();
         hit.color = new Color(0f, 0f, 0f, 0f); // invisible, just catches the pointer
-        var label = Label((RectTransform)go.transform, "Label", size >= 40 ? titleFont : bodyFont, size, DimCream, text,
-            withMarker ? TextAnchor.MiddleLeft : TextAnchor.MiddleRight, new Vector2(0f, 0.5f), new Vector2(box.x * 0.5f + (withMarker ? 34f : 0f), 0f), box);
-        AddShadow(label.gameObject, 0.5f);
+
+        RawImage band = null;
         Image marker = null;
         if (withMarker)
         {
+            band = Raw((RectTransform)go.transform, "Band", Band(), new Color(Brass.r, Brass.g, Brass.b, 0f));
+            Place(band.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(30f, 0f), new Vector2(box.x + 60f, box.y - 6f));
             marker = new GameObject("Marker", typeof(RectTransform), typeof(Image)).GetComponent<Image>();
             marker.transform.SetParent(go.transform, false);
             marker.sprite = diamond;
             marker.color = Brass;
-            Place(marker.rectTransform, new Vector2(0f, 0.5f), new Vector2(10f, 0f), new Vector2(14f, 14f));
+            Place(marker.rectTransform, new Vector2(0f, 0.5f), new Vector2(box.x * 0.36f, 0f), new Vector2(18f, 18f));
         }
+        var label = Label((RectTransform)go.transform, "Label", bodyFont, size, DimCream, text,
+            TextAnchor.MiddleRight, new Vector2(0f, 0.5f), new Vector2(box.x * 0.5f - (withMarker ? 6f : 0f), 0f), box);
+        AddShadow(label.gameObject, 0.55f);
+
         var button = go.GetComponent<Button>();
         button.transition = Selectable.Transition.None;
         button.onClick.AddListener(onClick);
         var fx = go.GetComponent<MenuButtonFx>();
         fx.label = label;
         fx.marker = marker;
+        fx.band = band;
         fx.normal = DimCream;
-        fx.highlight = Cream;
+        fx.highlight = Color.white;
         fx.accent = Brass;
         fx.onHighlight = () => { if (hoverSound != null) uiAudio.PlayOneShot(hoverSound, 0.5f); };
         return button;
@@ -498,6 +574,63 @@ public class OpeningMenu : MonoBehaviour
         s.effectDistance = new Vector2(2f, -2f);
     }
 
+    RawImage Raw(RectTransform parent, string name, Texture2D tex, Color color)
+    {
+        var img = new GameObject(name, typeof(RectTransform), typeof(RawImage)).GetComponent<RawImage>();
+        img.transform.SetParent(parent, false);
+        img.texture = tex;
+        img.color = color;
+        img.raycastTarget = false;
+        return img;
+    }
+
+    static void Stretch(RectTransform r, Vector2 min, Vector2 max)
+    {
+        r.anchorMin = min; r.anchorMax = max;
+        r.offsetMin = r.offsetMax = Vector2.zero;
+    }
+
+    /// <summary>Alpha ramp left to right, from a to b.</summary>
+    static Texture2D Ramp(float a, float b)
+    {
+        var tex = new Texture2D(256, 1, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, name = "Ramp" };
+        for (int x = 0; x < 256; x++) tex.SetPixel(x, 0, new Color(1f, 1f, 1f, Mathf.Lerp(a, b, x / 255f)));
+        tex.Apply();
+        return tex;
+    }
+
+    /// <summary>The selection band: clear at the left, full from just past the middle, easing off at the right.</summary>
+    static Texture2D Band()
+    {
+        var tex = new Texture2D(256, 8, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, name = "Band" };
+        for (int y = 0; y < 8; y++)
+        for (int x = 0; x < 256; x++)
+        {
+            float u = x / 255f, v = Mathf.Abs(y / 7f - 0.5f) * 2f;
+            float a = Mathf.SmoothStep(0f, 1f, u / 0.6f) * Mathf.Lerp(1f, 0.55f, Mathf.InverseLerp(0.75f, 1f, u));
+            tex.SetPixel(x, y, new Color(1f, 1f, 1f, a * (1f - v * v * 0.5f)));
+        }
+        tex.Apply();
+        return tex;
+    }
+
+    /// <summary>Dark round the edges, heaviest across the bottom.</summary>
+    static Texture2D Vignette()
+    {
+        const int N = 128;
+        var tex = new Texture2D(N, N, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, name = "Vignette" };
+        for (int y = 0; y < N; y++)
+        for (int x = 0; x < N; x++)
+        {
+            float u = x / (N - 1f) * 2f - 1f, v = y / (N - 1f) * 2f - 1f;
+            float d = Mathf.Sqrt(u * u * 0.8f + v * v);
+            float a = Mathf.SmoothStep(0.45f, 1.35f, d) + Mathf.Clamp01(-v - 0.35f) * 0.35f;
+            tex.SetPixel(x, y, new Color(1f, 1f, 1f, Mathf.Clamp01(a)));
+        }
+        tex.Apply();
+        return tex;
+    }
+
     static Texture2D Gradient()
     {
         var tex = new Texture2D(256, 1, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, name = "MenuShade" };
@@ -516,6 +649,7 @@ public class MenuButtonFx : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
 {
     public Text label;
     public Image marker;
+    public RawImage band;
     public Color normal, highlight, accent;
     public System.Action onHighlight;
 
@@ -552,7 +686,8 @@ public class MenuButtonFx : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
         if (!hasBase) { basePos = label.rectTransform.anchoredPosition; hasBase = true; }
         float s = Mathf.SmoothStep(0f, 1f, amount);
         label.color = Color.Lerp(normal, highlight, s);
-        label.rectTransform.anchoredPosition = basePos + new Vector2(8f * s, 0f);
+        label.rectTransform.anchoredPosition = basePos + new Vector2(-6f * s, 0f);
+        if (band != null) band.color = new Color(accent.r, accent.g, accent.b, 0.62f * s);
         if (marker != null)
         {
             marker.color = new Color(accent.r, accent.g, accent.b, s);
