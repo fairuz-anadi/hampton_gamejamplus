@@ -21,7 +21,7 @@ public static class HudBuilder
     static readonly Color Muted = new Color(0.68f, 0.74f, 0.85f);
 
     static Font regular, bold, italic;
-    static Sprite panel, outline, bar, ring, disc, keycap, iconCaptain, iconSafety, iconCrew;
+    static Sprite panel, outline, bar, ring, disc, keycap, iconCaptain, iconSafety, iconCrew, iconSpeaker;
 
     [MenuItem("Port/Samprity/Build HUD")]
     public static void Build()
@@ -71,6 +71,7 @@ public static class HudBuilder
         iconCaptain = Sprite("icon_captain", 0);
         iconSafety = Sprite("icon_safety", 0);
         iconCrew = Sprite("icon_crew", 0);
+        iconSpeaker = Sprite("icon_speaker", 0);
     }
 
     /// <summary>Imports a PNG from Art/UI/Sprites as a sprite, with a 9-slice border when it stretches.</summary>
@@ -111,7 +112,41 @@ public static class HudBuilder
         BuildMeters(root.transform);
         BuildOrders(root.transform);
         BuildPrompts(root.transform, (RectTransform)root.transform);
+        BuildSubtitles(root.transform);
         return root;
+    }
+
+    /// <summary>The Captain's line, bottom centre. CaptainSubtitles sizes the panel to each line.</summary>
+    static void BuildSubtitles(Transform parent)
+    {
+        var box = Box(parent, "CaptainSubtitles", new Vector2(0.5f, 0f), new Vector2(0f, 46f), new Vector2(1200f, 220f), new Vector2(0.5f, 0f));
+        var group = box.gameObject.AddComponent<CanvasGroup>();
+        group.alpha = 0f;
+        var panelRt = Box(box, "Panel", new Vector2(0.5f, 0f), Vector2.zero, new Vector2(760f, 112f), new Vector2(0.5f, 0f));
+        Img(panelRt, "Background", panel, new Color(0.04f, 0.06f, 0.11f, 0.9f), Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, Image.Type.Sliced);
+        var trim = Img(panelRt, "Trim", outline, Brass, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, Image.Type.Sliced);
+        var horn = Img(panelRt, "Speaker", iconSpeaker, Brass, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(58f, 0f), new Vector2(64f, 64f), Image.Type.Simple);
+        var label = Txt(panelRt, "Label", bold, 16, Brass, "THE  CAPTAIN", new Vector2(0f, 1f), new Vector2(112f, -14f), new Vector2(400f, 22f), TextAnchor.UpperLeft);
+        var line = Txt(panelRt, "Line", italic, 30, Cream, "", new Vector2(0f, 1f), new Vector2(112f, -40f), new Vector2(600f, 40f), TextAnchor.UpperLeft);
+        line.horizontalOverflow = HorizontalWrapMode.Wrap;
+        line.lineSpacing = 0.95f;
+        // Invisible twin of the line, used only to measure the finished line before it types out.
+        var sizer = Txt(panelRt, "Sizer", italic, 30, new Color(0f, 0f, 0f, 0f), "", new Vector2(0f, 1f), new Vector2(112f, -40f), new Vector2(600f, 40f), TextAnchor.UpperLeft);
+        sizer.horizontalOverflow = HorizontalWrapMode.Wrap;
+        sizer.lineSpacing = 0.95f;
+        Object.DestroyImmediate(sizer.GetComponent<Shadow>());
+        var staticText = Txt(panelRt, "Static", bold, 20, new Color(0.8f, 0.82f, 0.86f), "~  k s s s h h h t  ~", new Vector2(0.5f, 1f), new Vector2(0f, 30f), new Vector2(500f, 26f), TextAnchor.LowerCenter);
+        staticText.enabled = false;
+
+        var subs = box.gameObject.AddComponent<CaptainSubtitles>();
+        subs.group = group;
+        subs.panel = panelRt;
+        subs.line = line;
+        subs.sizer = sizer;
+        subs.label = label;
+        subs.staticText = staticText;
+        subs.trim = trim;
+        subs.horn = horn;
     }
 
     static void BuildMeters(Transform parent)
@@ -355,10 +390,12 @@ public static class HudBuilder
         var meters = hud.GetComponentInChildren<MeterPanel>(true);
         var cards = hud.GetComponentInChildren<OrderCards>(true).cards;
         var prompts = hud.GetComponentInChildren<StationPrompts>(true);
+        var subs = hud.GetComponentInChildren<CaptainSubtitles>(true);
 
-        void Shot(string name, int part, int ct, int ss, int crew, int ctWas, (OrderData d, int n, int seat, bool human, float left)[] orders, Vector3 at, float yaw, string station, string verb)
+        void Shot(string name, int part, int ct, int ss, int crew, int ctWas, (OrderData d, int n, int seat, bool human, float left)[] orders, Vector3 at, float yaw, string station, string verb, string subtitle, bool withStatic, string timeOfDay)
         {
-            mood.ApplyImmediate(part);
+            if (mood.cycle != null) mood.Preview(part, mood.cycle.PhaseOf(timeOfDay)); else mood.ApplyImmediate(part);
+            subs.Preview(subtitle, part, withStatic);
             MovementChecks.Sim(mover, follow, at, yaw, (1.2f, Vector2.zero));
             meters.captain.SetValue(ctWas); meters.captain.SetValue(ct);
             meters.safety.SetValue(ss);
@@ -395,10 +432,16 @@ public static class HudBuilder
 
         Shot("1_calm", 1, 55, 82, 60, 50,
             new[] { (feed, 1, 1, true, 19f), (ice, 2, 3, false, 4f) },
-            new Vector3(-0.8f, 0.05f, 6.2f), 180f, "Station_Boiler", "Shovel coal");
+            new Vector3(-0.8f, 0.05f, 6.2f), 180f, "Station_Boiler", "Shovel coal",
+            "Good work, lads. We'll make history.", false, "Morning");
         Shot("2_off", 2, 82, 41, 24, 76,
             new[] { (lifeboats, 9, 2, true, 3f) },
-            new Vector3(3.9f, 0.05f, 13.4f), 90f, "Station_Doors", "Pull lever");
+            new Vector3(3.9f, 0.05f, 13.4f), 90f, "Station_Doors", "Pull lever",
+            "I know the wireless is busy. I know who's at it.", true, "Afternoon");
+        Shot("3_truth", 3, 64, 33, 40, 64,
+            new (OrderData, int, int, bool, float)[0],
+            new Vector3(0f, 0.05f, 26.3f), 0f, "Station_Wheel", "Steer",
+            "You want to know why. Fine. No one remembers a careful captain. They remember the fastest crossing, and the name on the front page.", false, "Night");
 
         cam.targetTexture = null;
         Object.DestroyImmediate(rt);

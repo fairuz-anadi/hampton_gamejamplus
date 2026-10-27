@@ -16,6 +16,8 @@ public class StationPrompts : MonoBehaviour
     public float heightAbove = 1.7f;
     [Tooltip("Canvas units kept clear at the top for the order cards.")]
     public float keepClearTop = 370f;
+    [Tooltip("Canvas units kept clear at the bottom for the Captain's subtitles.")]
+    public float keepClearBottom = 210f;
     public Color normalTint = new Color(0.95f, 0.88f, 0.7f);
     public Color repairTint = new Color(1f, 0.45f, 0.35f);
     public Color doneTint = new Color(0.55f, 0.95f, 0.6f);
@@ -73,12 +75,12 @@ public class StationPrompts : MonoBehaviour
         for (int i = used; i < prompts.Length; i++) prompts[i].Hide();
     }
 
-    /// <summary>Keeps a prompt (pivot at its bottom centre) inside the screen and below the order cards.</summary>
+    /// <summary>Keeps a prompt (pivot at its bottom centre) on screen, below the order cards and above the subtitles.</summary>
     public Vector2 KeepOnScreen(Vector2 local)
     {
         Vector2 half = canvasRect.rect.size * 0.5f;
         local.x = Mathf.Clamp(local.x, -half.x + 170f, half.x - 170f);
-        local.y = Mathf.Clamp(local.y, -half.y + 30f, half.y - keepClearTop - 80f);
+        local.y = Mathf.Clamp(local.y, -half.y + keepClearBottom, half.y - keepClearTop - 80f);
         return local;
     }
 
