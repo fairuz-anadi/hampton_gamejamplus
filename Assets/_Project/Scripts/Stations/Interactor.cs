@@ -40,6 +40,20 @@ public class Interactor : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 0..1 progress of the station currently nearest (repair progress while broken, 1 once done),
+    /// or 0 while carrying, steering, or near nothing. One source of truth for a UI progress bar.
+    /// </summary>
+    public float HoldProgress01
+    {
+        get
+        {
+            if (!(NearestStation is Station s)) return 0f;
+            if (s is Wheel w && w.SteeringOpen) return 0f;
+            return s.IsDone && !s.IsBroken ? 1f : s.Progress01;
+        }
+    }
+
     void Awake()
     {
         actor = GetComponent<ICrewActor>();
