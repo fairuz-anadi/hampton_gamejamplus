@@ -38,6 +38,21 @@ public class OrderDirector : MonoBehaviour
     int nextIndex;
     int nextId = 1;
     int lastSeat;
+    bool lastWentToHuman;
+
+    [Header("Speed reward")]
+    [Tooltip("A player who obeys with at least this share of the timer left earns the bonus.")]
+    [SerializeField, Range(0f, 1f)] float smartFraction = 0.4f;
+    [SerializeField] MeterDelta smartBonus = new MeterDelta(2, 0, 0);
+    int smartStreak;
+
+    /// <summary>The Captain on a streak of three quick, obedient orders. He means it; that's the problem.</summary>
+    static readonly string[] StreakLines =
+    {
+        "Three in a row, and smartly done. That's the crew I asked for.",
+        "Look at that. Fast and no questions. They'll write about this crew.",
+        "Smart work again. Keep this up and we'll make port before the papers do.",
+    };
     float nextIssueAt;
     bool running;
 
@@ -71,6 +86,8 @@ public class OrderDirector : MonoBehaviour
         nextIndex = 0;
         nextId = 1;
         lastSeat = 0;
+        lastWentToHuman = false;
+        smartStreak = 0;
         running = true;
         nextIssueAt = Time.time + firstOrderDelay;
     }
@@ -102,7 +119,7 @@ public class OrderDirector : MonoBehaviour
         if (data.kind == OrderKind.Final && active.Count > 0) return;
         if (StationsBusy(data)) return; // try again next frame, once the station is free
 
-        var assignee = PickAssignee();
+        var assignee = PickAssignee(data);
         if (assignee == null && CrewRegistry.All.Count > 0) return; // everyone is busy, try again next frame
 
         if (GameManager.Instance != null) GameManager.Instance.EnterPart(data.part);
@@ -126,18 +143,32 @@ public class OrderDirector : MonoBehaviour
         return Random.Range(range.x, range.y);
     }
 
-    /// <summary>Round-robin over seats that have no active order and aren't locked out. Copes with gaps in seat numbers.</summary>
-    ICrewActor PickAssignee()
+    /// <summary>
+    /// Who gets the order. The players carry the voyage: the "off" orders and the final one go to a free human, and
+    /// normal orders alternate human / bot, so a solo player gets most orders and the bots fill in. Within humans and
+    /// within bots it's round-robin over seats that have no active order and aren't locked out (copes with seat gaps).
+    /// Nobody free in the wanted group: the other group takes it.
+    /// </summary>
+    ICrewActor PickAssignee(OrderData data)
     {
         var crew = CrewRegistry.All; // sorted by seat
         if (crew.Count == 0) return null;
+        bool wantHuman = data == null || data.kind != OrderKind.Normal || !lastWentToHuman;
+        var c = NextFree(crew, human: wantHuman) ?? NextFree(crew, human: !wantHuman);
+        if (c == null) return null;
+        lastSeat = c.Seat;
+        lastWentToHuman = !c.IsBot;
+        return c;
+    }
+
+    ICrewActor NextFree(IReadOnlyList<ICrewActor> crew, bool human)
+    {
         int start = 0;
         while (start < crew.Count && crew[start].Seat <= lastSeat) start++;
         for (int i = 0; i < crew.Count; i++)
         {
             var c = crew[(start + i) % crew.Count];
-            if (c.IsLockedOut || GetOrderFor(c) != null) continue;
-            lastSeat = c.Seat;
+            if (c.IsBot == human || c.IsLockedOut || GetOrderFor(c) != null) continue;
             return c;
         }
         return null;
@@ -215,6 +246,16 @@ public class OrderDirector : MonoBehaviour
 
         var delta = o.Data.DeltaFor(choice);
         if (witnessed) delta += fakeWitnessedPenalty;
+
+        // Speed reward: a player who obeys with time to spare earns a little of the Captain's favour, and every third
+        // in a row he says so. Only Captain's Trust moves, so it never changes which ending a run reaches.
+        bool smart = false;
+        if (o.Assignee != null && !o.Assignee.IsBot)
+        {
+            smart = choice == Choice.Obey && o.Data.timer > 0f && o.TimeLeft >= o.Data.timer * smartFraction;
+            smartStreak = smart ? smartStreak + 1 : 0;
+            if (smart) delta += smartBonus;
+        }
         MeterSystem.Instance?.Apply(delta);
 
         var entry = new ChoiceEntry
@@ -237,6 +278,12 @@ public class OrderDirector : MonoBehaviour
             StartCoroutine(NoticeFakeLater(o, entry));
 
         GameEvents.RaiseOrderResolved(o, choice);
+        if (smart)
+        {
+            GameEvents.RaiseSmartlyDone(o, smartStreak);
+            if (smartStreak % 3 == 0 && CaptainDirector.Instance != null)
+                CaptainDirector.Instance.SayStory(StreakLines[(smartStreak / 3 - 1) % StreakLines.Length]);
+        }
 
         if (AllOrdersDone)
         {

@@ -36,6 +36,9 @@ public static class GameEvents
     /// <summary>The Stoker hid this warning: it never showed up. Players only notice the gap in the numbering.</summary>
     public static event Action<int> IceWarningHidden;
 
+    /// <summary>A player obeyed with time to spare (OrderDirector's speed reward). Second argument = their streak so far.</summary>
+    public static event Action<ActiveOrder, int> SmartlyDone;
+
     public static void RaiseStateChanged(GameState s) => StateChanged?.Invoke(s);
     public static void RaisePartChanged(int part) => PartChanged?.Invoke(part);
     public static void RaiseTruthStarted() => TruthStarted?.Invoke();
@@ -50,6 +53,7 @@ public static class GameEvents
     public static void RaiseIceWarningDelivered(int n) => IceWarningDelivered?.Invoke(n);
     public static void RaiseIceWarningLost(int n) => IceWarningLost?.Invoke(n);
     public static void RaiseIceWarningHidden(int n) => IceWarningHidden?.Invoke(n);
+    public static void RaiseSmartlyDone(ActiveOrder o, int streak) => SmartlyDone?.Invoke(o, streak);
 
     /// <summary>Clears every listener when play mode starts, in case domain reload is turned off.</summary>
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -60,5 +64,6 @@ public static class GameEvents
         MetersChanged = null;
         StationBroken = null; StationRepaired = null; HelpCalled = null;
         IceWarningArrived = null; IceWarningDelivered = null; IceWarningLost = null; IceWarningHidden = null;
+        SmartlyDone = null;
     }
 }

@@ -19,7 +19,7 @@ public class StationSfx : MonoBehaviour
     [SerializeField, Range(0f, 1f)] float volume = 0.35f;
 
     AudioSource source;
-    AudioClip done, broken, repaired, help, morse;
+    AudioClip done, broken, repaired, help, morse, smart;
 
     void Awake()
     {
@@ -33,6 +33,7 @@ public class StationSfx : MonoBehaviour
         broken = Buzz("sfx_broken", 140f, 0.45f);
         help = Slide("sfx_help", 1200f, 1800f, 0.35f);
         morse = Tones("sfx_morse", (800f, 0.07f), (0f, 0.06f), (800f, 0.07f), (0f, 0.06f), (800f, 0.2f));
+        smart = Tones("sfx_smart", (784f, 0.08f), (988f, 0.08f), (1175f, 0.08f), (1568f, 0.22f));
     }
 
     void OnDestroy()
@@ -46,6 +47,7 @@ public class StationSfx : MonoBehaviour
         GameEvents.StationRepaired += OnRepaired;
         GameEvents.HelpCalled += OnHelp;
         GameEvents.IceWarningArrived += OnIceWarning;
+        GameEvents.SmartlyDone += OnSmart;
     }
 
     void OnDisable()
@@ -54,7 +56,10 @@ public class StationSfx : MonoBehaviour
         GameEvents.StationRepaired -= OnRepaired;
         GameEvents.HelpCalled -= OnHelp;
         GameEvents.IceWarningArrived -= OnIceWarning;
+        GameEvents.SmartlyDone -= OnSmart;
     }
+
+    void OnSmart(ActiveOrder o, int streak) => Play(smart);
 
     /// <summary>Station calls this when its light turns green.</summary>
     public static void PlayDone() => instance?.Play(instance.done);
