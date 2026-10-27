@@ -39,6 +39,7 @@ public static class ShipDeckBuilder
         var locomotion = MovementPrototypeBuilder.BuildLocomotionController();
         RenderLookSetup.Apply();
         CreateMaterials();
+        StylizedLook.Apply(); // ship, KayKit and crew materials onto the painterly toon shader
 
         var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
         foreach (var go in scene.GetRootGameObjects()) Object.DestroyImmediate(go);
@@ -87,6 +88,7 @@ public static class ShipDeckBuilder
         BuildBridge(stationT, propT);
         BuildBow(propT);
         BuildDetails(propT);
+        BuildCraft(propT);
         BuildExterior(hullT);
         var fxT = Group(t, "Atmosphere");
         BuildAtmosphere(fxT);
@@ -100,11 +102,14 @@ public static class ShipDeckBuilder
         mood.offVolume = PostVolume(fxT, "PostFX_Off", "Off", 0f);
         mood.truthVolume = PostVolume(fxT, "PostFX_Truth", "Truth", 0f);
         mood.sky = AssetDatabase.LoadAssetAtPath<Material>(RenderLookSetup.SkyMaterialPath);
+        mood.probes = fxT.GetComponentsInChildren<ReflectionProbe>();
 
-        Marker(markerT, "Spawn_1", new Vector3(-3f, 0.05f, 6.8f), 0f);
-        Marker(markerT, "Spawn_2", new Vector3(-1f, 0.05f, 7.0f), 0f);
-        Marker(markerT, "Spawn_3", new Vector3(1f, 0.05f, 7.0f), 0f);
-        Marker(markerT, "Spawn_4", new Vector3(3f, 0.05f, 6.8f), 0f);
+        // The crew line up in the stokehold facing the furnace (the first order is the boiler). Seat 1 stands in line
+        // with the corridor doorway, so the follow camera behind them looks through it. The opening ends on this shot.
+        Marker(markerT, "Spawn_1", new Vector3(-0.7f, 0.05f, 6.2f), 180f);
+        Marker(markerT, "Spawn_2", new Vector3(-2.4f, 0.05f, 6.3f), 180f);
+        Marker(markerT, "Spawn_3", new Vector3(0.95f, 0.05f, 6.0f), 180f);
+        Marker(markerT, "Spawn_4", new Vector3(2.6f, 0.05f, 6.3f), 180f);
         return root;
     }
 
@@ -136,9 +141,9 @@ public static class ShipDeckBuilder
             string piece; Material mat = null;
             if (z < 4f && x != 0f) piece = "floor_tile_big_grate";             // stokehold grating either side of the boiler
             else if (z < 8f) { piece = "floor_tile_large"; mat = darkFloor; }  // boiler: sooty stone
-            else if (z < 16f) piece = "floor_tile_large";                      // corridor
-            else if (z < 32f) piece = "floor_wood_large";                      // wireless, bridge
-            else piece = "floor_wood_large_dark";                              // bow deck
+            else if (z < 16f) { piece = "floor_tile_large"; mat = StylizedLook.Get("KK_StoneFloor"); }   // corridor
+            else if (z < 32f) { piece = "floor_wood_large"; mat = StylizedLook.Get("KK_WoodFloor"); }    // wireless, bridge
+            else { piece = "floor_wood_large_dark"; mat = StylizedLook.Get("KK_WoodFloor"); }            // bow deck
             Kit(p, "Dungeon", piece, new Vector3(x, 0f, z), 0f, null, false, mat);
         }
     }
@@ -188,6 +193,13 @@ public static class ShipDeckBuilder
         Prim(PrimitiveType.Cylinder, "Flue", s, new Vector3(0f, 3.6f, -1.2f), Vector3.zero, new Vector3(0.8f, 1.2f, 0.8f), coal);
         Prim(PrimitiveType.Cube, "Firebox", s, new Vector3(0f, 0.75f, 0.62f), Vector3.zero, new Vector3(1.3f, 0.9f, 0.12f), fire, false);
         Prim(PrimitiveType.Cube, "FireboxFrame", s, new Vector3(0f, 0.75f, 0.58f), Vector3.zero, new Vector3(1.6f, 1.15f, 0.1f), coal, false);
+        // A bed of dull-red embers along the bottom and iron grate bars in front, so the fire reads as a furnace
+        // mouth instead of a flat glowing panel. Visual only.
+        var embers = ShipMat("Ship_EmberBed", new Color(0.5f, 0.1f, 0.03f), null, 0f, 0.2f, new Color(1f, 0.16f, 0.03f) * 1.3f);
+        Prim(PrimitiveType.Cube, "EmberBed", s, new Vector3(0f, 0.43f, 0.69f), Vector3.zero, new Vector3(1.3f, 0.26f, 0.04f), embers, false);
+        for (int i = 0; i < 5; i++)
+            Prim(PrimitiveType.Cube, "GrateBar_" + i, s, new Vector3(-0.52f + i * 0.26f, 0.75f, 0.71f), Vector3.zero, new Vector3(0.05f, 0.9f, 0.04f), coal, false);
+        Prim(PrimitiveType.Cube, "GrateRail", s, new Vector3(0f, 0.95f, 0.72f), Vector3.zero, new Vector3(1.3f, 0.05f, 0.04f), coal, false);
         // Coal chute: two people shovel from the pile into the chute.
         Prim(PrimitiveType.Cube, "CoalChute", s, new Vector3(2.4f, 0.95f, 0.1f), new Vector3(-28f, 0f, 0f), new Vector3(1.1f, 0.12f, 2.2f), steel);
         for (int i = 0; i < 4; i++)
@@ -195,7 +207,7 @@ public static class ShipDeckBuilder
         StatusLight(s, new Vector3(0f, 2.55f, 0.55f));
         WorkSpot(s, "WorkSpot_A", new Vector3(-0.8f, 0.05f, 1.6f), 180f);
         WorkSpot(s, "WorkSpot_B", new Vector3(0.8f, 0.05f, 1.6f), 180f);
-        var fireLight = PointLight(s, "FireGlow", new Vector3(0f, 0.9f, 1.3f), new Color(1f, 0.45f, 0.15f), 4f, 7f);
+        var fireLight = PointLight(s, "FireGlow", new Vector3(0f, 0.9f, 1.3f), new Color(1f, 0.45f, 0.15f), 6f, 9f);
         fireLight.shadows = LightShadows.Soft;
         fireLight.gameObject.AddComponent<FireFlicker>();
         Speaker(props, "Speaker_Boiler", new Vector3(-5.4f, 2.5f, 5f), 90f);
@@ -262,7 +274,7 @@ public static class ShipDeckBuilder
         Speaker(props, "Speaker_Wireless", new Vector3(5.4f, 2.5f, 21f), -90f);
         Kit(props, "Furniture", "shelf_B_large_decorated", new Vector3(-4f, 0f, 22.9f), 180f);
         Kit(props, "Furniture", "cabinet_medium_decorated", new Vector3(4.9f, 0f, 19f), -90f);
-        Kit(props, "Furniture", "rug_rectangle_stripes_A", new Vector3(1f, 0.06f, 20f), 90f, null, false);
+        Kit(props, "Furniture", "rug_rectangle_stripes_A", new Vector3(1f, 0.06f, 20f), 90f, null, false, Runner("Ship_RunnerGreen", new Color(0.2f, 0.3f, 0.25f)));
     }
 
     static void BuildBridge(Transform stations, Transform props)
@@ -396,7 +408,7 @@ public static class ShipDeckBuilder
         Prim(PrimitiveType.Cube, "Notice_A", board, new Vector3(-0.3f, 0.08f, -0.03f), new Vector3(0f, 0f, 4f), new Vector3(0.35f, 0.45f, 0.01f), cream, false);
         Prim(PrimitiveType.Cube, "Notice_B", board, new Vector3(0.25f, -0.05f, -0.03f), new Vector3(0f, 0f, -6f), new Vector3(0.4f, 0.3f, 0.01f), cream, false);
         Pipe(d, "CorridorPipe", new Vector3(-1.42f, 2.6f, 12f), new Vector3(90f, 0f, 0f), 8f, 0.12f, steel);
-        Kit(d, "Furniture", "rug_rectangle_stripes_B", new Vector3(0f, 0.06f, 12f), 90f, null, false);
+        Kit(d, "Furniture", "rug_rectangle_stripes_B", new Vector3(0f, 0.06f, 12f), 90f, null, false, Runner("Ship_RunnerRed", new Color(0.44f, 0.13f, 0.1f)));
 
         // Wireless: the wall clock (Riham can turn its hands for "the clock skips back"), papers, cables, a chart.
         var clock = Group(d, "WirelessClock");
@@ -444,6 +456,192 @@ public static class ShipDeckBuilder
         Rigging(mast, new Vector3(0f, 11.5f, 0f), new Vector3(-5.8f, 0.9f, -1.6f));
         Rigging(mast, new Vector3(0f, 11.5f, 0f), new Vector3(5.8f, 0.9f, -1.6f));
         Rigging(mast, new Vector3(0f, 11.5f, 0f), new Vector3(0f, 0.9f, 1.2f));
+
+        BuildProwAndStern(e);
+        BuildWake(e);
+    }
+
+    // ---------- Hull ends and the ship under way (visual only, no colliders) ----------
+
+    /// <summary>A raked prow ahead of the bow railing and a rounded stern, so the hull isn't a box.</summary>
+    static void BuildProwAndStern(Transform e)
+    {
+        const float half = 6.6f, keel = -2.7f, stemZ = 42.5f, bowZ = 36.2f, sheer = 0.7f;
+        var m = new Mesh { name = "Prow" };
+        var verts = new List<Vector3>();
+        var tris = new List<int>();
+        void Quad(Vector3 a, Vector3 b, Vector3 c, Vector3 d) { int i = verts.Count; verts.AddRange(new[] { a, b, c, d }); tris.AddRange(new[] { i, i + 1, i + 2, i, i + 2, i + 3 }); }
+        void Tri(Vector3 a, Vector3 b, Vector3 c) { int i = verts.Count; verts.AddRange(new[] { a, b, c }); tris.AddRange(new[] { i, i + 1, i + 2 }); }
+        Vector3 L0 = new Vector3(-half, keel, bowZ), L1 = new Vector3(-half, 0f, bowZ), R0 = new Vector3(half, keel, bowZ), R1 = new Vector3(half, 0f, bowZ);
+        Vector3 S0 = new Vector3(0f, keel, stemZ - 1.2f), S1 = new Vector3(0f, sheer, stemZ);
+        Quad(L0, L1, S1, S0);   // port side
+        Quad(R0, S0, S1, R1);   // starboard side
+        Tri(L1, R1, S1);        // foredeck
+        m.SetVertices(verts);
+        m.SetTriangles(tris, 0);
+        m.RecalculateNormals();
+        m.RecalculateBounds();
+        MovementPrototypeBuilder.EnsureFolder(GeneratedMeshFolder);
+        AssetDatabase.DeleteAsset($"{GeneratedMeshFolder}/Prow.asset");
+        AssetDatabase.CreateAsset(m, $"{GeneratedMeshFolder}/Prow.asset");
+        var prow = new GameObject("Prow", typeof(MeshFilter), typeof(MeshRenderer));
+        prow.transform.SetParent(e, false);
+        prow.GetComponent<MeshFilter>().sharedMesh = m;
+        prow.GetComponent<MeshRenderer>().sharedMaterial = hull;
+        prow.isStatic = true;
+
+        // Foredeck planking, cream bulwarks along the V, and the cream band carried round to the stem.
+        var deck = Object.Instantiate(prow, e);
+        deck.name = "Foredeck";
+        deck.transform.localPosition = new Vector3(0f, 0.04f, 0f);
+        deck.GetComponent<MeshRenderer>().sharedMaterial = StylizedLook.Get("KK_WoodFloor");
+        foreach (float side in new[] { -1f, 1f })
+        {
+            var from = new Vector3(side * (half - 0.15f), 0.5f, bowZ);
+            var to = new Vector3(side * 0.12f, sheer + 0.55f, stemZ - 0.1f);
+            var dir = to - from;
+            Prim(PrimitiveType.Cube, "Bulwark", e, (from + to) * 0.5f, Quaternion.LookRotation(dir).eulerAngles, new Vector3(0.18f, 0.9f, dir.magnitude), cream, false);
+            var bandDir = new Vector3(-side * half, 0f, stemZ - bowZ);
+            Prim(PrimitiveType.Cube, "HullBand_Prow", e, new Vector3(side * (half * 0.5f + 0.06f), -0.15f, (bowZ + stemZ) * 0.5f),
+                Quaternion.LookRotation(bandDir).eulerAngles, new Vector3(0.12f, 0.3f, bandDir.magnitude), cream, false);
+        }
+
+        // Rounded stern: half an ellipse of hull, cream band round its top.
+        Prim(PrimitiveType.Cylinder, "Stern", e, new Vector3(0f, -1.35f, -0.3f), Vector3.zero, new Vector3(13.2f, 1.35f, 6f), hull, false);
+        Prim(PrimitiveType.Cylinder, "SternBand", e, new Vector3(0f, -0.15f, -0.3f), Vector3.zero, new Vector3(13.4f, 0.15f, 6.15f), cream, false);
+        Prim(PrimitiveType.Cylinder, "SternDeck", e, new Vector3(0f, 0.01f, -0.3f), Vector3.zero, new Vector3(13.0f, 0.02f, 5.8f), darkWood, false);
+    }
+
+    /// <summary>
+    /// Foam that sells the ship moving while the deck stays still: the churned wake behind the stern, the two arms of
+    /// the V spreading from it, bow waves peeling back along the hull, and spray off the stem. The sea itself streams
+    /// aft (SeaScroll.forwardSpeed); the foam streams at the same speed (FoamScroll).
+    /// </summary>
+    static void BuildWake(Transform e)
+    {
+        var foam = FoamMaterial();
+        var w = Group(e, "Wake");
+        const float y = -2.15f, speed = 4f, repeat = 18f;
+
+        // Churned water straight behind the stern, widening and fading over 150 m.
+        Strip(w, "Wake_Centre", foam, 150f, 60, repeat, s =>
+        {
+            float half = 4.5f + s * 0.1f;
+            return (new Vector3(-half, y, -2.5f - s), new Vector3(half, y, -2.5f - s), Mathf.Pow(1f - s / 150f, 1.4f) * 0.85f);
+        }, speed);
+        // The V: two thin arms at about 19 degrees off the stern.
+        foreach (float side in new[] { -1f, 1f })
+            Strip(w, side < 0 ? "Wake_ArmPort" : "Wake_ArmStarboard", foam, 120f, 40, repeat, s =>
+            {
+                float x = side * (6.2f + s * 0.34f);
+                return (new Vector3(x - side * 1.2f, y + 0.005f, -1.5f - s), new Vector3(x + side * 1.4f, y + 0.005f, -1.5f - s), Mathf.Pow(1f - s / 120f, 1.2f) * 0.7f);
+            }, speed);
+        // Bow waves: from the stem back along each side, flaring out as they go aft.
+        foreach (float side in new[] { -1f, 1f })
+            Strip(w, side < 0 ? "BowWave_Port" : "BowWave_Starboard", foam, 52f, 52, repeat * 0.5f, s =>
+            {
+                float z = 42.2f - s;
+                float hullX = z > 36.2f ? 6.6f * (42.5f - z) / 6.3f : 6.62f;
+                float spread = 0.5f + s * 0.05f;
+                float a = Mathf.Min(s, 1f) * Mathf.Pow(1f - s / 52f, 0.8f) * 0.9f;
+                return (new Vector3(side * (hullX + 0.02f), y + 0.01f, z), new Vector3(side * (hullX + spread + 0.6f), y + 0.01f, z), a);
+            }, speed);
+
+        var sprayMat = ParticleMat("Ship_Spray", new Color(0.95f, 0.97f, 1f, 0.55f));
+        foreach (float side in new[] { -1f, 1f })
+        {
+            var spray = Particles(e, "BowSpray", new Vector3(side * 0.6f, -1.9f, 41.4f), sprayMat, 26f, 1.1f, new Vector2(0.25f, 0.7f), new Vector2(1.5f, 3.2f), 20f, new Vector3(side * 0.8f, 0f, -3.5f), 80);
+            spray.transform.localRotation = Quaternion.Euler(-55f, side * 40f, 0f);
+            var main = spray.main;
+            main.gravityModifier = 0.6f;
+        }
+    }
+
+    /// <summary>
+    /// A foam strip along its length s (metres): edge(s) gives its two edges and opacity there. V runs along s in
+    /// texture repeats, so FoamScroll moving V forward streams the foam towards larger s (aft).
+    /// </summary>
+    static void Strip(Transform parent, string name, Material mat, float length, int segments, float metresPerRepeat,
+        System.Func<float, (Vector3 a, Vector3 b, float alpha)> edge, float speed)
+    {
+        var verts = new List<Vector3>();
+        var uvs = new List<Vector2>();
+        var cols = new List<Color>();
+        var tris = new List<int>();
+        for (int i = 0; i <= segments; i++)
+        {
+            float s = length * i / segments;
+            var (a, b, alpha) = edge(s);
+            verts.Add(a); verts.Add(b);
+            uvs.Add(new Vector2(0f, s / metresPerRepeat)); uvs.Add(new Vector2(1f, s / metresPerRepeat));
+            var c = new Color(1f, 1f, 1f, Mathf.Clamp01(alpha));
+            cols.Add(c); cols.Add(c);
+            if (i == 0) continue;
+            int k = i * 2;
+            tris.AddRange(new[] { k - 2, k, k - 1, k - 1, k, k + 1 });
+        }
+        var m = new Mesh { name = name };
+        m.SetVertices(verts); m.SetUVs(0, uvs); m.SetColors(cols); m.SetTriangles(tris, 0);
+        m.RecalculateNormals();
+        // Make the strip face up whichever way its edges run.
+        var n = m.normals;
+        if (n.Length > 0 && n[0].y < 0f) { tris.Reverse(); m.SetTriangles(tris, 0); m.RecalculateNormals(); }
+        m.RecalculateBounds();
+        AssetDatabase.DeleteAsset($"{GeneratedMeshFolder}/{name}.asset");
+        AssetDatabase.CreateAsset(m, $"{GeneratedMeshFolder}/{name}.asset");
+        var go = new GameObject(name, typeof(MeshFilter), typeof(MeshRenderer));
+        go.transform.SetParent(parent, false);
+        go.GetComponent<MeshFilter>().sharedMesh = m;
+        var r = go.GetComponent<MeshRenderer>();
+        r.sharedMaterial = mat;
+        r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        r.receiveShadows = false;
+        var scroll = go.AddComponent<FoamScroll>();
+        scroll.speed = speed;
+        scroll.metresPerRepeat = metresPerRepeat;
+    }
+
+    const string FoamTexturePath = "Assets/_Project/Art/Textures/Foam.png";
+
+    /// <summary>Streaky white foam with soft holes, tileable, generated once.</summary>
+    static Material FoamMaterial()
+    {
+        if (!System.IO.File.Exists(FoamTexturePath))
+        {
+            const int N = 256;
+            var tex = new Texture2D(N, N, TextureFormat.RGBA32, false);
+            var rng = new System.Random(11);
+            var blobs = new List<(float x, float y, float rx, float ry, float a)>();
+            for (int i = 0; i < 420; i++)
+                blobs.Add(((float)rng.NextDouble(), (float)rng.NextDouble(), 0.006f + (float)rng.NextDouble() * 0.03f, 0.02f + (float)rng.NextDouble() * 0.09f, 0.3f + (float)rng.NextDouble() * 0.7f));
+            for (int y = 0; y < N; y++)
+            for (int x = 0; x < N; x++)
+            {
+                float u = x / (float)N, v = y / (float)N, a = 0f;
+                foreach (var b in blobs)
+                {
+                    float dx = Mathf.Abs(u - b.x); dx = Mathf.Min(dx, 1f - dx);
+                    float dy = Mathf.Abs(v - b.y); dy = Mathf.Min(dy, 1f - dy);
+                    float d = dx * dx / (b.rx * b.rx) + dy * dy / (b.ry * b.ry);
+                    if (d < 1f) a = Mathf.Max(a, (1f - d) * b.a);
+                }
+                float lacy = Mathf.PerlinNoise(u * 18f, v * 6f);
+                tex.SetPixel(x, y, new Color(1f, 1f, 1f, Mathf.Clamp01(a * 1.4f * (0.55f + 0.6f * lacy))));
+            }
+            tex.Apply();
+            System.IO.File.WriteAllBytes(FoamTexturePath, tex.EncodeToPNG());
+            Object.DestroyImmediate(tex);
+            AssetDatabase.ImportAsset(FoamTexturePath);
+            var ti = (TextureImporter)AssetImporter.GetAtPath(FoamTexturePath);
+            ti.alphaIsTransparency = true;
+            ti.wrapMode = TextureWrapMode.Repeat;
+            ti.mipmapEnabled = true;
+            ti.SaveAndReimport();
+        }
+        var mat = ParticleMat("Ship_Foam", new Color(0.92f, 0.96f, 1f, 0.9f));
+        mat.SetTexture("_BaseMap", AssetDatabase.LoadAssetAtPath<Texture2D>(FoamTexturePath));
+        EditorUtility.SetDirty(mat);
+        return mat;
     }
 
     /// <summary>Smoke, steam, embers, dust in the lamplight, a reflection probe for the brass.</summary>
@@ -456,14 +654,24 @@ public static class ShipDeckBuilder
         foreach (var (name, z) in new[] { ("Dust_Boiler", 4f), ("Dust_Corridor", 12f), ("Dust_Wireless", 20f), ("Dust_Bridge", 28f) })
             Dust(p, name, new Vector3(0f, 1.4f, z));
 
-        var probe = new GameObject("ReflectionProbe").AddComponent<ReflectionProbe>();
+        // Deck probe for brass and iron, and a high, wide one so the open sea reflects the sky rather than the
+        // deck's insides. PartMood re-renders both as the sky changes (they'd keep the run-start sky otherwise).
+        Probe(p, "ReflectionProbe", new Vector3(0f, 1.6f, 18f), new Vector3(16f, 8f, 40f), 128, 2);
+        Probe(p, "ReflectionProbe_Sea", new Vector3(0f, 14f, 18f), new Vector3(4000f, 60f, 4000f), 64, 0); // out to the horizon
+    }
+
+    static ReflectionProbe Probe(Transform p, string name, Vector3 pos, Vector3 size, int resolution, int importance)
+    {
+        var probe = new GameObject(name).AddComponent<ReflectionProbe>();
         probe.transform.SetParent(p, false);
-        probe.transform.localPosition = new Vector3(0f, 1.6f, 18f);
+        probe.transform.localPosition = pos;
         probe.mode = UnityEngine.Rendering.ReflectionProbeMode.Realtime;
-        probe.refreshMode = UnityEngine.Rendering.ReflectionProbeRefreshMode.OnAwake;
+        probe.refreshMode = UnityEngine.Rendering.ReflectionProbeRefreshMode.ViaScripting;
         probe.timeSlicingMode = UnityEngine.Rendering.ReflectionProbeTimeSlicingMode.IndividualFaces;
-        probe.size = new Vector3(16f, 8f, 40f);
-        probe.resolution = 128;
+        probe.size = size;
+        probe.resolution = resolution;
+        probe.importance = importance;
+        return probe;
     }
 
     static UnityEngine.Rendering.Volume PostVolume(Transform p, string name, string part, float weight)
@@ -602,6 +810,244 @@ public static class ShipDeckBuilder
         noise.frequency = 0.3f;
     }
 
+    // ---------- Craft pass: trims, joints, rivets, rail, rope (visual only, no colliders) ----------
+
+    const string GeneratedMeshFolder = "Assets/_Project/Art/Models/Generated";
+
+    static void BuildCraft(Transform p)
+    {
+        var c = Group(p, "Craft");
+        const float hullFace = 5.47f;       // inner face of the hull walls
+        const float wallTop = 4f * WallScaleY;
+
+        // Wooden skirting where every wall meets the deck: grounds the walls and hides the seam.
+        foreach (float side in new[] { -1f, 1f })
+            Prim(PrimitiveType.Cube, "Skirting_Hull", c, new Vector3(hullFace * side - 0.02f * side, 0.09f, 16f), Vector3.zero, new Vector3(0.07f, 0.16f, 31f), darkWood, false);
+        Prim(PrimitiveType.Cube, "Skirting_Stern", c, new Vector3(0f, 0.09f, 0.52f), Vector3.zero, new Vector3(11f, 0.16f, 0.07f), darkWood, false);
+        foreach (float z in new[] { 8f, 16f, 24f, 32f })
+            foreach (float face in new[] { -0.52f, 0.52f })
+            {
+                if (z == 32f && face > 0f) continue; // the bow side of the bridge front is open deck
+                foreach (float side in new[] { -1f, 1f })
+                    Prim(PrimitiveType.Cube, "Skirting_Bulkhead", c, new Vector3(4f * side, 0.09f, z + face), Vector3.zero, new Vector3(3.9f, 0.16f, 0.07f), darkWood, false);
+            }
+        foreach (float z in new[] { 10f, 14f })
+            Prim(PrimitiveType.Cube, "Skirting_Store", c, new Vector3(-1.48f, 0.09f, z), Vector3.zero, new Vector3(0.07f, 0.16f, 3.9f), darkWood, false);
+
+        // Iron joint strips where the hull plates meet, every 4 m.
+        for (float z = 4f; z < 32f; z += 4f)
+            foreach (float side in new[] { -1f, 1f })
+                Prim(PrimitiveType.Cube, "PlateJoint", c, new Vector3(hullFace * side - 0.03f * side, wallTop * 0.5f, z), Vector3.zero, new Vector3(0.08f, wallTop, 0.16f), steel, false);
+
+        BuildWainscot(c, hullFace);
+
+        // Rivets in rows along the bulkheads and hull, above the panelling and near the top, as one mesh.
+        var rivets = new List<CombineInstance>();
+        var sphere = PrimitiveMesh(PrimitiveType.Sphere);
+        void Row(Vector3 from, Vector3 to, float spacing, Vector3 outward)
+        {
+            int n = Mathf.Max(1, Mathf.RoundToInt(Vector3.Distance(from, to) / spacing));
+            for (int i = 0; i <= n; i++)
+            {
+                var pos = Vector3.Lerp(from, to, i / (float)n) + outward * 0.01f;
+                rivets.Add(new CombineInstance { mesh = sphere, transform = Matrix4x4.TRS(pos, Quaternion.identity, new Vector3(0.055f, 0.055f, 0.055f)) });
+            }
+        }
+        foreach (float y in new[] { WainscotTop + 0.18f, wallTop - 0.25f })
+        {
+            foreach (float side in new[] { -1f, 1f })
+                Row(new Vector3(hullFace * side, y, 0.8f), new Vector3(hullFace * side, y, 31.4f), 0.45f, new Vector3(-side, 0f, 0f));
+            foreach (float z in new[] { 8f, 16f, 24f })
+                foreach (float face in new[] { -0.5f, 0.5f })
+                    foreach (float side in new[] { -1f, 1f })
+                        Row(new Vector3(2.15f * side, y, z + face), new Vector3(5.4f * side, y, z + face), 0.45f, new Vector3(0f, 0f, Mathf.Sign(face)));
+        }
+        CombinedMesh(c, "Rivets", rivets, brass, "Rivets");
+
+        // Brass handrail on brackets along the wireless room and the bridge.
+        foreach (float side in new[] { -1f, 1f })
+        {
+            Pipe(c, "Handrail", new Vector3((hullFace - 0.12f) * side, 1.0f, 24f), new Vector3(90f, 0f, 0f), 15f, 0.06f, brass);
+            for (float z = 17f; z <= 31f; z += 2f)
+                Prim(PrimitiveType.Cube, "RailBracket", c, new Vector3((hullFace - 0.06f) * side, 1.0f, z), Vector3.zero, new Vector3(0.12f, 0.05f, 0.04f), brass, false);
+        }
+
+        // Coiled rope: on the bow, by the muster bell.
+        var rope = ShipMat("Ship_Rope", new Color(0.66f, 0.55f, 0.38f));
+        StylizedLook.Style(rope, StylizedLook.Role.Prop);
+        rope.SetFloat("_Grain", 0.35f);
+        rope.SetFloat("_NoiseScale", 2.5f);
+        RopeCoil(c, new Vector3(-3.6f, 0.05f, 34.6f), 0.55f, rope);
+        RopeCoil(c, new Vector3(3.4f, 0.05f, 33.4f), 0.45f, rope);
+        RopeCoil(c, new Vector3(4.6f, 0.05f, 9.0f), 0.4f, rope);
+
+        // A few tools left where the work happens.
+        var wrench = Group(c, "Wrench");
+        wrench.localPosition = new Vector3(-2.4f, 0.07f, 5.4f);
+        wrench.localRotation = Quaternion.Euler(0f, 35f, 0f);
+        Prim(PrimitiveType.Cube, "Handle", wrench, Vector3.zero, Vector3.zero, new Vector3(0.05f, 0.03f, 0.45f), steel, false);
+        Prim(PrimitiveType.Cylinder, "Jaw", wrench, new Vector3(0f, 0f, 0.25f), Vector3.zero, new Vector3(0.12f, 0.02f, 0.12f), steel, false);
+        var can = Group(c, "OilCan");
+        can.localPosition = new Vector3(-4.9f, 0f, 5.1f);
+        Prim(PrimitiveType.Cylinder, "Body", can, new Vector3(0f, 0.14f, 0f), Vector3.zero, new Vector3(0.22f, 0.14f, 0.22f), redPaint, false);
+        Prim(PrimitiveType.Cylinder, "Spout", can, new Vector3(0.12f, 0.3f, 0f), new Vector3(0f, 0f, -50f), new Vector3(0.03f, 0.12f, 0.03f), brass, false);
+    }
+
+    const float WainscotTop = 1.0f;
+
+    /// <summary>
+    /// Dark wood panelling along the lower walls under a wooden cap rail, so KayKit's dungeon bricks read as a ship's
+    /// panelled bulkheads. Boards are separate pieces with thin gaps and their own tint (vertex colour), combined into
+    /// one mesh per material. Visual only: no colliders, nothing moves.
+    /// </summary>
+    static void BuildWainscot(Transform c, float hullFace)
+    {
+        var cube = PrimitiveMesh(PrimitiveType.Cube);
+        var boards = new List<CombineInstance>();
+        var tints = new List<Color>();
+        var rails = new List<CombineInstance>();
+        var rng = new System.Random(7);
+        const float bottom = 0.17f, depth = 0.05f, boardWidth = 0.95f, gap = 0.03f;
+
+        // A run of boards on an axis-aligned wall face. alongZ: the face is at x = face, else at z = face.
+        // inward is +1/-1 towards the room. Boards overlapping [skipFrom, skipTo] are left out (doors).
+        void Run(bool alongZ, float face, float inward, float from, float to, float skipFrom = 0f, float skipTo = 0f)
+        {
+            int n = Mathf.Max(1, Mathf.RoundToInt((to - from) / boardWidth));
+            float w = (to - from) / n, mid = face + inward * depth * 0.5f, h = WainscotTop - bottom;
+            Vector3 At(float along, float y, float off) => alongZ ? new Vector3(off, y, along) : new Vector3(along, y, off);
+            Vector3 Size(float len, float height, float d) => alongZ ? new Vector3(d, height, len) : new Vector3(len, height, d);
+            bool skipped(float a, float b) => skipTo > skipFrom && b > skipFrom && a < skipTo;
+            for (int i = 0; i < n; i++)
+            {
+                float a = from + i * w + gap * 0.5f, b = from + (i + 1) * w - gap * 0.5f;
+                if (skipped(a, b)) continue;
+                boards.Add(new CombineInstance { mesh = cube, transform = Matrix4x4.TRS(At((a + b) * 0.5f, bottom + h * 0.5f, mid), Quaternion.identity, Size(b - a, h, depth)) });
+                float t = 0.86f + (float)rng.NextDouble() * 0.24f;               // board to board: lighter and darker
+                float warm = ((float)rng.NextDouble() - 0.5f) * 0.06f;          // and a little warmer or cooler
+                tints.Add(new Color(t + warm, t, t - warm));
+            }
+            // Cap rail along the top, broken at the skipped stretch.
+            void Rail(float a, float b)
+            {
+                if (b - a < 0.05f) return;
+                rails.Add(new CombineInstance { mesh = cube, transform = Matrix4x4.TRS(At((a + b) * 0.5f, WainscotTop + 0.03f, face + inward * 0.045f), Quaternion.identity, Size(b - a, 0.07f, 0.09f)) });
+            }
+            if (skipTo > skipFrom) { Rail(from, skipFrom); Rail(skipTo, to); }
+            else Rail(from, to);
+        }
+
+        // Hull sides, both rooms' worth, stern to the bridge front.
+        foreach (float side in new[] { -1f, 1f })
+            Run(true, hullFace * side, -side, 0.55f, 31.45f);
+        // Stern, behind the boiler.
+        Run(false, 0.5f, 1f, -hullFace, hullFace);
+        // Bulkheads either side of each doorway, on both faces; the bridge front only on its inside.
+        foreach (float z in new[] { 8f, 16f, 24f, 32f })
+            foreach (float face in new[] { -0.5f, 0.5f })
+            {
+                if (z == 32f && face > 0f) continue;
+                foreach (float side in new[] { -1f, 1f })
+                    Run(false, z + face, Mathf.Sign(face), side < 0f ? -hullFace : 2.05f, side < 0f ? -2.05f : hullFace);
+            }
+        // Lifeboat store wall: corridor side has the door (z 9.5-10.8 once scaled and turned), store side is plain.
+        Run(true, -1.5f, 1f, 8.5f, 15.5f, 9.35f, 10.95f);
+        Run(true, -2.5f, -1f, 8.5f, 15.5f);
+
+        var wood = ShipMat("Ship_Wainscot", new Color(0.4f, 0.25f, 0.16f));
+        StylizedLook.Style(wood, StylizedLook.Role.Wood);
+        wood.SetFloat("_VertexTint", 1f);
+        wood.SetFloat("_WoodGrain", 0.2f);
+        wood.SetVector("_GrainStretch", new Vector4(0.3f, 2.2f, 0f, 0f)); // grain runs up the boards
+        wood.SetFloat("_DirtAmount", 0.45f);
+        wood.SetFloat("_DirtHeight", 0.45f);
+        CombinedMesh(c, "Wainscot", boards, wood, "Wainscot", tints);
+        CombinedMesh(c, "WainscotRail", rails, darkWood, "WainscotRail");
+    }
+
+    /// <summary>Three stacked, slightly shrinking rings of rope, combined into one mesh.</summary>
+    static void RopeCoil(Transform parent, Vector3 pos, float radius, Material mat)
+    {
+        var torus = TorusMesh(1f, 0.11f, 28, 8);
+        var parts = new List<CombineInstance>();
+        for (int i = 0; i < 3; i++)
+        {
+            float r = radius * (1f - i * 0.12f);
+            parts.Add(new CombineInstance { mesh = torus, transform = Matrix4x4.TRS(new Vector3(0f, 0.06f + i * 0.1f, 0f), Quaternion.Euler(0f, i * 40f, 0f), new Vector3(r, r * 0.9f, r)) });
+        }
+        var go = CombinedMesh(parent, "RopeCoil", parts, mat, $"RopeCoil_{radius:0.00}");
+        go.transform.localPosition = pos;
+    }
+
+    /// <param name="tints">Optional colour per part, written to the vertex colours (Port/Stylized's _VertexTint).</param>
+    static GameObject CombinedMesh(Transform parent, string name, List<CombineInstance> parts, Material mat, string assetName, List<Color> tints = null)
+    {
+        var mesh = new Mesh { name = assetName, indexFormat = UnityEngine.Rendering.IndexFormat.UInt32 };
+        mesh.CombineMeshes(parts.ToArray(), true, true);
+        if (tints != null)
+        {
+            var colors = new Color[mesh.vertexCount];
+            int v = 0;
+            for (int i = 0; i < parts.Count; i++)
+                for (int k = 0; k < parts[i].mesh.vertexCount; k++) colors[v++] = tints[i];
+            mesh.colors = colors;
+        }
+        mesh.RecalculateBounds();
+        MovementPrototypeBuilder.EnsureFolder(GeneratedMeshFolder);
+        string path = $"{GeneratedMeshFolder}/{assetName}.asset";
+        AssetDatabase.DeleteAsset(path);
+        AssetDatabase.CreateAsset(mesh, path);
+        var go = new GameObject(name, typeof(MeshFilter), typeof(MeshRenderer));
+        go.transform.SetParent(parent, false);
+        go.GetComponent<MeshFilter>().sharedMesh = mesh;
+        go.GetComponent<MeshRenderer>().sharedMaterial = mat;
+        go.isStatic = true;
+        return go;
+    }
+
+    static Mesh PrimitiveMesh(PrimitiveType type)
+    {
+        var tmp = GameObject.CreatePrimitive(type);
+        var mesh = tmp.GetComponent<MeshFilter>().sharedMesh;
+        Object.DestroyImmediate(tmp);
+        return mesh;
+    }
+
+    static Mesh TorusMesh(float radius, float tube, int seg, int sides)
+    {
+        var verts = new List<Vector3>();
+        var normals = new List<Vector3>();
+        var uvs = new List<Vector2>();
+        var tris = new List<int>();
+        for (int i = 0; i <= seg; i++)
+        {
+            float u = i / (float)seg * Mathf.PI * 2f;
+            var ring = new Vector3(Mathf.Cos(u), 0f, Mathf.Sin(u));
+            for (int j = 0; j <= sides; j++)
+            {
+                float v = j / (float)sides * Mathf.PI * 2f;
+                var n = ring * Mathf.Cos(v) + Vector3.up * Mathf.Sin(v);
+                verts.Add(ring * radius + n * tube);
+                normals.Add(n);
+                uvs.Add(new Vector2(i / (float)seg, j / (float)sides));
+            }
+        }
+        int stride = sides + 1;
+        for (int i = 0; i < seg; i++)
+            for (int j = 0; j < sides; j++)
+            {
+                int a = i * stride + j, b = a + stride;
+                tris.AddRange(new[] { a, a + 1, b, b, a + 1, b + 1 });
+            }
+        var m = new Mesh { name = "Torus" };
+        m.SetVertices(verts);
+        m.SetNormals(normals);
+        m.SetUVs(0, uvs);
+        m.SetTriangles(tris, 0);
+        m.RecalculateBounds();
+        return m;
+    }
+
     // ---------- Building blocks ----------
 
     static Transform Group(Transform parent, string name)
@@ -616,6 +1062,8 @@ public static class ShipDeckBuilder
         var go = new GameObject(name);
         go.transform.SetParent(parent, false);
         go.transform.localPosition = pos;
+        // Soft gold outline while a player is in reach.
+        go.AddComponent<InteractHighlight>().outlineTemplate = AssetDatabase.LoadAssetAtPath<Material>(StylizedLook.InteractOutlinePath);
         return go;
     }
 
@@ -699,13 +1147,14 @@ public static class ShipDeckBuilder
         go.transform.localPosition = localPos;
         go.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
         go.transform.localScale = scale ?? Vector3.one;
-        if (overrideMat != null)
-            foreach (var r in go.GetComponentsInChildren<Renderer>())
-            {
-                var mats = r.sharedMaterials;
-                for (int i = 0; i < mats.Length; i++) mats[i] = overrideMat;
-                r.sharedMaterials = mats;
-            }
+        // Every KayKit piece gets a stylized material: the override if given, else the stylized copy of its atlas.
+        foreach (var r in go.GetComponentsInChildren<Renderer>())
+        {
+            var mats = r.sharedMaterials;
+            for (int i = 0; i < mats.Length; i++)
+                mats[i] = overrideMat != null ? overrideMat : (StylizedLook.ForKayKit(mats[i]) ?? mats[i]);
+            r.sharedMaterials = mats;
+        }
         if (collider)
         {
             var b = LocalMeshBounds(go.transform);
@@ -741,23 +1190,26 @@ public static class ShipDeckBuilder
     static void CreateMaterials()
     {
         var dungeonTex = AssetDatabase.LoadAssetAtPath<Texture2D>($"{KayKit}/Dungeon/dungeon_texture.png");
-        navyWall = ShipMat("Ship_WallNavy", new Color(0.50f, 0.60f, 0.92f), dungeonTex);
+        // Palette: muted slate-navy plates, warm dark wood, aged brass and cream. Kept low in saturation so the lamps,
+        // the fire and the status lights are what pops.
+        navyWall = ShipMat("Ship_WallNavy", new Color(0.47f, 0.51f, 0.6f), dungeonTex);
         darkFloor = ShipMat("Ship_FloorSoot", new Color(0.45f, 0.43f, 0.45f), dungeonTex);
         brass = ShipMat("Ship_Brass", new Color(0.80f, 0.60f, 0.26f), null, 0.7f, 0.55f);
         coal = ShipMat("Ship_Coal", new Color(0.08f, 0.08f, 0.09f), null, 0f, 0.2f);
         cream = ShipMat("Ship_Cream", new Color(0.92f, 0.87f, 0.75f));
         darkWood = ShipMat("Ship_DarkWood", new Color(0.33f, 0.21f, 0.13f));
-        steel = ShipMat("Ship_Steel", new Color(0.24f, 0.26f, 0.30f), null, 0.6f, 0.35f);
+        steel = ShipMat("Ship_Steel", new Color(0.34f, 0.36f, 0.40f), null, 0.6f, 0.35f);
         hull = ShipMat("Ship_Hull", new Color(0.07f, 0.08f, 0.12f));
         sea = ShipMat("Ship_Sea", new Color(0.06f, 0.24f, 0.38f), null, 0f, 0.85f);
         white = ShipMat("Ship_LifeboatWhite", new Color(0.93f, 0.92f, 0.88f));
-        fire = ShipMat("Ship_FireGlow", new Color(1f, 0.45f, 0.12f), null, 0f, 0.2f, new Color(1f, 0.4f, 0.1f) * 3f);
-        statusRed = ShipMat("Ship_StatusRed", new Color(1f, 0.15f, 0.1f), null, 0f, 0.5f, new Color(1f, 0.12f, 0.08f) * 2.5f);
-        ShipMat("Ship_StatusGreen", new Color(0.2f, 1f, 0.35f), null, 0f, 0.5f, new Color(0.15f, 1f, 0.3f) * 2.5f);
-        lampGlass = ShipMat("Ship_LampGlass", new Color(1f, 0.85f, 0.6f), null, 0f, 0.5f, new Color(1f, 0.75f, 0.45f) * 2f);
+        // Emissives sit above the bloom threshold so they glow softly; the fire is kept deep orange, not white-hot.
+        fire = ShipMat("Ship_FireGlow", new Color(1f, 0.35f, 0.08f), null, 0f, 0.2f, new Color(1f, 0.3f, 0.05f) * 2.4f);
+        statusRed = ShipMat("Ship_StatusRed", new Color(1f, 0.15f, 0.1f), null, 0f, 0.5f, new Color(1f, 0.12f, 0.08f) * 3.5f);
+        ShipMat("Ship_StatusGreen", new Color(0.2f, 1f, 0.35f), null, 0f, 0.5f, new Color(0.15f, 1f, 0.3f) * 3.5f);
+        lampGlass = ShipMat("Ship_LampGlass", new Color(1f, 0.85f, 0.6f), null, 0f, 0.5f, new Color(1f, 0.72f, 0.42f) * 4.5f);
         redPaint = ShipMat("Ship_RedPaint", new Color(0.62f, 0.09f, 0.07f), null, 0f, 0.35f);
         buff = ShipMat("Ship_FunnelBuff", new Color(0.82f, 0.62f, 0.34f), null, 0f, 0.25f);
-        portholeGlow = ShipMat("Ship_PortholeGlow", new Color(1f, 0.82f, 0.5f), null, 0f, 0.6f, new Color(1f, 0.7f, 0.35f) * 1.6f);
+        portholeGlow = ShipMat("Ship_PortholeGlow", new Color(1f, 0.82f, 0.5f), null, 0f, 0.6f, new Color(1f, 0.7f, 0.35f) * 2.2f);
 
         // The sea: ripples from a generated normal map, tiled small so the sun glints break up.
         var ripples = AssetDatabase.LoadAssetAtPath<Texture2D>(RenderLookSetup.SeaNormalPath);
@@ -771,6 +1223,19 @@ public static class ShipDeckBuilder
         steamMat = ParticleMat("Ship_Steam", new Color(0.85f, 0.85f, 0.9f, 0.3f));
         emberMat = ParticleMat("Ship_Embers", new Color(1f, 0.55f, 0.2f, 1f) * 2.5f);
         dustMat = ParticleMat("Ship_Dust", new Color(1f, 0.9f, 0.75f, 0.35f));
+    }
+
+    /// <summary>A woven runner: KayKit's rug atlas swatches are flat pastel blocks that read as debug pads.</summary>
+    static Material Runner(string name, Color color)
+    {
+        var m = ShipMat(name, color);
+        StylizedLook.Style(m, StylizedLook.Role.Cloth);
+        m.SetFloat("_WoodGrain", 0.22f);                         // weave streaks along the runner
+        m.SetVector("_GrainStretch", new Vector4(0.6f, 9f, 0f, 0f));
+        m.SetFloat("_EdgeWear", 0.1f);
+        m.SetFloat("_PathWear", 0.5f);
+        m.SetFloat("_PathHalfWidth", 0.9f);
+        return m;
     }
 
     static Material ParticleMat(string name, Color tint)
@@ -879,11 +1344,10 @@ public static class ShipDeckBuilder
         var idle = new Vector2(0f, 0f);
         cam.Render(); // the first headless render is garbage
 
-        // Animators don't run in edit mode, so the crew shows its T-pose in these pictures.
-        void Shot(string name, Vector3 pos, float yaw, int part, string timeOfDay, params (float, Vector2)[] steps)
+        // Animators don't run in edit mode, so the crew shows its T-pose in these pictures. (Rebind/Update and
+        // AnimationMode sampling both knock the hair off its head bone, so don't.)
+        void Save(string name)
         {
-            mood.Preview(part, mood.cycle != null ? mood.cycle.PhaseOf(timeOfDay) : 0.3f);
-            MovementChecks.Sim(mover, follow, pos, yaw, steps);
             cam.Render();
             RenderTexture.active = rt;
             var tex = new Texture2D(rt.width, rt.height, TextureFormat.RGB24, false);
@@ -892,6 +1356,12 @@ public static class ShipDeckBuilder
             RenderTexture.active = null;
             System.IO.File.WriteAllBytes($"Logs/ShipShot_{name}.png", tex.EncodeToPNG());
             Object.DestroyImmediate(tex);
+        }
+        void Shot(string name, Vector3 pos, float yaw, int part, string timeOfDay, params (float, Vector2)[] steps)
+        {
+            mood.Preview(part, mood.cycle != null ? mood.cycle.PhaseOf(timeOfDay) : 0.3f);
+            MovementChecks.Sim(mover, follow, pos, yaw, steps);
+            Save(name);
         }
 
         // One view forward over the bow through the day, then two at night.
@@ -909,6 +1379,19 @@ public static class ShipDeckBuilder
         Shot("10_night_lifeboats", new Vector3(1.5f, 0.05f, 11f), 270f, 1, "Night", (1.5f, idle));
         Shot("11_night_partOff", bridge, 0f, 2, "Night", (1.5f, idle));
         Shot("12_night_walk_aft", new Vector3(0f, 0.05f, 30f), 180f, 1, "Night", (1.2f, new Vector2(0f, 1f)));
+
+        // The whole deck from Ship.unity's fixed gameplay camera (ShipSceneAssembler: 55° down, 50 m, 45° FOV).
+        MovementChecks.Sim(mover, follow, new Vector3(0f, 0.05f, 12f), 0f, (0.5f, idle));
+        float fov = cam.fieldOfView;
+        cam.fieldOfView = 45f;
+        var look = Quaternion.Euler(55f, 0f, 0f);
+        cam.transform.SetPositionAndRotation(new Vector3(0f, 0f, 18f) - look * Vector3.forward * 50f, look);
+        foreach (var (name, part, time) in new[] { ("13_overview_noon", 1, "Noon"), ("14_overview_night", 1, "Night"), ("15_overview_truth", 3, "Night") })
+        {
+            mood.Preview(part, mood.cycle != null ? mood.cycle.PhaseOf(time) : 0.3f);
+            Save(name);
+        }
+        cam.fieldOfView = fov;
         mood.ApplyImmediate(1);
 
         cam.targetTexture = null;

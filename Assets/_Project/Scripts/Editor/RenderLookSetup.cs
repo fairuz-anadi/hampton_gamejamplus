@@ -23,9 +23,9 @@ public static class RenderLookSetup
         MovementPrototypeBuilder.EnsureFolder(FxFolder);
         MovementPrototypeBuilder.EnsureFolder("Assets/_Project/Art/Textures");
         TuneUrpAsset();
-        BuildProfile("Calm", new Color(1f, 0.97f, 0.92f), 6f, 0.15f, 8f, 0.12f, 0f);
+        BuildProfile("Calm", new Color(1f, 0.97f, 0.92f), 6f, 0.15f, 0f, 0.12f, 0f);
         BuildProfile("Off", new Color(0.9f, 0.94f, 1f), -18f, 0.2f, -25f, 0.2f, 0.05f);
-        BuildProfile("Truth", new Color(1f, 0.82f, 0.76f), 20f, 0.25f, -10f, 0.34f, 0.25f);
+        BuildProfile("Truth", new Color(1f, 0.82f, 0.76f), 20f, 1.0f, -10f, 0.28f, 0.25f);
         BuildSky();
         BuildSeaNormal();
         AssetDatabase.SaveAssets();
@@ -48,6 +48,20 @@ public static class RenderLookSetup
         SetF("m_ShadowDistance", 45f);
         so.ApplyModifiedPropertiesWithoutUndo();
         EditorUtility.SetDirty(asset);
+
+        // Stronger, wider ambient occlusion so props sit on the deck (contact shadows) and corners darken softly.
+        var renderer = AssetDatabase.LoadAssetAtPath<ScriptableRendererData>("Assets/_Project/Settings/URP/PC_Renderer.asset");
+        if (renderer != null)
+            foreach (var feature in renderer.rendererFeatures)
+            {
+                if (feature == null || feature.name != "ScreenSpaceAmbientOcclusion") continue;
+                var fso = new SerializedObject(feature);
+                fso.FindProperty("m_Settings.Intensity").floatValue = 0.95f;
+                fso.FindProperty("m_Settings.Radius").floatValue = 0.45f;
+                fso.FindProperty("m_Settings.DirectLightingStrength").floatValue = 0.35f;
+                fso.ApplyModifiedPropertiesWithoutUndo();
+                EditorUtility.SetDirty(feature);
+            }
 
         // The deck's reflection probe refreshes at runtime; the PC level had real-time probes off.
         var quality = new SerializedObject(AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/QualitySettings.asset")[0]);
@@ -88,12 +102,18 @@ public static class RenderLookSetup
 
         Add<Tonemapping>().mode.Override(TonemappingMode.ACES);
         var bloom = Add<Bloom>();
+        // Lamps, the furnace and status lights glow; nothing else should.
         bloom.threshold.Override(0.95f);
         bloom.intensity.Override(0.7f);
-        bloom.scatter.Override(0.65f);
+        bloom.scatter.Override(0.7f);
         var color = Add<ColorAdjustments>();
         color.postExposure.Override(exposure);
-        color.contrast.Override(14f);
+        color.contrast.Override(7f);
+        // Painterly colour: cool shadows, warm lights, like the light and shade on an illustration.
+        var split = Add<SplitToning>();
+        split.shadows.Override(new Color(0.46f, 0.53f, 0.68f));
+        split.highlights.Override(new Color(0.78f, 0.68f, 0.56f));
+        split.balance.Override(-15f);
         color.saturation.Override(saturation);
         color.colorFilter.Override(filter);
         Add<WhiteBalance>().temperature.Override(temperature);
@@ -108,21 +128,22 @@ public static class RenderLookSetup
     }
 
     /// <summary>
-    /// Unity's procedural sky: it follows the main light (RenderSettings.sun), so it brightens at noon, turns orange at
-    /// sunrise and sunset, and goes dark at night. PartMood sets its exposure per time of day and tints it per part.
+    /// The painted gradient sky (Port/Sky), saved with daytime colours. PartMood drives a runtime copy from the clock:
+    /// zenith and horizon colours, sun and moon, stars at night, tinted per story part.
     /// </summary>
     static void BuildSky()
     {
+        var shader = Shader.Find("Port/Sky");
         var mat = AssetDatabase.LoadAssetAtPath<Material>(SkyMaterialPath);
-        if (mat == null) { mat = new Material(Shader.Find("Skybox/Procedural")); AssetDatabase.CreateAsset(mat, SkyMaterialPath); }
-        mat.shader = Shader.Find("Skybox/Procedural");
-        mat.SetFloat("_SunDisk", 2f);           // high-quality sun disc
-        mat.SetFloat("_SunSize", 0.035f);
-        mat.SetFloat("_SunSizeConvergence", 6f);
-        mat.SetFloat("_AtmosphereThickness", 1.05f);
-        mat.SetColor("_SkyTint", new Color(0.5f, 0.5f, 0.5f));
-        mat.SetColor("_GroundColor", new Color(0.32f, 0.38f, 0.44f));
-        mat.SetFloat("_Exposure", 1.3f);
+        if (mat == null) { mat = new Material(shader); AssetDatabase.CreateAsset(mat, SkyMaterialPath); }
+        mat.shader = shader;
+        mat.SetColor("_ZenithColor", new Color(0.33f, 0.53f, 0.8f));
+        mat.SetColor("_HorizonColor", new Color(0.74f, 0.83f, 0.92f));
+        mat.SetColor("_GroundColor", new Color(0.32f, 0.4f, 0.5f));
+        mat.SetFloat("_HorizonBlend", 0.45f);
+        mat.SetColor("_SunColor", new Color(1f, 0.95f, 0.85f));
+        mat.SetColor("_MoonColor", Color.black);
+        mat.SetFloat("_Stars", 0f);
         EditorUtility.SetDirty(mat);
     }
     /// <summary>Tileable ripple normal map for the sea, from a few layered sine waves.</summary>

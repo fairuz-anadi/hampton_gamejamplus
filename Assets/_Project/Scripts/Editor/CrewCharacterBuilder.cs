@@ -46,6 +46,7 @@ public static class CrewCharacterBuilder
         ConfigureImports();
         var controller = BuildController();
         var mats = BuildMaterials();
+        StylizedLook.Apply(); // crew skin, cloth and hair onto the painterly toon shader, plus the outline material
         var heads = new Dictionary<bool, Mesh>
         {
             [false] = CutHead(Q + "/Characters/Superhero_Male_FullBody.fbx", "Head_Male"),
@@ -157,7 +158,8 @@ public static class CrewCharacterBuilder
     static AnimatorController BuildController()
     {
         var clips = AssetDatabase.LoadAllAssetsAtPath(AnimFbx).OfType<AnimationClip>().Where(c => !c.name.StartsWith("__preview__")).ToArray();
-        AnimationClip Clip(string n) => clips.FirstOrDefault(c => c.name.EndsWith(n));
+        // Exact take name: "Idle_Loop" must not pick up Crouch_Idle_Loop or Spell_Simple_Idle_Loop.
+        AnimationClip Clip(string n) => clips.FirstOrDefault(c => c.name == n || c.name.EndsWith("|" + n));
         var idle = Clip("Idle_Loop");
         var walk = Clip("Walk_Loop");
         var jog = Clip("Jog_Fwd_Loop");
@@ -335,6 +337,19 @@ public static class CrewCharacterBuilder
         animator.runtimeAnimatorController = controller;
         animator.applyRootMotion = false;
         animator.cullingMode = AnimatorCullingMode.CullUpdateTransforms;
+
+        // Thin warm-dark silhouette outline, an extra material on every body part and the hair.
+        var outline = AssetDatabase.LoadAssetAtPath<Material>(StylizedLook.CrewOutlinePath);
+        if (outline != null)
+            foreach (var r in root.GetComponentsInChildren<Renderer>(true))
+            {
+                var slots = r.sharedMaterials;
+                if (System.Array.IndexOf(slots, outline) >= 0) continue;
+                var withOutline = new Material[slots.Length + 1];
+                slots.CopyTo(withOutline, 0);
+                withOutline[slots.Length] = outline;
+                r.sharedMaterials = withOutline;
+            }
 
         PrefabUtility.SaveAsPrefabAsset(root, CrewPrefabPath(seat));
         Object.DestroyImmediate(root);

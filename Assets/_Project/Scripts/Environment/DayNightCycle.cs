@@ -58,7 +58,7 @@ public class DayNightCycle : MonoBehaviour
     [Tooltip("Moonlight strength at midnight.")]
     [Min(0f)] public float moonBrightness = 0.95f;
     [Tooltip("Sky brightness at midnight (1.3 = full day).")]
-    [Min(0f)] public float nightSkyExposure = 0.5f;
+    [Min(0f)] public float nightSkyExposure = 0.16f;
 
     /// <summary>0..1 through the day: 0 = dawn, ~0.36 = noon, dayShare = dusk, 0.86 = middle of the night.</summary>
     public float Phase { get; private set; }
@@ -67,13 +67,24 @@ public class DayNightCycle : MonoBehaviour
 
     float fastTo = -1f;
 
+    /// <summary>The clock running in the scene, for the HUD's sun/moon dial.</summary>
+    public static DayNightCycle Current { get; private set; }
+
     void OnEnable()
     {
+        Current = this;
         GameEvents.StateChanged += OnStateChanged;
         Phase = RunStartPhase;
     }
 
-    void OnDisable() => GameEvents.StateChanged -= OnStateChanged;
+    void OnDisable()
+    {
+        if (Current == this) Current = null;
+        GameEvents.StateChanged -= OnStateChanged;
+    }
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetStatics() => Current = null;
 
     void OnStateChanged(GameState s)
     {
