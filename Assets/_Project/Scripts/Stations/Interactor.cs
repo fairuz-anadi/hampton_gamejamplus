@@ -18,6 +18,27 @@ public class Interactor : MonoBehaviour
     public IStation NearestStation { get; private set; }
     /// <summary>Holding the Wheel during the iceberg finale. The Move axis steers then, so the owner stops walking.</summary>
     public bool IsSteering { get; private set; }
+    /// <summary>True while a CarryItem/IceWarningCarry is in hand.</summary>
+    public bool IsCarrying => carriedItem != null;
+
+    /// <summary>
+    /// The short action phrase for whatever's nearest right now ("Drop", "Repair Wheel", "Boiler 1/2", ...),
+    /// or "" when there's nothing to interact with. One source of truth for every prompt UI (Samprity's HUD,
+    /// or a sandbox fallback) instead of each one re-deriving it from station state.
+    /// </summary>
+    public string PromptText
+    {
+        get
+        {
+            if (carriedItem != null) return "Drop";
+            if (NearestStation == null) return "";
+            if (NearestStation is Wheel w && w.SteeringOpen)
+                return w.IsBroken ? "Repair Wheel" : "Steer  ·  hold + Left/Right";
+            if (NearestStation is Doors d && d.CanUnlock) return $"Reopen lifeboat store {d.ActiveHolders}/{d.NeededHolders}";
+            if (NearestStation is Station s && s.NeededHolders > 1) return $"{s.Type}  {s.ActiveHolders}/{s.NeededHolders}";
+            return NearestStation.Type.ToString();
+        }
+    }
 
     void Awake()
     {
@@ -137,39 +158,5 @@ public class Interactor : MonoBehaviour
             }
         }
         return best;
-    }
-
-    void OnGUI()
-    {
-        if (carriedItem == null && NearestStation == null) return;
-        var cam = Camera.main;
-        if (cam == null) return;
-
-        var screen = cam.WorldToScreenPoint(transform.position + Vector3.up * 2.2f);
-        if (screen.z <= 0f) return;
-
-        string text;
-        if (carriedItem != null) text = "[Interact] Drop";
-        else if (NearestStation is Wheel w && w.SteeringOpen)
-            text = w.IsBroken ? "[Hold Interact] Repair Wheel" : "[Hold Interact + Left/Right] Steer";
-        else if (NearestStation is Doors d && d.CanUnlock) text = $"[Hold Interact] Reopen lifeboat store {d.ActiveHolders}/{d.NeededHolders}";
-        else if (NearestStation is Station s && s.NeededHolders > 1) text = $"[Hold Interact] {s.Type} {s.ActiveHolders}/{s.NeededHolders}";
-        else text = $"[Hold Interact] {NearestStation.Type}";
-        float x = screen.x - 80, y = Screen.height - screen.y;
-        GUI.Label(new Rect(x, y, 220, 20), text);
-
-        // Progress bar under the prompt while the work (or repair) is under way: red while broken, green when done.
-        if (carriedItem == null && NearestStation is Station st && !(st is Wheel sw && sw.SteeringOpen))
-        {
-            float p = st.IsDone && !st.IsBroken ? 1f : st.Progress01;
-            if (p <= 0f && st.ActiveHolders == 0) return;
-            var bar = new Rect(x, y + 20, 120, 8);
-            var old = GUI.color;
-            GUI.color = new Color(0f, 0f, 0f, 0.6f);
-            GUI.DrawTexture(bar, Texture2D.whiteTexture);
-            GUI.color = st.IsBroken ? new Color(0.9f, 0.35f, 0.25f) : st.IsDone ? new Color(0.35f, 0.85f, 0.4f) : new Color(0.95f, 0.8f, 0.3f);
-            GUI.DrawTexture(new Rect(bar.x, bar.y, bar.width * p, bar.height), Texture2D.whiteTexture);
-            GUI.color = old;
-        }
     }
 }
