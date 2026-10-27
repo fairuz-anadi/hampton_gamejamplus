@@ -4,9 +4,10 @@ using UnityEngine;
 /// <summary>
 /// A floating ice warning (MSG 1-3): one instance per number, visible and pickupable only while
 /// IceWarnings reports it Waiting. Anyone can pick it up, no OrderData involved — unlike CarryItem,
-/// which requires the carrier to hold a matching order. Carrying it near the Bridge (Wheel) and
-/// letting go (pressing Interact again, same as any carried item, via Drop()) calls
-/// IceWarnings.Instance.Deliver(n). Letting go anywhere else just abandons it in place. If the 40 s
+/// which requires the carrier to hold a matching order. Carrying it near the Bridge and letting go
+/// (pressing Interact again, same as any carried item, via Drop()) calls IceWarnings.Instance.Deliver(n).
+/// "Near the Bridge" is Anadi's DropPoint_Bridge deck marker when it exists, else the Wheel station's
+/// own position (the sandbox has no marker). Letting go anywhere else just abandons it in place. If the 40 s
 /// window runs out while it's being carried, IceWarnings marks it Lost on its own; Update() notices
 /// next frame and releases it the same way CarryItem notices an order resolving out from under it.
 /// Static TryPickUpWarning/TryDeliverWarning let Riham's bots and the Stoker use this without going
@@ -77,9 +78,23 @@ public class IceWarningCarry : MonoBehaviour, ICarryItem
     bool AttemptDelivery()
     {
         if (carrierActor == null) return false;
-        var bridge = StationRegistry.Get(StationType.Wheel);
-        if (bridge == null || Vector3.Distance(carrierActor.Position, bridge.Position) > deliverRange) return false;
+        if (!TryGetBridgePosition(out var bridgePos)) return false;
+        if (Vector3.Distance(carrierActor.Position, bridgePos) > deliverRange) return false;
         return IceWarnings.Instance != null && IceWarnings.Instance.Deliver(warningNumber);
+    }
+
+    /// <summary>Anadi's deck marks the real drop point as DropPoint_Bridge; the sandbox has none, so this
+    /// falls back to the Wheel station there instead.</summary>
+    static bool TryGetBridgePosition(out Vector3 position)
+    {
+        var marker = GameObject.Find("DropPoint_Bridge");
+        if (marker != null) { position = marker.transform.position; return true; }
+
+        var wheel = StationRegistry.Get(StationType.Wheel);
+        if (wheel != null) { position = wheel.Position; return true; }
+
+        position = Vector3.zero;
+        return false;
     }
 
     /// <summary>Picks up the nearest waiting warning in range, if the actor isn't already carrying one.</summary>
