@@ -14,6 +14,7 @@ using UnityEngine.InputSystem;
 ///   Rabib's Boiler/Doors/Wheel/Wireless scripts on the deck's Station_* objects (status light = their StatusLight bulb)
 ///   Rabib's carry items for orders 2 and 10, at the Wireless desk and the Wheel
 ///   Rabib's ice warnings MSG 1-3 on the deck's PickUp_IceWarning marker (they only show while waiting)
+///   Rabib's IcebergSequence (the steering finale), which replaces GameManager's placeholder iceberg
 /// </summary>
 public static class ShipSceneAssembler
 {
@@ -41,10 +42,11 @@ public static class ShipSceneAssembler
         EnsureCarryItem(deck, "PassengerList", "02_PassengerList", "Station_Wireless");
         EnsureCarryItem(deck, "CaptainsLog", "10_CaptainsLog", "Station_Wheel");
         for (int n = 1; n <= 3; n++) EnsureIceWarning(deck, n);
+        EnsureIcebergSequence();
 
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
-        Debug.Log("[ShipSceneAssembler] Ship.unity has the deck, a deck camera, player join, 4 stations, 2 carry items and 3 ice warnings.");
+        Debug.Log("[ShipSceneAssembler] Ship.unity has the deck, a deck camera, player join, 4 stations, 2 carry items, 3 ice warnings and the iceberg finale.");
     }
 
     public static void AssembleBatch() => Assemble();
@@ -100,6 +102,16 @@ public static class ShipSceneAssembler
     }
 
     /// <summary>The item for a carry order, waiting beside the station where it's picked up.</summary>
+    /// <summary>
+    /// The finale. With no bow point set it places the iceberg 7 m ahead of the Wheel, which is the bow rail on
+    /// Samprity's deck, inside the whole-deck camera.
+    /// </summary>
+    static void EnsureIcebergSequence()
+    {
+        if (Object.FindAnyObjectByType<IcebergSequence>() != null) return;
+        new GameObject("[IcebergSequence]").AddComponent<IcebergSequence>();
+    }
+
     /// <summary>One message slip per warning, side by side on the desk's pick-up marker.</summary>
     static void EnsureIceWarning(GameObject deck, int number)
     {

@@ -119,6 +119,62 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &121519641
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 121519643}
+  - component: {fileID: 121519642}
+  m_Layer: 0
+  m_Name: '[IcebergSequence]'
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &121519642
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 121519641}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3d95a368959e24742b3f09e3cf7638ad, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::IcebergSequence
+  steerSeconds: 30
+  startAngle: 35
+  perSteererRate: 3
+  pull: 0.05
+  deadzone: 0.2
+  startSide: 0
+  bowPoint: {fileID: 0}
+  bowAheadOfWheel: 7
+  startAhead: 10
+  impactAhead: 2
+  icebergSize: {x: 5, y: 5, z: 4}
+  icebergColor: {r: 0.93, g: 0.97, b: 1, a: 1}
+--- !u!4 &121519643
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 121519641}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &518224237
 GameObject:
   m_ObjectHideFlags: 0
@@ -777,6 +833,7 @@ MonoBehaviour:
   workDuration: 3
   repairDuration: 3
   statusLight: {fileID: 0}
+  unlockSeconds: 3
 --- !u!114 &1683977143
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1124,3 +1181,4 @@ SceneRoots:
   - {fileID: 1971613157}
   - {fileID: 1934266536}
   - {fileID: 1998110451}
+  - {fileID: 121519643}
