@@ -1,0 +1,108 @@
+using System.Collections.Generic;
+using UnityEngine;
+
+/// <summary>
+/// Shows a prompt over the station nearest each human crew member. Owner: Samprity.
+/// Uses Rabib's stations (StationRegistry) when there are any; until then, the ShipDeck's Station_* markers,
+/// so the prompts already work on the deck. Shows "Repair" on broken stations and "Done" on green ones.
+/// </summary>
+public class StationPrompts : MonoBehaviour
+{
+    public StationPromptUI[] prompts = new StationPromptUI[0];
+    public RectTransform canvasRect;
+    [Tooltip("How close a crew member must be to a station, in metres.")]
+    public float range = 2.8f;
+    [Tooltip("How high above the station the prompt floats, in metres.")]
+    public float heightAbove = 1.7f;
+    [Tooltip("Canvas units kept clear at the top for the order cards.")]
+    public float keepClearTop = 370f;
+    public Color normalTint = new Color(0.95f, 0.88f, 0.7f);
+    public Color repairTint = new Color(1f, 0.45f, 0.35f);
+    public Color doneTint = new Color(0.55f, 0.95f, 0.6f);
+
+    struct Spot { public Vector3 pos; public StationType type; public IStation station; }
+
+    readonly List<Spot> spots = new List<Spot>(8);
+    readonly List<Transform> markers = new List<Transform>(4);
+    readonly List<(Transform t, Component c)> humans = new List<(Transform, Component)>(3);
+
+    void Start()
+    {
+        foreach (StationType t in System.Enum.GetValues(typeof(StationType)))
+        {
+            var go = GameObject.Find("Station_" + (t == StationType.Doors ? "Doors" : t.ToString()));
+            if (go != null) markers.Add(go.transform);
+        }
+    }
+
+    void LateUpdate()
+    {
+        var cam = Camera.main;
+        GatherSpots();
+        GatherHumans();
+
+        int used = 0;
+        foreach (var (who, actor) in humans)
+        {
+            if (used >= prompts.Length || cam == null) break;
+            int best = -1;
+            float bestDist = range * range;
+            for (int i = 0; i < spots.Count; i++)
+            {
+                Vector3 d = spots[i].pos - who.position;
+                d.y = 0f;
+                if (d.sqrMagnitude < bestDist) { bestDist = d.sqrMagnitude; best = i; }
+            }
+            if (best < 0) continue;
+
+            var s = spots[best];
+            Vector3 screen = cam.WorldToScreenPoint(s.pos + Vector3.up * heightAbove);
+            if (screen.z <= 0f) continue;
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, screen, null, out var local);
+            local = KeepOnScreen(local);
+
+            string key = HudText.KeyFor(HudText.Key.Interact, actor);
+            if (s.station != null && s.station.IsBroken)
+                prompts[used].Show(local, HudText.StationName(s.type), "Hold to repair", key, repairTint);
+            else if (s.station != null && s.station.IsDone)
+                prompts[used].Show(local, HudText.StationName(s.type), "Done", key, doneTint);
+            else
+                prompts[used].Show(local, HudText.StationName(s.type), "Hold  ·  " + HudText.StationVerb(s.type), key, normalTint);
+            used++;
+        }
+        for (int i = used; i < prompts.Length; i++) prompts[i].Hide();
+    }
+
+    /// <summary>Keeps a prompt (pivot at its bottom centre) inside the screen and below the order cards.</summary>
+    public Vector2 KeepOnScreen(Vector2 local)
+    {
+        Vector2 half = canvasRect.rect.size * 0.5f;
+        local.x = Mathf.Clamp(local.x, -half.x + 170f, half.x - 170f);
+        local.y = Mathf.Clamp(local.y, -half.y + 30f, half.y - keepClearTop - 80f);
+        return local;
+    }
+
+    void GatherSpots()
+    {
+        spots.Clear();
+        foreach (var st in StationRegistry.All)
+            spots.Add(new Spot { pos = st.Position, type = st.Type, station = st });
+        if (spots.Count > 0) return;
+        foreach (var m in markers)
+        {
+            if (m == null) continue;
+            System.Enum.TryParse(m.name.Substring("Station_".Length), out StationType t);
+            spots.Add(new Spot { pos = m.position, type = t });
+        }
+    }
+
+    void GatherHumans()
+    {
+        humans.Clear();
+        foreach (var c in CrewRegistry.All)
+            if (!c.IsBot && c is Component comp) humans.Add((comp.transform, comp));
+        if (humans.Count > 0) return;
+        // Sandbox scenes: no registered crew, just someone walking around.
+        foreach (var m in ThirdPersonMover.All) humans.Add((m.transform, m));
+    }
+}

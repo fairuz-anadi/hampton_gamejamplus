@@ -46,6 +46,10 @@ public class ThirdPersonMover : MonoBehaviour
     [Tooltip("Float parameter that receives the walking speed in m/s.")]
     public string speedParameter = "Speed";
 
+    static readonly System.Collections.Generic.List<ThirdPersonMover> all = new System.Collections.Generic.List<ThirdPersonMover>(4);
+    /// <summary>Every active mover, for things like the HUD's station prompts in sandbox scenes.</summary>
+    public static System.Collections.Generic.IReadOnlyList<ThirdPersonMover> All => all;
+
     CharacterController controller;
     Vector2 moveInput;
     Vector3 moveDir = Vector3.forward;
@@ -74,17 +78,29 @@ public class ThirdPersonMover : MonoBehaviour
         CacheAnimatorParameter();
     }
 
-#if ENABLE_INPUT_SYSTEM
     void OnEnable()
     {
+        if (!all.Contains(this)) all.Add(this);
+#if ENABLE_INPUT_SYSTEM
         if (!readOwnInput) return;
         if (moveAction != null && moveAction.action != null) { moveAction.action.Enable(); return; }
         ownMove ??= CreateDefaultMoveAction();
         ownMove.Enable();
+#endif
     }
 
-    void OnDisable() => ownMove?.Disable();
+    void OnDisable()
+    {
+        all.Remove(this);
+#if ENABLE_INPUT_SYSTEM
+        ownMove?.Disable();
+#endif
+    }
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetStatics() => all.Clear();
+
+#if ENABLE_INPUT_SYSTEM
     static InputAction CreateDefaultMoveAction()
     {
         var a = new InputAction("Move", InputActionType.Value, expectedControlType: "Vector2");
