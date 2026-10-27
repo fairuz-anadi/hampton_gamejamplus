@@ -102,6 +102,40 @@ public static class CaptainScript
         "Yes, yes. Ice. There's always ice.",
     };
 
+    // ---------- Muster vote ----------
+
+    public static readonly string[] VoteCalled =
+    {
+        "{seat} is ringing the muster bell. How dramatic.",
+        "A vote? On my ship? Go on then, {seat}. Quickly.",
+    };
+    public const string VoteNobody = "Nobody? Then back to work, all of you.";
+    /// <summary>They locked out an honest crewmate. He enjoys this.</summary>
+    public static readonly string[] VoteWrong =
+    {
+        "You've locked out {seat}. Wonderful. One fewer pair of hands.",
+        "{seat}, off the stations. Your crewmates don't trust you. Neither do I.",
+    };
+    /// <summary>They caught the Stoker. He doesn't like it, but he can't say why.</summary>
+    public static readonly string[] VoteRight =
+    {
+        "Hm. {seat}. Fine. Back to work.",
+        "{seat}? An odd choice. Never mind. Carry on.",
+    };
+
+    // ---------- Wireless: the ice warnings ----------
+
+    /// <summary>
+    /// The text on each ice warning (MSG 1-3), loosely after the real 14 April 1912 messages. Words in [brackets]
+    /// arrive blacked out, more of them each time: a "something's off" moment.
+    /// </summary>
+    public static readonly string[] IceWarningText =
+    {
+        "MSG 1. Westbound steamers report bergs, growlers and field ice in 42 N, from 49 to 51 W.",
+        "MSG 2. Large [icebergs] sighted. [Ice] [field] directly in your track. Advise [reduce] [speed].",
+        "MSG 3. Saw much [heavy] [pack] [ice] and great number [large] [icebergs]. [Field] [ice] [ahead]. Weather clear.",
+    };
+
     // ---------- Part 3: the Truth monologue ----------
 
     public static readonly string[] Monologue =

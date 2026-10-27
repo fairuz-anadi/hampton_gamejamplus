@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-/// Spawns the crew and the Captain (CrewRoster, SuspicionTracker, CaptainDirector) in gameplay scenes,
+/// Spawns the crew and the Captain (CrewRoster, SuspicionTracker, CaptainDirector, OffMoments, MusterVote) in gameplay scenes,
 /// the same way GameSystems spawns the core systems, so nobody has to edit Ship.unity. Owner: Riham.
 /// Riham_AI.unity also counts as a gameplay scene, with the core systems running.
 /// </summary>
@@ -36,6 +36,8 @@ public static class CrewAISystems
         }
         if (Object.FindAnyObjectByType<SuspicionTracker>() == null) go.AddComponent<SuspicionTracker>();
         if (Object.FindAnyObjectByType<CaptainDirector>() == null) go.AddComponent<CaptainDirector>();
+        if (Object.FindAnyObjectByType<OffMoments>() == null) go.AddComponent<OffMoments>();
+        if (Object.FindAnyObjectByType<MusterVote>() == null) go.AddComponent<MusterVote>();
         return go;
     }
 }
