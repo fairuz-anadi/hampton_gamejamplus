@@ -33,12 +33,14 @@ public class CarryItem : MonoBehaviour, ICarryItem
     {
         GameEvents.OrderIssued += OnOrderIssued;
         GameEvents.OrderResolved += OnOrderResolved;
+        GameEvents.StateChanged += OnStateChanged;
     }
 
     void OnDisable()
     {
         GameEvents.OrderIssued -= OnOrderIssued;
         GameEvents.OrderResolved -= OnOrderResolved;
+        GameEvents.StateChanged -= OnStateChanged;
     }
 
     void OnOrderIssued(ActiveOrder active)
@@ -50,6 +52,14 @@ public class CarryItem : MonoBehaviour, ICarryItem
     void OnOrderResolved(ActiveOrder active, Choice choice)
     {
         if (active.Data == order) ReturnHome();
+    }
+
+    // A fresh run (first start, or an in-place sandbox restart with no scene reload): OrderDirector.Begin()
+    // wipes its active orders without resolving them, so nothing else tells us to let go. Without this, whatever
+    // was mid-carry at restart stays glued to its old carrier (and unpickupable) until its order happens to reissue.
+    void OnStateChanged(GameState s)
+    {
+        if (s == GameState.Part1) ReturnHome();
     }
 
     void Update()
