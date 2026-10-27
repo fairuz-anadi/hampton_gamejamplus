@@ -3,4 +3,6 @@
 public interface IInteractSource
 {
     bool InteractHeld { get; }
+    /// <summary>Left/right steering, -1..1 (the Move action's x, or the debug arrows). Only read while steering the Wheel.</summary>
+    float SteerInput { get; }
 }

@@ -27,6 +27,16 @@ public class DebugSecondPlayer : MonoBehaviour, ICrewActor, IInteractSource, IRo
     public bool IsLockedOut { get; private set; }
 
     public bool InteractHeld => Keyboard.current != null && Keyboard.current.rightCtrlKey.isPressed;
+    /// <summary>Left/Right arrows; steers only while Right Ctrl is held at the Wheel during the finale.</summary>
+    public float SteerInput
+    {
+        get
+        {
+            var kb = Keyboard.current;
+            if (kb == null) return 0f;
+            return (kb.rightArrowKey.isPressed ? 1f : 0f) - (kb.leftArrowKey.isPressed ? 1f : 0f);
+        }
+    }
 
     void Awake()
     {
@@ -60,11 +70,13 @@ public class DebugSecondPlayer : MonoBehaviour, ICrewActor, IInteractSource, IRo
         if (kb.downArrowKey.isPressed) input.y -= 1f;
         if (kb.rightArrowKey.isPressed) input.x += 1f;
         if (kb.leftArrowKey.isPressed) input.x -= 1f;
-        mover.SetMoveInput(input);
+        // While steering the Wheel, the arrows turn the ship instead of walking.
+        TryGetComponent(out Interactor interactor);
+        mover.SetMoveInput(interactor != null && interactor.IsSteering ? Vector2.zero : input);
 
         if (kb.rightShiftKey.wasPressedThisFrame) OrderDirector.Instance?.Report(this);
         if (kb.enterKey.wasPressedThisFrame) OrderDirector.Instance?.Refuse(this);
-        if (kb.rightAltKey.wasPressedThisFrame && TryGetComponent(out Interactor interactor)) interactor.CallHelp();
+        if (kb.rightAltKey.wasPressedThisFrame && interactor != null) interactor.CallHelp();
     }
 
     public void SetRoom(string roomId) => zoneRoom = roomId;

@@ -23,6 +23,7 @@ public class PlayerController : MonoBehaviour, ICrewActor, IInteractSource, IRoo
     string zoneRoom = "Unknown";
     public bool IsLockedOut { get; private set; }
     public bool InteractHeld => interactAction.IsPressed();
+    public float SteerInput => moveAction.ReadValue<Vector2>().x;
 
     void Awake()
     {
@@ -49,7 +50,9 @@ public class PlayerController : MonoBehaviour, ICrewActor, IInteractSource, IRoo
 
     void Update()
     {
-        mover.SetMoveInput(moveAction.ReadValue<Vector2>());
+        // While steering the Wheel, the Move axis turns the ship instead of walking.
+        bool steering = interactor != null && interactor.IsSteering;
+        mover.SetMoveInput(steering ? Vector2.zero : moveAction.ReadValue<Vector2>());
         if (reportAction.WasPerformedThisFrame()) OrderDirector.Instance?.Report(this);
         if (refuseAction.WasPerformedThisFrame()) OrderDirector.Instance?.Refuse(this);
         if (callHelpAction.WasPerformedThisFrame() && interactor != null) interactor.CallHelp();

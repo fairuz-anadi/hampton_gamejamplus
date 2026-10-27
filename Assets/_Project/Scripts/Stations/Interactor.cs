@@ -16,6 +16,8 @@ public class Interactor : MonoBehaviour
     bool wasHeld;
 
     public IStation NearestStation { get; private set; }
+    /// <summary>Holding the Wheel during the iceberg finale. The Move axis steers then, so the owner stops walking.</summary>
+    public bool IsSteering { get; private set; }
 
     void Awake()
     {
@@ -30,6 +32,7 @@ public class Interactor : MonoBehaviour
         bool holding = !lockedOut && interactSource != null && interactSource.InteractHeld;
         bool justPressed = holding && !wasHeld;
         wasHeld = holding;
+        IsSteering = false;
 
         // The item went home on its own (its order ended), so we're empty-handed again.
         if (carriedItem != null && !carriedItem.IsCarried) carriedItem = null;
@@ -54,6 +57,13 @@ public class Interactor : MonoBehaviour
         }
         currentStation?.Hold(actor, holding);
         NearestStation = nearestStation;
+
+        // Steering is separate from the order hold: one person is enough, the 2-holder count doesn't matter.
+        if (holding && currentStation is Wheel wheel && wheel.SteeringOpen && !wheel.IsBroken)
+        {
+            IsSteering = true;
+            wheel.Steer(actor, interactSource.SteerInput);
+        }
 
         if (justPressed)
         {
@@ -140,6 +150,8 @@ public class Interactor : MonoBehaviour
 
         string text;
         if (carriedItem != null) text = "[Interact] Drop";
+        else if (NearestStation is Wheel w && w.SteeringOpen)
+            text = w.IsBroken ? "[Hold Interact] Repair Wheel" : "[Hold Interact + Left/Right] Steer";
         else if (NearestStation is Doors d && d.CanUnlock) text = $"[Hold Interact] Reopen lifeboat store {d.ActiveHolders}/{d.NeededHolders}";
         else if (NearestStation is Station s && s.NeededHolders > 1) text = $"[Hold Interact] {s.Type} {s.ActiveHolders}/{s.NeededHolders}";
         else text = $"[Hold Interact] {NearestStation.Type}";
