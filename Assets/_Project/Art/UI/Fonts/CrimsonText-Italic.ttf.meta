@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 91b73bedd85b613428418cba3e76795f
+guid: 8356b91a64a369e428e71888e0d1ae0b
 TrueTypeFontImporter:
   externalObjects: {}
   serializedVersion: 4
@@ -9,7 +9,7 @@ TrueTypeFontImporter:
   characterPadding: 1
   includeFontData: 1
   fontNames:
-  - Alegreya Sans
+  - Crimson Text
   fallbackFontReferences: []
   customCharacters: 
   fontRenderingMode: 0

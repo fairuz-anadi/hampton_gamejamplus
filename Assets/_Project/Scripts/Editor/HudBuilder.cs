@@ -4,7 +4,8 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// Builds the HUD prefab (Prefabs/UI/Resources/HUD.prefab): meters, order cards, station prompts. Owner: Samprity.
+/// Builds the HUD prefab (Prefabs/UI/Resources/HUD.prefab): meters, sun/moon dial, orders, station prompts, subtitles.
+/// Owner: Samprity. Styled after AFK Journey's soft painterly HUD (our own art and layout).
 ///   In the Editor:  Port > Samprity > Build HUD
 ///   Headless:       Unity.exe -batchmode -projectPath . -executeMethod HudBuilder.BuildBatch -quit
 ///   Preview:        Unity.exe -batchmode -projectPath . -executeMethod HudBuilder.PreviewBatch   (Logs/HudPreview_*.png)
@@ -15,13 +16,11 @@ public static class HudBuilder
     public const string PrefabPath = "Assets/_Project/Prefabs/UI/Resources/HUD.prefab";
     const string UI = "Assets/_Project/Art/UI";
 
-    static readonly Color Navy = new Color(0.05f, 0.08f, 0.15f, 0.86f);
-    static readonly Color Brass = new Color(0.86f, 0.68f, 0.34f);
     static readonly Color Cream = new Color(0.96f, 0.92f, 0.82f);
-    static readonly Color Muted = new Color(0.68f, 0.74f, 0.85f);
+    static readonly Color Gold = new Color(0.95f, 0.78f, 0.42f);
 
     static Font regular, bold, italic;
-    static Sprite panel, outline, bar, ring, disc, keycap, iconCaptain, iconSafety, iconCrew, iconSpeaker;
+    static Sprite pill, banner, band, softDisc, ringThin, dialTicks, diamond, sunIcon, moonIcon, keyRound, disc, iconCaptain, iconSafety, iconCrew, iconSpeaker;
 
     [MenuItem("Port/Samprity/Build HUD")]
     public static void Build()
@@ -59,14 +58,19 @@ public static class HudBuilder
 
     static void LoadArt()
     {
-        regular = AssetDatabase.LoadAssetAtPath<Font>($"{UI}/Fonts/AlegreyaSans-Regular.ttf");
-        bold = AssetDatabase.LoadAssetAtPath<Font>($"{UI}/Fonts/AlegreyaSans-Bold.ttf");
-        italic = AssetDatabase.LoadAssetAtPath<Font>($"{UI}/Fonts/AlegreyaSans-Italic.ttf");
-        panel = Sprite("panel", 18);
-        outline = Sprite("panel_outline", 18);
-        bar = Sprite("bar", 10);
-        keycap = Sprite("keycap", 13);
-        ring = Sprite("ring", 0);
+        regular = AssetDatabase.LoadAssetAtPath<Font>($"{UI}/Fonts/CrimsonText-SemiBold.ttf");
+        bold = AssetDatabase.LoadAssetAtPath<Font>($"{UI}/Fonts/CrimsonText-Bold.ttf");
+        italic = AssetDatabase.LoadAssetAtPath<Font>($"{UI}/Fonts/CrimsonText-SemiBoldItalic.ttf");
+        pill = Sprite("soft_pill", 30);
+        banner = Sprite("soft_banner", 0);
+        band = Sprite("soft_band", 0);
+        softDisc = Sprite("soft_disc", 0);
+        ringThin = Sprite("ring_thin", 0);
+        dialTicks = Sprite("dial_ticks", 0);
+        diamond = Sprite("diamond", 0);
+        sunIcon = Sprite("sun", 0);
+        moonIcon = Sprite("moon", 0);
+        keyRound = Sprite("key_round", 0);
         disc = Sprite("disc", 0);
         iconCaptain = Sprite("icon_captain", 0);
         iconSafety = Sprite("icon_safety", 0);
@@ -93,6 +97,8 @@ public static class HudBuilder
     }
 
     // ---------- Layout ----------
+    // Soft and painterly, after AFK Journey: no hard boxes or outlines, translucent dark pills and fades, a classical
+    // serif in white and cream with gold accents, round medallions, a sun/moon dial.
 
     static GameObject BuildHud()
     {
@@ -110,75 +116,47 @@ public static class HudBuilder
         root.AddComponent<HUD>().root = group;
 
         BuildMeters(root.transform);
+        BuildDial(root.transform);
         BuildOrders(root.transform);
         BuildPrompts(root.transform, (RectTransform)root.transform);
         BuildSubtitles(root.transform);
         return root;
     }
 
-    /// <summary>The Captain's line, bottom centre. CaptainSubtitles sizes the panel to each line.</summary>
-    static void BuildSubtitles(Transform parent)
-    {
-        var box = Box(parent, "CaptainSubtitles", new Vector2(0.5f, 0f), new Vector2(0f, 46f), new Vector2(1200f, 220f), new Vector2(0.5f, 0f));
-        var group = box.gameObject.AddComponent<CanvasGroup>();
-        group.alpha = 0f;
-        var panelRt = Box(box, "Panel", new Vector2(0.5f, 0f), Vector2.zero, new Vector2(760f, 112f), new Vector2(0.5f, 0f));
-        Img(panelRt, "Background", panel, new Color(0.04f, 0.06f, 0.11f, 0.9f), Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, Image.Type.Sliced);
-        var trim = Img(panelRt, "Trim", outline, Brass, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, Image.Type.Sliced);
-        var horn = Img(panelRt, "Speaker", iconSpeaker, Brass, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(58f, 0f), new Vector2(64f, 64f), Image.Type.Simple);
-        var label = Txt(panelRt, "Label", bold, 16, Brass, "THE  CAPTAIN", new Vector2(0f, 1f), new Vector2(112f, -14f), new Vector2(400f, 22f), TextAnchor.UpperLeft);
-        var line = Txt(panelRt, "Line", italic, 30, Cream, "", new Vector2(0f, 1f), new Vector2(112f, -40f), new Vector2(600f, 40f), TextAnchor.UpperLeft);
-        line.horizontalOverflow = HorizontalWrapMode.Wrap;
-        line.lineSpacing = 0.95f;
-        // Invisible twin of the line, used only to measure the finished line before it types out.
-        var sizer = Txt(panelRt, "Sizer", italic, 30, new Color(0f, 0f, 0f, 0f), "", new Vector2(0f, 1f), new Vector2(112f, -40f), new Vector2(600f, 40f), TextAnchor.UpperLeft);
-        sizer.horizontalOverflow = HorizontalWrapMode.Wrap;
-        sizer.lineSpacing = 0.95f;
-        Object.DestroyImmediate(sizer.GetComponent<Shadow>());
-        var staticText = Txt(panelRt, "Static", bold, 20, new Color(0.8f, 0.82f, 0.86f), "~  k s s s h h h t  ~", new Vector2(0.5f, 1f), new Vector2(0f, 30f), new Vector2(500f, 26f), TextAnchor.LowerCenter);
-        staticText.enabled = false;
-
-        var subs = box.gameObject.AddComponent<CaptainSubtitles>();
-        subs.group = group;
-        subs.panel = panelRt;
-        subs.line = line;
-        subs.sizer = sizer;
-        subs.label = label;
-        subs.staticText = staticText;
-        subs.trim = trim;
-        subs.horn = horn;
-    }
-
+    /// <summary>Three round medallions across the top left: a ring that fills with the meter, the icon, the number.</summary>
     static void BuildMeters(Transform parent)
     {
-        var box = Box(parent, "Meters", new Vector2(0f, 1f), new Vector2(36f, -30f), new Vector2(440f, 208f), new Vector2(0f, 1f));
-        Img(box, "Background", panel, Navy, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, Image.Type.Sliced);
-        Img(box, "Trim", outline, new Color(Brass.r, Brass.g, Brass.b, 0.55f), Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, Image.Type.Sliced);
+        var box = Box(parent, "Meters", new Vector2(0f, 1f), new Vector2(34f, -26f), new Vector2(420f, 170f), new Vector2(0f, 1f));
         var panelComp = box.gameObject.AddComponent<MeterPanel>();
-        panelComp.captain = MeterRow(box, 0, "CAPTAIN'S  TRUST", iconCaptain, Brass, 0, new[] { 25, 75 });
-        panelComp.safety = MeterRow(box, 1, "SHIP  SAFETY", iconSafety, new Color(0.48f, 0.74f, 0.98f), 30, new[] { 50 });
-        panelComp.crew = MeterRow(box, 2, "CREW  TRUST", iconCrew, new Color(0.52f, 0.84f, 0.6f), 30, new[] { 30, 70 });
+        panelComp.captain = Medallion(box, 0, "CAPTAIN", iconCaptain, Gold, 0, new[] { 25, 75 });
+        panelComp.safety = Medallion(box, 1, "SAFETY", iconSafety, new Color(0.55f, 0.8f, 1f), 30, new[] { 50 });
+        panelComp.crew = Medallion(box, 2, "CREW", iconCrew, new Color(0.6f, 0.9f, 0.62f), 30, new[] { 30, 70 });
     }
 
-    static MeterBar MeterRow(RectTransform box, int i, string label, Sprite icon, Color color, int danger, int[] ticks)
+    static MeterBar Medallion(RectTransform box, int i, string label, Sprite icon, Color color, int danger, int[] ticks)
     {
-        var row = Box(box, "Meter_" + label.Replace(" ", "").Replace("'", ""), new Vector2(0f, 1f), new Vector2(18f, -18f - i * 62f), new Vector2(404f, 56f), new Vector2(0f, 1f));
-        Img(row, "Icon", icon, color, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(26f, 0f), new Vector2(46f, 46f), Image.Type.Simple);
-        Txt(row, "Label", bold, 16, Muted, label, new Vector2(0f, 1f), new Vector2(60f, -2f), new Vector2(260f, 22f), TextAnchor.UpperLeft);
-
-        var track = Box(row, "Track", new Vector2(0f, 0f), new Vector2(60f, 10f), new Vector2(268f, 16f), new Vector2(0f, 0f));
-        Img(track, "Back", bar, new Color(1f, 1f, 1f, 0.12f), Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, Image.Type.Sliced);
-        var fill = Img(track, "Fill", bar, color, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, Image.Type.Filled);
-        fill.fillMethod = Image.FillMethod.Horizontal;
-        fill.fillOrigin = (int)Image.OriginHorizontal.Left;
+        var m = Box(box, "Meter_" + label, new Vector2(0f, 1f), new Vector2(i * 136f, 0f), new Vector2(124f, 170f), new Vector2(0f, 1f));
+        var medal = Box(m, "Medallion", new Vector2(0.5f, 1f), new Vector2(0f, -4f), new Vector2(96f, 96f), new Vector2(0.5f, 1f));
+        Img(medal, "Shade", softDisc, new Color(0f, 0f, 0f, 0.55f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(132f, 132f), Image.Type.Simple);
+        Img(medal, "RingBack", ringThin, new Color(1f, 1f, 1f, 0.16f), Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, Image.Type.Simple);
+        var fill = Img(medal, "RingFill", ringThin, color, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, Image.Type.Filled);
+        fill.fillMethod = Image.FillMethod.Radial360;
+        fill.fillOrigin = (int)Image.Origin360.Top;
+        fill.fillClockwise = true;
         foreach (int t in ticks)
-            Img(track, "Tick_" + t, null, new Color(1f, 1f, 1f, 0.45f), new Vector2(t / 100f, 0f), new Vector2(t / 100f, 1f), Vector2.zero, new Vector2(2f, 6f), Image.Type.Simple);
+        {
+            // Small pip on the ring where the meter changes behaviour (e.g. the Captain at 25 and 75).
+            float a = t / 100f * Mathf.PI * 2f;
+            Img(medal, "Pip_" + t, disc, Cream, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(Mathf.Sin(a), Mathf.Cos(a)) * 44f, new Vector2(7f, 7f), Image.Type.Simple);
+        }
+        Img(medal, "Icon", icon, Cream, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(50f, 50f), Image.Type.Simple);
 
-        var value = Txt(row, "Value", bold, 26, Cream, "50", new Vector2(0f, 0f), new Vector2(338f, 2f), new Vector2(54f, 34f), TextAnchor.LowerRight);
-        var delta = Txt(row, "Delta", bold, 18, Cream, "", new Vector2(0f, 1f), new Vector2(338f, 0f), new Vector2(64f, 22f), TextAnchor.UpperRight);
+        var value = Txt(m, "Value", bold, 34, Color.white, "50", new Vector2(0.5f, 1f), new Vector2(0f, -100f), new Vector2(120f, 40f), TextAnchor.UpperCenter);
+        Txt(m, "Label", regular, 16, Cream, Spaced(label), new Vector2(0.5f, 1f), new Vector2(0f, -140f), new Vector2(124f, 22f), TextAnchor.UpperCenter);
+        var delta = Txt(m, "Delta", bold, 22, Color.white, "", new Vector2(1f, 1f), new Vector2(-2f, -6f), new Vector2(50f, 26f), TextAnchor.UpperRight);
         delta.color = new Color(1f, 1f, 1f, 0f);
 
-        var mb = row.gameObject.AddComponent<MeterBar>();
+        var mb = m.gameObject.AddComponent<MeterBar>();
         mb.fill = fill;
         mb.valueText = value;
         mb.deltaText = delta;
@@ -187,48 +165,75 @@ public static class HudBuilder
         return mb;
     }
 
+    /// <summary>Top right: the time of day, as a sun and moon riding round a dial.</summary>
+    static void BuildDial(Transform parent)
+    {
+        var box = Box(parent, "TimeOfDay", new Vector2(1f, 1f), new Vector2(-36f, -24f), new Vector2(170f, 206f), new Vector2(1f, 1f));
+        var group = box.gameObject.AddComponent<CanvasGroup>();
+        var dial = Box(box, "Dial", new Vector2(0.5f, 1f), Vector2.zero, new Vector2(164f, 164f), new Vector2(0.5f, 1f));
+        Img(dial, "Shade", softDisc, new Color(0f, 0f, 0f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(214f, 214f), Image.Type.Simple);
+        var face = Img(dial, "Face", disc, new Color(0.36f, 0.56f, 0.82f, 0.85f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(138f, 138f), Image.Type.Simple);
+        Img(dial, "Ticks", dialTicks, new Color(1f, 0.95f, 0.85f, 0.75f), Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, Image.Type.Simple);
+        var orbit = Box(dial, "Orbit", new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero, new Vector2(0.5f, 0.5f));
+        var sun = Img(orbit, "Sun", sunIcon, new Color(1f, 0.83f, 0.42f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 42f), new Vector2(46f, 46f), Image.Type.Simple);
+        var moon = Img(orbit, "Moon", moonIcon, new Color(0.88f, 0.92f, 1f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -42f), new Vector2(40f, 40f), Image.Type.Simple);
+        // Thin gold ring over the face edge, like a compass bezel.
+        Img(dial, "Bezel", ringThin, new Color(Gold.r, Gold.g, Gold.b, 0.8f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(146f, 146f), Image.Type.Simple);
+        var name = Txt(box, "Phase", regular, 20, Cream, Spaced("MORNING"), new Vector2(0.5f, 0f), new Vector2(0f, 4f), new Vector2(170f, 30f), TextAnchor.LowerCenter);
+
+        var comp = box.gameObject.AddComponent<TimeOfDayDial>();
+        comp.group = group;
+        comp.orbit = orbit;
+        comp.sun = sun.rectTransform;
+        comp.moon = moon.rectTransform;
+        comp.face = face;
+        comp.phaseName = name;
+    }
+
+    /// <summary>Right side, under the dial: orders as quest-tracker entries.</summary>
     static void BuildOrders(Transform parent)
     {
-        var box = Box(parent, "Orders", new Vector2(0.5f, 1f), new Vector2(0f, -26f), new Vector2(780f, 330f), new Vector2(0.5f, 1f));
+        var box = Box(parent, "Orders", new Vector2(1f, 1f), new Vector2(-24f, -252f), new Vector2(620f, 300f), new Vector2(1f, 1f));
         var cards = box.gameObject.AddComponent<OrderCards>();
         cards.cards = new[] { Card(box, 0), Card(box, 1) };
     }
 
     static OrderCardUI Card(RectTransform box, int i)
     {
-        var slot = Box(box, "Card_" + (i + 1), new Vector2(0.5f, 1f), new Vector2(0f, -i * 166f), new Vector2(780f, 154f), new Vector2(0.5f, 1f));
+        var slot = Box(box, "Order_" + (i + 1), new Vector2(1f, 1f), new Vector2(0f, -i * 148f), new Vector2(620f, 136f), new Vector2(1f, 1f));
         var group = slot.gameObject.AddComponent<CanvasGroup>();
         var body = Box(slot, "Body", Vector2.zero, Vector2.zero, Vector2.zero, new Vector2(0.5f, 0.5f));
         body.anchorMin = Vector2.zero;
         body.anchorMax = Vector2.one;
         body.sizeDelta = Vector2.zero;
-        Img(body, "Background", panel, Navy, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, Image.Type.Sliced);
-        Img(body, "Trim", outline, new Color(Brass.r, Brass.g, Brass.b, 0.7f), Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, Image.Type.Sliced);
+        Img(body, "Pill", pill, new Color(0.03f, 0.04f, 0.07f, 0.62f), Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, Image.Type.Sliced);
 
-        var timer = Box(body, "Timer", new Vector2(0f, 0.5f), new Vector2(78f, 0f), new Vector2(112f, 112f), new Vector2(0.5f, 0.5f));
-        Img(timer, "RingBack", ring, new Color(1f, 1f, 1f, 0.13f), Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, Image.Type.Simple);
-        var fill = Img(timer, "RingFill", ring, Cream, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, Image.Type.Filled);
+        // Diamond quest marker with the timer as a ring round it.
+        var marker = Box(body, "Marker", new Vector2(0f, 1f), new Vector2(54f, -52f), new Vector2(76f, 76f), new Vector2(0.5f, 0.5f));
+        Img(marker, "RingBack", ringThin, new Color(1f, 1f, 1f, 0.14f), Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, Image.Type.Simple);
+        var fill = Img(marker, "RingFill", ringThin, Cream, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, Image.Type.Filled);
         fill.fillMethod = Image.FillMethod.Radial360;
         fill.fillOrigin = (int)Image.Origin360.Top;
         fill.fillClockwise = false;
-        var seconds = Txt(timer, "Seconds", bold, 38, Cream, "30", Vector2.zero, Vector2.zero, Vector2.zero, TextAnchor.MiddleCenter, true);
+        Img(marker, "Diamond", diamond, Gold, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(34f, 34f), Image.Type.Simple);
+        var seconds = Txt(body, "Seconds", bold, 22, Cream, "30", new Vector2(0f, 1f), new Vector2(34f, -96f), new Vector2(40f, 28f), TextAnchor.UpperCenter);
 
-        var header = Txt(body, "Header", bold, 17, Brass, "ORDER 1", new Vector2(0f, 1f), new Vector2(156f, -14f), new Vector2(600f, 22f), TextAnchor.UpperLeft);
-        var line = Txt(body, "CaptainLine", italic, 25, Cream, "\u201CMorning, crew.\u201D", new Vector2(0f, 1f), new Vector2(156f, -38f), new Vector2(600f, 66f), TextAnchor.UpperLeft);
+        var header = Txt(body, "Header", regular, 17, Gold, "ORDER 1", new Vector2(0f, 1f), new Vector2(104f, -10f), new Vector2(490f, 22f), TextAnchor.UpperLeft);
+        var line = Txt(body, "CaptainLine", italic, 25, Color.white, "“Morning, crew.”", new Vector2(0f, 1f), new Vector2(104f, -32f), new Vector2(496f, 62f), TextAnchor.UpperLeft);
         line.horizontalOverflow = HorizontalWrapMode.Wrap;
-        line.lineSpacing = 0.95f;
-        var where = Txt(body, "Where", regular, 19, Muted, "Boiler", new Vector2(0f, 0f), new Vector2(156f, 14f), new Vector2(330f, 26f), TextAnchor.LowerLeft);
+        line.lineSpacing = 0.9f;
+        var where = Txt(body, "Where", regular, 19, Cream, "Boiler", new Vector2(0f, 0f), new Vector2(104f, 10f), new Vector2(260f, 26f), TextAnchor.LowerLeft);
 
-        var hints = Box(body, "Hints", new Vector2(1f, 0f), new Vector2(-20f, 12f), new Vector2(300f, 34f), new Vector2(1f, 0f));
-        var reportKey = KeyHint(hints, "Report", "R", "Report done", new Vector2(-160f, 0f));
-        var refuseKey = KeyHint(hints, "Refuse", "X", "Refuse", new Vector2(0f, 0f));
-        var botNote = Txt(body, "BotNote", italic, 19, Muted, "Number Three is on it", new Vector2(1f, 0f), new Vector2(-22f, 14f), new Vector2(300f, 26f), TextAnchor.LowerRight);
+        var hints = Box(body, "Hints", new Vector2(1f, 0f), new Vector2(-18f, 8f), new Vector2(300f, 34f), new Vector2(1f, 0f));
+        var reportKey = KeyHint(hints, "Report", "R", "Report done", new Vector2(-104f, 0f), 140f);
+        var refuseKey = KeyHint(hints, "Refuse", "X", "Refuse", new Vector2(0f, 0f), 92f);
+        var botNote = Txt(body, "BotNote", italic, 19, Cream, "Number Three is on it", new Vector2(1f, 0f), new Vector2(-22f, 10f), new Vector2(280f, 26f), TextAnchor.LowerRight);
 
-        var stamp = Txt(body, "Stamp", bold, 40, Cream, "REPORTED DONE", new Vector2(1f, 0.5f), new Vector2(-40f, 4f), new Vector2(440f, 60f), TextAnchor.MiddleRight);
+        var stamp = Txt(body, "Stamp", bold, 34, Cream, "REPORTED DONE", new Vector2(1f, 0.5f), new Vector2(-24f, 0f), new Vector2(420f, 50f), TextAnchor.MiddleRight);
         stamp.rectTransform.pivot = new Vector2(1f, 0.5f);
-        stamp.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 6f);
+        stamp.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 4f);
         var o = stamp.gameObject.AddComponent<Outline>();
-        o.effectColor = new Color(0f, 0f, 0f, 0.8f);
+        o.effectColor = new Color(0f, 0f, 0f, 0.75f);
         o.effectDistance = new Vector2(2f, -2f);
 
         var card = slot.gameObject.AddComponent<OrderCardUI>();
@@ -244,20 +249,22 @@ public static class HudBuilder
         card.hints = hints.gameObject;
         card.reportKey = reportKey;
         card.refuseKey = refuseKey;
+        card.timerCalm = Cream;
         return card;
     }
 
-    /// <summary>[R] Report done : a key cap with a letter, and a label to its right.</summary>
-    static Text KeyHint(RectTransform parent, string name, string key, string label, Vector2 rightEdge)
+    /// <summary>(R) Report done : a round key with its letter, and a label to its right.</summary>
+    static Text KeyHint(RectTransform parent, string name, string key, string label, Vector2 rightEdge, float width)
     {
-        var g = Box(parent, name, new Vector2(1f, 0.5f), rightEdge, new Vector2(150f, 34f), new Vector2(1f, 0.5f));
-        var cap = Img(g, "KeyCap", keycap, Cream, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(17f, 0f), new Vector2(34f, 34f), Image.Type.Sliced);
-        var k = Txt(cap.rectTransform, "Key", bold, 20, Cream, key, Vector2.zero, Vector2.zero, Vector2.zero, TextAnchor.MiddleCenter, true);
-        k.rectTransform.offsetMin = new Vector2(0f, 2f);
-        Txt(g, "Label", regular, 20, Cream, label, new Vector2(0f, 0.5f), new Vector2(44f, 0f), new Vector2(110f, 30f), TextAnchor.MiddleLeft).rectTransform.pivot = new Vector2(0f, 0.5f);
+        var g = Box(parent, name, new Vector2(1f, 0.5f), rightEdge, new Vector2(width, 34f), new Vector2(1f, 0.5f));
+        var cap = Img(g, "Key", keyRound, Cream, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(15f, 0f), new Vector2(30f, 30f), Image.Type.Simple);
+        var k = Txt(cap.rectTransform, "Letter", bold, 18, Cream, key, Vector2.zero, Vector2.zero, Vector2.zero, TextAnchor.MiddleCenter, true);
+        k.rectTransform.offsetMin = new Vector2(0f, 1f);
+        Txt(g, "Label", regular, 19, Cream, label, new Vector2(0f, 0.5f), new Vector2(36f, 0f), new Vector2(width - 36f, 28f), TextAnchor.MiddleLeft).rectTransform.pivot = new Vector2(0f, 0.5f);
         return k;
     }
 
+    /// <summary>Floating over stations: a round key and a soft fading label, no box.</summary>
     static void BuildPrompts(Transform parent, RectTransform canvasRect)
     {
         var layer = Box(parent, "StationPrompts", Vector2.zero, Vector2.zero, Vector2.zero, new Vector2(0.5f, 0.5f));
@@ -267,21 +274,20 @@ public static class HudBuilder
         var sp = layer.gameObject.AddComponent<StationPrompts>();
         sp.canvasRect = canvasRect;
         sp.prompts = new StationPromptUI[3];
+        sp.normalTint = Cream;
         for (int i = 0; i < 3; i++)
         {
             // Anchored at the canvas centre so ScreenPointToLocalPointInRectangle positions map straight on.
-            var p = Box(layer, "Prompt_" + (i + 1), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(300f, 64f), new Vector2(0.5f, 0f));
+            var p = Box(layer, "Prompt_" + (i + 1), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(300f, 62f), new Vector2(0.5f, 0f));
             var g = p.gameObject.AddComponent<CanvasGroup>();
             g.alpha = 0f;
-            Img(p, "Background", panel, Navy, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, Image.Type.Sliced);
-            var cap = Img(p, "KeyCap", keycap, Cream, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(34f, 0f), new Vector2(40f, 40f), Image.Type.Sliced);
-            var k = Txt(cap.rectTransform, "Key", bold, 24, Cream, "E", Vector2.zero, Vector2.zero, Vector2.zero, TextAnchor.MiddleCenter, true);
+            Img(p, "Fade", banner, new Color(0.02f, 0.03f, 0.06f, 0.82f), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(160f, 0f), new Vector2(320f, 62f), Image.Type.Simple);
+            Img(p, "KeyShade", disc, new Color(0.02f, 0.03f, 0.06f, 0.75f), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(30f, 0f), new Vector2(50f, 50f), Image.Type.Simple);
+            var cap = Img(p, "Key", keyRound, Cream, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(30f, 0f), new Vector2(50f, 50f), Image.Type.Simple);
+            var k = Txt(cap.rectTransform, "Letter", bold, 26, Cream, "E", Vector2.zero, Vector2.zero, Vector2.zero, TextAnchor.MiddleCenter, true);
             k.rectTransform.offsetMin = new Vector2(0f, 2f);
-            var title = Txt(p, "Title", bold, 15, Brass, "BOILER", new Vector2(0f, 1f), new Vector2(66f, -8f), new Vector2(224f, 20f), TextAnchor.UpperLeft);
-            var action = Txt(p, "Action", regular, 21, Cream, "Hold  ·  Shovel coal", new Vector2(0f, 0f), new Vector2(66f, 8f), new Vector2(224f, 28f), TextAnchor.LowerLeft);
-            // Small pointer under the box.
-            var tip = Img(p, "Tip", disc, Navy, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, -6f), new Vector2(12f, 12f), Image.Type.Simple);
-            tip.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 45f);
+            var title = Txt(p, "Title", regular, 16, Gold, "Boiler", new Vector2(0f, 1f), new Vector2(64f, -4f), new Vector2(230f, 22f), TextAnchor.UpperLeft);
+            var action = Txt(p, "Action", regular, 23, Color.white, "Hold  ·  Shovel coal", new Vector2(0f, 0f), new Vector2(64f, 6f), new Vector2(230f, 30f), TextAnchor.LowerLeft);
 
             var ui = p.gameObject.AddComponent<StationPromptUI>();
             ui.group = g;
@@ -293,6 +299,50 @@ public static class HudBuilder
             sp.prompts[i] = ui;
         }
     }
+
+    /// <summary>The Captain's line, bottom centre, on a soft band that fades at both ends.</summary>
+    static void BuildSubtitles(Transform parent)
+    {
+        var box = Box(parent, "CaptainSubtitles", new Vector2(0.5f, 0f), new Vector2(0f, 34f), new Vector2(1400f, 220f), new Vector2(0.5f, 0f));
+        var group = box.gameObject.AddComponent<CanvasGroup>();
+        group.alpha = 0f;
+        var panelRt = Box(box, "Panel", new Vector2(0.5f, 0f), Vector2.zero, new Vector2(900f, 120f), new Vector2(0.5f, 0f));
+        Img(panelRt, "Band", band, new Color(0.02f, 0.03f, 0.06f, 0.78f), Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, Image.Type.Simple);
+        // A hairline of the part's colour across the top of the band.
+        var trim = Img(panelRt, "Trim", band, Gold, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, -10f), new Vector2(-120f, 2f), Image.Type.Simple);
+        var head = Box(panelRt, "Head", new Vector2(0.5f, 1f), new Vector2(0f, -16f), new Vector2(240f, 28f), new Vector2(0.5f, 1f));
+        var horn = Img(head, "Speaker", iconSpeaker, Gold, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(26f, 0f), new Vector2(30f, 30f), Image.Type.Simple);
+        var label = Txt(head, "Label", regular, 18, Gold, Spaced("THE CAPTAIN"), new Vector2(0f, 0.5f), new Vector2(48f, 0f), new Vector2(190f, 26f), TextAnchor.MiddleLeft);
+        label.rectTransform.pivot = new Vector2(0f, 0.5f);
+        var line = Txt(panelRt, "Line", italic, 32, Color.white, "", new Vector2(0.5f, 1f), new Vector2(0f, -48f), new Vector2(700f, 44f), TextAnchor.UpperCenter);
+        line.horizontalOverflow = HorizontalWrapMode.Wrap;
+        line.lineSpacing = 0.92f;
+        // Invisible twin of the line, used only to measure the finished line before it types out.
+        var sizer = Txt(panelRt, "Sizer", italic, 32, new Color(0f, 0f, 0f, 0f), "", new Vector2(0.5f, 1f), new Vector2(0f, -48f), new Vector2(700f, 44f), TextAnchor.UpperCenter);
+        sizer.horizontalOverflow = HorizontalWrapMode.Wrap;
+        sizer.lineSpacing = 0.92f;
+        Object.DestroyImmediate(sizer.GetComponent<Shadow>());
+        var staticText = Txt(panelRt, "Static", regular, 20, new Color(0.82f, 0.84f, 0.88f), Spaced("~ kssshhht ~"), new Vector2(0.5f, 1f), new Vector2(0f, 24f), new Vector2(500f, 26f), TextAnchor.LowerCenter);
+        staticText.enabled = false;
+
+        var subs = box.gameObject.AddComponent<CaptainSubtitles>();
+        subs.group = group;
+        subs.panel = panelRt;
+        subs.line = line;
+        subs.sizer = sizer;
+        subs.label = label;
+        subs.staticText = staticText;
+        subs.trim = trim;
+        subs.horn = horn;
+        subs.padding = new Vector2(320f, 74f);
+        subs.maxTextWidth = 1000f;
+        subs.calm = new CaptainSubtitles.Style { trim = new Color(Gold.r, Gold.g, Gold.b, 0.9f), label = Gold, text = Color.white, tremble = 0f };
+        subs.off = new CaptainSubtitles.Style { trim = new Color(0.66f, 0.76f, 0.9f, 0.9f), label = new Color(0.72f, 0.8f, 0.92f), text = new Color(0.92f, 0.95f, 1f), tremble = 0f };
+        subs.truth = new CaptainSubtitles.Style { trim = new Color(0.9f, 0.22f, 0.18f, 0.95f), label = new Color(1f, 0.42f, 0.36f), text = new Color(1f, 0.9f, 0.86f), tremble = 1.4f };
+    }
+
+    /// <summary>Letter-spaced capitals, the way the reference sets its small labels.</summary>
+    static string Spaced(string s) => string.Join(" ", s.ToCharArray()).Replace("   ", "    ");
 
     // ---------- Helpers ----------
 
@@ -353,8 +403,8 @@ public static class HudBuilder
         t.verticalOverflow = VerticalWrapMode.Overflow;
         t.raycastTarget = false;
         var shadow = go.AddComponent<Shadow>();
-        shadow.effectColor = new Color(0f, 0f, 0f, 0.55f);
-        shadow.effectDistance = new Vector2(1.5f, -1.5f);
+        shadow.effectColor = new Color(0f, 0f, 0f, 0.7f);
+        shadow.effectDistance = new Vector2(1.5f, -2f);
         return t;
     }
 
@@ -391,11 +441,13 @@ public static class HudBuilder
         var cards = hud.GetComponentInChildren<OrderCards>(true).cards;
         var prompts = hud.GetComponentInChildren<StationPrompts>(true);
         var subs = hud.GetComponentInChildren<CaptainSubtitles>(true);
+        var dial = hud.GetComponentInChildren<TimeOfDayDial>(true);
 
         void Shot(string name, int part, int ct, int ss, int crew, int ctWas, (OrderData d, int n, int seat, bool human, float left)[] orders, Vector3 at, float yaw, string station, string verb, string subtitle, bool withStatic, string timeOfDay)
         {
             if (mood.cycle != null) mood.Preview(part, mood.cycle.PhaseOf(timeOfDay)); else mood.ApplyImmediate(part);
             subs.Preview(subtitle, part, withStatic);
+            if (mood.cycle != null) dial.Show(mood.cycle, mood.cycle.PhaseOf(timeOfDay));
             MovementChecks.Sim(mover, follow, at, yaw, (1.2f, Vector2.zero));
             meters.captain.SetValue(ctWas); meters.captain.SetValue(ct);
             meters.safety.SetValue(ss);
