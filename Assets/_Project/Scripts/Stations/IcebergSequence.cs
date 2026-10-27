@@ -220,7 +220,11 @@ public class IcebergSequence : MonoBehaviour
         iceberg.transform.localScale = icebergSize;
         Destroy(iceberg.GetComponent<Collider>()); // scenery only, mustn't block anyone or the NavMesh
 
-        var mat = iceberg.GetComponent<Renderer>().material;
+        // A primitive's default material renders magenta in builds, so use the URP Lit one from Resources.
+        var renderer = iceberg.GetComponent<Renderer>();
+        var lit = Resources.Load<Material>("RuntimeLit");
+        if (lit != null) renderer.sharedMaterial = lit;
+        var mat = renderer.material;
         if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", icebergColor);
         else mat.color = icebergColor;
     }

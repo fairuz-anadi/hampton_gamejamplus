@@ -54,6 +54,7 @@ public static class ShipDeckBuilder
         deck.GetComponent<PartMood>().ApplyImmediate(1);
 
         EditorSceneManager.SaveScene(scene, ScenePath);
+        HudBuilder.AddToSandbox(); // the rebuild wiped the scene; put the HUD back
         AssetDatabase.SaveAssets();
         Debug.Log($"[ShipDeck] Built {PrefabPath} and {ScenePath}");
     }
@@ -91,6 +92,8 @@ public static class ShipDeckBuilder
         BuildAtmosphere(fxT);
 
         var mood = root.AddComponent<PartMood>();
+        mood.cycle = root.AddComponent<DayNightCycle>();
+        mood.sun = BuildSun(lightT);
         mood.moon = BuildMoon(lightT);
         mood.lamps = BuildLamps(lightT);
         mood.calmVolume = PostVolume(fxT, "PostFX_Calm", "Calm", 1f);
@@ -305,16 +308,34 @@ public static class ShipDeckBuilder
         Kit(props, "Dungeon", "barrel_small_stack", new Vector3(-4.8f, 0f, 33.2f), 0f);
     }
 
+    /// <summary>Night light. PartMood fades it in as the sun sets and makes it the shadow-casting light at night.</summary>
     static Light BuildMoon(Transform p)
     {
         var go = new GameObject("Moon");
         go.transform.SetParent(p, false);
-        go.transform.rotation = Quaternion.Euler(42f, 35f, 0f);
+        go.transform.rotation = Quaternion.Euler(48f, 215f, 0f);
         var l = go.AddComponent<Light>();
         l.type = LightType.Directional;
         l.shadows = LightShadows.Soft;
-        l.color = new Color(0.62f, 0.7f, 1f);
-        l.intensity = 0.45f;
+        l.shadowStrength = 0.7f;
+        l.color = new Color(0.72f, 0.8f, 1f);
+        l.intensity = 0f;
+        l.enabled = false;
+        return l;
+    }
+
+    /// <summary>The sun. DayNightCycle moves it across the sky; PartMood dims and tints it per story part.</summary>
+    static Light BuildSun(Transform p)
+    {
+        var go = new GameObject("Sun");
+        go.transform.SetParent(p, false);
+        go.transform.rotation = Quaternion.Euler(52f, 35f, 0f);
+        var l = go.AddComponent<Light>();
+        l.type = LightType.Directional;
+        l.shadows = LightShadows.Soft;
+        l.shadowStrength = 0.85f;
+        l.color = new Color(1f, 0.96f, 0.88f);
+        l.intensity = 1.7f;
         return l;
     }
 
@@ -728,7 +749,7 @@ public static class ShipDeckBuilder
         darkWood = ShipMat("Ship_DarkWood", new Color(0.33f, 0.21f, 0.13f));
         steel = ShipMat("Ship_Steel", new Color(0.24f, 0.26f, 0.30f), null, 0.6f, 0.35f);
         hull = ShipMat("Ship_Hull", new Color(0.07f, 0.08f, 0.12f));
-        sea = ShipMat("Ship_Sea", new Color(0.04f, 0.10f, 0.18f), null, 0f, 0.85f);
+        sea = ShipMat("Ship_Sea", new Color(0.06f, 0.24f, 0.38f), null, 0f, 0.85f);
         white = ShipMat("Ship_LifeboatWhite", new Color(0.93f, 0.92f, 0.88f));
         fire = ShipMat("Ship_FireGlow", new Color(1f, 0.45f, 0.12f), null, 0f, 0.2f, new Color(1f, 0.4f, 0.1f) * 3f);
         statusRed = ShipMat("Ship_StatusRed", new Color(1f, 0.15f, 0.1f), null, 0f, 0.5f, new Color(1f, 0.12f, 0.08f) * 2.5f);
@@ -738,7 +759,7 @@ public static class ShipDeckBuilder
         buff = ShipMat("Ship_FunnelBuff", new Color(0.82f, 0.62f, 0.34f), null, 0f, 0.25f);
         portholeGlow = ShipMat("Ship_PortholeGlow", new Color(1f, 0.82f, 0.5f), null, 0f, 0.6f, new Color(1f, 0.7f, 0.35f) * 1.6f);
 
-        // The sea: ripples from a generated normal map, tiled small so the moon glints break up.
+        // The sea: ripples from a generated normal map, tiled small so the sun glints break up.
         var ripples = AssetDatabase.LoadAssetAtPath<Texture2D>(RenderLookSetup.SeaNormalPath);
         sea.SetTexture("_BumpMap", ripples);
         sea.EnableKeyword("_NORMALMAP");
@@ -859,9 +880,9 @@ public static class ShipDeckBuilder
         cam.Render(); // the first headless render is garbage
 
         // Animators don't run in edit mode, so the crew shows its T-pose in these pictures.
-        void Shot(string name, Vector3 pos, float yaw, int part, params (float, Vector2)[] steps)
+        void Shot(string name, Vector3 pos, float yaw, int part, string timeOfDay, params (float, Vector2)[] steps)
         {
-            mood.ApplyImmediate(part);
+            mood.Preview(part, mood.cycle != null ? mood.cycle.PhaseOf(timeOfDay) : 0.3f);
             MovementChecks.Sim(mover, follow, pos, yaw, steps);
             cam.Render();
             RenderTexture.active = rt;
@@ -873,12 +894,21 @@ public static class ShipDeckBuilder
             Object.DestroyImmediate(tex);
         }
 
-        Shot("1_boiler", new Vector3(-0.8f, 0.05f, 4.8f), 180f, 1, (1.5f, idle));
-        Shot("2_corridor_levers", new Vector3(3.9f, 0.05f, 11f), 90f, 1, (1.5f, idle));
-        Shot("3_lifeboat_store", new Vector3(1.5f, 0.05f, 11f), 270f, 1, (1.5f, idle));
-        Shot("4_wireless", new Vector3(-1f, 0.05f, 20f), 270f, 2, (1.5f, idle));
-        Shot("5_bridge_wheel", new Vector3(0f, 0.05f, 25.5f), 0f, 2, (1.5f, idle));
-        Shot("6_walking_aft_truth", new Vector3(0f, 0.05f, 22f), 180f, 3, (1.2f, new Vector2(0f, 1f)));
+        // One view forward over the bow through the day, then two at night.
+        var bridge = new Vector3(0f, 0.05f, 25.5f);
+        Shot("1_dawn", bridge, 0f, 1, "Dawn", (1.5f, idle));
+        Shot("2_noon", bridge, 0f, 1, "Noon", (1.5f, idle));
+        Shot("3_afternoon_partOff", bridge, 0f, 2, "Afternoon", (1.5f, idle));
+        Shot("4_dusk", bridge, 0f, 1, "Dusk", (1.5f, idle));
+        Shot("5_night_corridor", new Vector3(3.9f, 0.05f, 11f), 90f, 1, "Night", (1.5f, idle));
+        Shot("6_night_truth", new Vector3(0f, 0.05f, 22f), 180f, 3, "Night", (1.2f, new Vector2(0f, 1f)));
+        // Night in every room, to check it stays playable.
+        Shot("7_night_bridge", bridge, 0f, 1, "Night", (1.5f, idle));
+        Shot("8_night_boiler", new Vector3(-0.8f, 0.05f, 4.8f), 180f, 1, "Night", (1.5f, idle));
+        Shot("9_night_wireless", new Vector3(-1f, 0.05f, 20f), 270f, 1, "Night", (1.5f, idle));
+        Shot("10_night_lifeboats", new Vector3(1.5f, 0.05f, 11f), 270f, 1, "Night", (1.5f, idle));
+        Shot("11_night_partOff", bridge, 0f, 2, "Night", (1.5f, idle));
+        Shot("12_night_walk_aft", new Vector3(0f, 0.05f, 30f), 180f, 1, "Night", (1.2f, new Vector2(0f, 1f)));
         mood.ApplyImmediate(1);
 
         cam.targetTexture = null;

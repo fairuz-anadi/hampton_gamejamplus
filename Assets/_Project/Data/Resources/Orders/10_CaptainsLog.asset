@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: 10_CaptainsLog
   m_EditorClassIdentifier: 
   part: 2
-  captainLine: "Take my log to the wireless desk. Don't read it."
+  captainLine: "Take my log to the wireless desk. And don't read it.\nI mean it. Don't. It's private. It's... poetry. Mostly poetry. Some sums."
   voice: {fileID: 0}
   station: 1
   isCarry: 1

@@ -1,11 +1,11 @@
-﻿using System.Linq;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
 /// <summary>
-/// The game's render look: URP quality settings, one post-processing profile per story part, the night sky and the
+/// The game's render look: URP quality settings, one post-processing profile per story part, the procedural sky and the
 /// sea's ripple texture. Owner: Samprity. Safe to run again; it overwrites what it made.
 /// Called by the ship deck builder; also on its own via Port > Samprity > Apply Render Look.
 /// </summary>
@@ -13,7 +13,7 @@ public static class RenderLookSetup
 {
     const string PcAsset = "Assets/_Project/Settings/URP/PC_RPAsset.asset";
     public const string FxFolder = "Assets/_Project/Art/PostFX";
-    public const string SkyMaterialPath = FxFolder + "/NightSky.mat";
+    public const string SkyMaterialPath = FxFolder + "/Sky.mat";
     public const string SeaNormalPath = "Assets/_Project/Art/Textures/SeaRipples_Normal.png";
     public static string ProfilePath(string part) => $"{FxFolder}/Mood_{part}.asset";
 
@@ -23,9 +23,9 @@ public static class RenderLookSetup
         MovementPrototypeBuilder.EnsureFolder(FxFolder);
         MovementPrototypeBuilder.EnsureFolder("Assets/_Project/Art/Textures");
         TuneUrpAsset();
-        BuildProfile("Calm", new Color(1f, 0.94f, 0.86f), 12f, 1.0f, 5f, 0.2f, 0f);
-        BuildProfile("Off", new Color(0.86f, 0.92f, 1f), -16f, 0.85f, -10f, 0.27f, 0.05f);
-        BuildProfile("Truth", new Color(1f, 0.75f, 0.72f), 0f, 0.7f, -15f, 0.38f, 0.25f);
+        BuildProfile("Calm", new Color(1f, 0.97f, 0.92f), 6f, 0.15f, 8f, 0.12f, 0f);
+        BuildProfile("Off", new Color(0.9f, 0.94f, 1f), -18f, 0.2f, -25f, 0.2f, 0.05f);
+        BuildProfile("Truth", new Color(1f, 0.82f, 0.76f), 20f, 0.25f, -10f, 0.34f, 0.25f);
         BuildSky();
         BuildSeaNormal();
         AssetDatabase.SaveAssets();
@@ -107,61 +107,24 @@ public static class RenderLookSetup
         EditorUtility.SetDirty(profile);
     }
 
-    /// <summary>Equirectangular night sky: navy gradient, stars, a moon. Fog doesn't touch the skybox, so its horizon matches the fog.</summary>
+    /// <summary>
+    /// Unity's procedural sky: it follows the main light (RenderSettings.sun), so it brightens at noon, turns orange at
+    /// sunrise and sunset, and goes dark at night. PartMood sets its exposure per time of day and tints it per part.
+    /// </summary>
     static void BuildSky()
     {
-        const int W = 2048, H = 1024;
-        var tex = new Texture2D(W, H, TextureFormat.RGB24, false);
-        var px = new Color[W * H];
-        var horizon = new Color(0.10f, 0.12f, 0.20f);
-        var zenith = new Color(0.015f, 0.02f, 0.05f);
-        // Moon opposite the moon light's travel direction (light rotation 42, 35).
-        Vector3 moonDir = -(Quaternion.Euler(42f, 35f, 0f) * Vector3.forward);
-        var rng = new System.Random(1912);
-        for (int y = 0; y < H; y++)
-        {
-            float lat = (y + 0.5f) / H * Mathf.PI - Mathf.PI / 2f;
-            float up = Mathf.Sin(lat);
-            for (int x = 0; x < W; x++)
-            {
-                float lon = (x + 0.5f) / W * Mathf.PI * 2f - Mathf.PI;
-                var dir = new Vector3(Mathf.Cos(lat) * Mathf.Sin(lon), up, Mathf.Cos(lat) * Mathf.Cos(lon));
-                Color c = up <= 0f ? horizon * 0.8f : Color.Lerp(horizon, zenith, Mathf.Pow(up, 0.45f));
-                // Stars, more of them higher up, none in the haze near the horizon.
-                double r = rng.NextDouble();
-                if (up > 0.08f && r < 0.0016 * up)
-                {
-                    float b = 0.35f + (float)rng.NextDouble() * 0.65f;
-                    c += new Color(b, b, b * 1.05f) * Mathf.Clamp01((up - 0.08f) * 4f);
-                }
-                float moon = Vector3.Dot(dir, moonDir);
-                if (moon > 0.9993f) c = new Color(0.95f, 0.93f, 0.85f);
-                else if (moon > 0.985f) c += new Color(0.25f, 0.27f, 0.32f) * Mathf.Pow((moon - 0.985f) / 0.0143f, 3f);
-                px[y * W + x] = c;
-            }
-        }
-        tex.SetPixels(px);
-        tex.Apply();
-        string texPath = FxFolder + "/NightSky.png";
-        System.IO.File.WriteAllBytes(texPath, tex.EncodeToPNG());
-        Object.DestroyImmediate(tex);
-        AssetDatabase.ImportAsset(texPath);
-        var ti = (TextureImporter)AssetImporter.GetAtPath(texPath);
-        ti.wrapModeU = TextureWrapMode.Repeat;
-        ti.wrapModeV = TextureWrapMode.Clamp;
-        ti.mipmapEnabled = false;
-        ti.maxTextureSize = 2048;
-        ti.SaveAndReimport();
-
         var mat = AssetDatabase.LoadAssetAtPath<Material>(SkyMaterialPath);
-        if (mat == null) { mat = new Material(Shader.Find("Skybox/Panoramic")); AssetDatabase.CreateAsset(mat, SkyMaterialPath); }
-        mat.SetTexture("_MainTex", AssetDatabase.LoadAssetAtPath<Texture2D>(texPath));
-        mat.SetFloat("_Mapping", 1f); // latitude-longitude layout
-        mat.SetFloat("_Exposure", 1f);
-        mat.SetColor("_Tint", new Color(0.5f, 0.5f, 0.5f));
+        if (mat == null) { mat = new Material(Shader.Find("Skybox/Procedural")); AssetDatabase.CreateAsset(mat, SkyMaterialPath); }
+        mat.shader = Shader.Find("Skybox/Procedural");
+        mat.SetFloat("_SunDisk", 2f);           // high-quality sun disc
+        mat.SetFloat("_SunSize", 0.035f);
+        mat.SetFloat("_SunSizeConvergence", 6f);
+        mat.SetFloat("_AtmosphereThickness", 1.05f);
+        mat.SetColor("_SkyTint", new Color(0.5f, 0.5f, 0.5f));
+        mat.SetColor("_GroundColor", new Color(0.32f, 0.38f, 0.44f));
+        mat.SetFloat("_Exposure", 1.3f);
         EditorUtility.SetDirty(mat);
     }
-
     /// <summary>Tileable ripple normal map for the sea, from a few layered sine waves.</summary>
     static void BuildSeaNormal()
     {

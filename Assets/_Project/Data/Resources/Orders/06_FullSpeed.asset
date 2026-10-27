@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: 06_FullSpeed
   m_EditorClassIdentifier: 
   part: 2
-  captainLine: "Keep her at full speed. We've a schedule to beat."
+  captainLine: "Keep her at full speed. We've a schedule to beat.\nSpeed is safety, crew. Everyone knows that. Write it down. Actually, don't write it down."
   voice: {fileID: 0}
   station: 0
   isCarry: 0
