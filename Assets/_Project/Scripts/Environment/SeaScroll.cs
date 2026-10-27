@@ -1,6 +1,6 @@
 using UnityEngine;
 
-/// <summary>Slides the sea's ripple texture so the water looks alive and the moonlight glints move. Owner: Samprity.</summary>
+/// <summary>Slides the sea's ripple texture so the water looks alive and the sun glints move. Owner: Samprity.</summary>
 [RequireComponent(typeof(Renderer))]
 public class SeaScroll : MonoBehaviour
 {
