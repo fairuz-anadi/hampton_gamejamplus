@@ -3,31 +3,48 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 /// <summary>
-/// A top-down deck map drawn as UI icons on Samprity's existing HUD canvas (no second camera). Shows crew by seat
-/// colour, stations as neutral squares, waiting ice warnings and the bridge marker. Owner: Rabib.
+/// A top-down deck map drawn as UI icons on Samprity's existing HUD canvas (no second camera). Owner: Rabib.
 /// Spawns itself from Resources/MiniMap in gameplay scenes, like HUD, so nobody has to edit Ship.unity.
 /// Built from Rabib &gt; Build MiniMap (MiniMapBuilder.cs), not hand-edited.
+/// Static things (deck bounds, bridge marker, room zones, station glyph positions) are placed once in Start();
+/// only crew, ice warnings and the highlight ring move, so those are the only things LateUpdate ever touches.
 /// </summary>
 public class MiniMap : MonoBehaviour
 {
-    [SerializeField] bool showBots = false;
+    [System.Serializable]
+    class StationGlyph { public RectTransform root; }
 
-    [SerializeField] GameObject panel;
+    [System.Serializable]
+    class CrewIcon { public RectTransform root; public Image dot; public RectTransform arrow; public Image ring; }
+
+    [System.Serializable]
+    class IceIcon { public RectTransform root; public Image core; public Image glow; }
+
+    [SerializeField] bool showBots = false;
+    [SerializeField] float fadeSeconds = 0.3f;
+
+    [SerializeField] CanvasGroup fadeGroup;
     [SerializeField] RectTransform mapArea;
-    [SerializeField] Image bridgeIcon;
-    [SerializeField] Image[] stationIcons = new Image[4];
+    [SerializeField] RectTransform[] roomZones;
+    [SerializeField] StationGlyph[] stationGlyphs;
     [SerializeField] Image highlightRing;
-    [SerializeField] Image[] iceWarningIcons = new Image[3];
-    [SerializeField] Image[] crewIcons = new Image[CrewRoster.SeatCount];
+    [SerializeField] RectTransform bridgeMarker;
+    [SerializeField] CrewIcon[] crewIcons;
+    [SerializeField] IceIcon[] iceWarningIcons;
 
     static readonly StationType[] StationTypes = (StationType[])System.Enum.GetValues(typeof(StationType));
+    static readonly string[] RoomIds = { "Boiler", "Corridor", "Wireless", "Bridge", "Bow" };
+    static readonly Color HighlightColor = new Color(0.95f, 0.78f, 0.42f, 1f);
+
+    const float HighlightPulseCycles = 0.9f, HighlightPulseGrow = 0.18f;
+    const float IceWarningPulseCycles = 1.4f;
 
     float minX, maxX, minZ, maxZ;
     bool boundsReady;
     bool hiddenForState;
     Vector3 bridgeWorldPos;
     bool hasBridge;
-    bool loggedHiddenReason;
+    float[] iceFade;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     static void Init()
@@ -50,15 +67,26 @@ public class MiniMap : MonoBehaviour
 
     void Start()
     {
+        iceFade = new float[iceWarningIcons != null ? iceWarningIcons.Length : 0];
+
         FindDeckBounds();
-        FindBridgeMarker();
+        if (boundsReady)
+        {
+            FindBridgeMarker();
+            PlaceRoomZones();
+            PlaceStationGlyphs();
+        }
+
         // Deferred to Start(), not Awake() or OnSceneLoaded: every object's Awake() (including HUD's, which sets
         // HUD.Instance) finishes before any Start() runs that frame, regardless of sceneLoaded subscriber order.
         bool parented = HUD.Instance != null;
         if (parented) transform.SetParent(HUD.Instance.transform, false);
         else Debug.LogWarning("[MiniMap] HUD.Instance is null in Start() — staying unparented, off any Canvas, so nothing will render.");
+
         GameEvents.StateChanged += OnStateChanged;
         hiddenForState = GameManager.Instance != null && GameManager.Instance.State == GameState.Iceberg;
+        if (fadeGroup != null) fadeGroup.alpha = 0f;
+
         Debug.Log($"[MiniMap] Start: boundsReady={boundsReady} hasBridge={hasBridge} parentedToHud={parented} hiddenForState={hiddenForState}");
     }
 
@@ -70,13 +98,13 @@ public class MiniMap : MonoBehaviour
     {
         var col = GameObject.Find("DeckCollider")?.GetComponent<BoxCollider>();
         boundsReady = col != null;
-        if (!boundsReady) { if (panel != null) panel.SetActive(false); return; }
+        if (!boundsReady) return;
         var b = col.bounds;
         minX = b.min.x; maxX = b.max.x; minZ = b.min.z; maxZ = b.max.z;
     }
 
     /// <summary>Anadi's deck marks the real drop point as DropPoint_Bridge; the sandbox has none, so this falls
-    /// back to the Wheel station there instead (same fallback IceWarningCarry uses). Static, so placed once.</summary>
+    /// back to the Wheel station there instead (same fallback IceWarningCarry uses). Static, placed once.</summary>
     void FindBridgeMarker()
     {
         var marker = GameObject.Find("DropPoint_Bridge");
@@ -87,61 +115,69 @@ public class MiniMap : MonoBehaviour
             hasBridge = wheel != null;
             if (hasBridge) bridgeWorldPos = wheel.Position;
         }
-        if (bridgeIcon == null) return;
-        bridgeIcon.gameObject.SetActive(hasBridge);
-        if (hasBridge) bridgeIcon.rectTransform.anchoredPosition = ToLocal(bridgeWorldPos);
+        if (bridgeMarker == null) return;
+        bridgeMarker.gameObject.SetActive(hasBridge);
+        if (hasBridge) bridgeMarker.anchoredPosition = ToLocal(bridgeWorldPos);
     }
 
-    Vector2 ToLocal(Vector3 world)
+    Vector2 ToLocal(Vector3 world, float pad = 12f)
     {
         float u = Mathf.InverseLerp(minX, maxX, world.x);
         float v = Mathf.InverseLerp(minZ, maxZ, world.z);
         var size = mapArea.rect.size;
-        const float pad = 12f;
         return new Vector2(Mathf.Lerp(pad, size.x - pad, u), Mathf.Lerp(pad, size.y - pad, v));
+    }
+
+    /// <summary>Room footprints never move, so this runs once from Start(), not every frame.</summary>
+    void PlaceRoomZones()
+    {
+        if (roomZones == null) return;
+        for (int i = 0; i < RoomIds.Length && i < roomZones.Length; i++)
+        {
+            var zone = roomZones[i];
+            if (zone == null) continue;
+
+            RoomVolume found = null;
+            for (int j = 0; j < RoomVolume.All.Count; j++)
+                if (RoomVolume.All[j] != null && RoomVolume.All[j].roomId == RoomIds[i]) { found = RoomVolume.All[j]; break; }
+
+            var col = found != null ? found.GetComponent<BoxCollider>() : null;
+            if (col == null) { zone.gameObject.SetActive(false); continue; }
+
+            var b = col.bounds;
+            Vector2 c0 = ToLocal(new Vector3(b.min.x, 0f, b.min.z), 0f);
+            Vector2 c1 = ToLocal(new Vector3(b.max.x, 0f, b.max.z), 0f);
+            zone.gameObject.SetActive(true);
+            zone.anchoredPosition = (c0 + c1) * 0.5f;
+            zone.sizeDelta = new Vector2(Mathf.Abs(c1.x - c0.x), Mathf.Abs(c1.y - c0.y));
+        }
+    }
+
+    /// <summary>Stations don't move either, so their glyphs are positioned once. Only the highlight ring is dynamic.</summary>
+    void PlaceStationGlyphs()
+    {
+        if (stationGlyphs == null) return;
+        for (int i = 0; i < StationTypes.Length && i < stationGlyphs.Length; i++)
+        {
+            var glyph = stationGlyphs[i];
+            if (glyph == null || glyph.root == null) continue;
+            var st = StationRegistry.Get(StationTypes[i]);
+            glyph.root.gameObject.SetActive(st != null);
+            if (st != null) glyph.root.anchoredPosition = ToLocal(st.Position);
+        }
     }
 
     void LateUpdate()
     {
-        bool visible = boundsReady && !hiddenForState;
-        if (panel.activeSelf != visible) panel.SetActive(visible);
-        if (!visible)
-        {
-            if (!loggedHiddenReason)
-            {
-                loggedHiddenReason = true;
-                Debug.Log($"[MiniMap] Hidden in LateUpdate: boundsReady={boundsReady} hiddenForState={hiddenForState}");
-            }
-            return;
-        }
-        loggedHiddenReason = false;
+        bool hidden = !boundsReady || hiddenForState;
+        if (fadeGroup != null)
+            fadeGroup.alpha = Mathf.MoveTowards(fadeGroup.alpha, hidden ? 0f : 1f, Time.unscaledDeltaTime / fadeSeconds);
+        if (!boundsReady) return;
 
-        PlaceStationIcons();
-        PlaceCrewIcons();
+        var solo = SoloHuman();
+        UpdateHighlightRing(solo);
+        PlaceCrewIcons(solo);
         PlaceIceWarningIcons();
-    }
-
-    /// <summary>Neutral squares always, regardless of IsDone/IsBroken; only the active order's station lights up,
-    /// and only in solo play (no single "local human" exists once 2+ humans share the screen).</summary>
-    void PlaceStationIcons()
-    {
-        var human = SoloHuman();
-        var order = human != null && OrderDirector.Instance != null ? OrderDirector.Instance.GetOrderFor(human) : null;
-        StationType? highlighted = order?.Data.station;
-
-        for (int i = 0; i < StationTypes.Length && i < stationIcons.Length; i++)
-        {
-            var st = StationRegistry.Get(StationTypes[i]);
-            var icon = stationIcons[i];
-            if (icon == null) continue;
-            icon.gameObject.SetActive(st != null);
-            if (st != null) icon.rectTransform.anchoredPosition = ToLocal(st.Position);
-        }
-
-        var highlightStation = highlighted.HasValue ? StationRegistry.Get(highlighted.Value) : null;
-        if (highlightRing == null) return;
-        highlightRing.gameObject.SetActive(highlightStation != null);
-        if (highlightStation != null) highlightRing.rectTransform.anchoredPosition = ToLocal(highlightStation.Position);
     }
 
     /// <summary>The one human playing, only when nobody else is — matches GameplayCameraRig's own solo/overview split.</summary>
@@ -160,8 +196,26 @@ public class MiniMap : MonoBehaviour
         return humans == 1 ? found : null;
     }
 
-    void PlaceCrewIcons()
+    void UpdateHighlightRing(ICrewActor solo)
     {
+        if (highlightRing == null) return;
+        var order = solo != null && OrderDirector.Instance != null ? OrderDirector.Instance.GetOrderFor(solo) : null;
+        var station = order != null ? StationRegistry.Get(order.Data.station) : null;
+
+        bool show = station != null;
+        highlightRing.gameObject.SetActive(show);
+        if (!show) return;
+
+        highlightRing.rectTransform.anchoredPosition = ToLocal(station.Position);
+        float pulse = 0.5f + 0.5f * Mathf.Sin(Time.time * HighlightPulseCycles * Mathf.PI * 2f);
+        highlightRing.rectTransform.localScale = Vector3.one * (1f + HighlightPulseGrow * pulse);
+        var c = HighlightColor; c.a = Mathf.Lerp(0.55f, 1f, pulse);
+        highlightRing.color = c;
+    }
+
+    void PlaceCrewIcons(ICrewActor solo)
+    {
+        if (crewIcons == null) return;
         var crew = CrewRegistry.All;
         int used = 0;
         for (int i = 0; i < crew.Count && used < crewIcons.Length; i++)
@@ -169,29 +223,56 @@ public class MiniMap : MonoBehaviour
             var c = crew[i];
             if (c.IsBot && !showBots) continue;
             var icon = crewIcons[used++];
-            if (icon == null) continue;
-            icon.gameObject.SetActive(true);
-            icon.color = CrewRoster.SeatColors[Mathf.Clamp(c.Seat, 0, CrewRoster.SeatColors.Length - 1)];
-            icon.rectTransform.anchoredPosition = ToLocal(c.Position);
+            if (icon == null || icon.root == null) continue;
+
+            icon.root.gameObject.SetActive(true);
+            icon.root.anchoredPosition = ToLocal(c.Position);
+            if (icon.dot != null) icon.dot.color = CrewRoster.SeatColors[Mathf.Clamp(c.Seat, 0, CrewRoster.SeatColors.Length - 1)];
+
+            if (icon.arrow != null)
+            {
+                var actorTransform = (c as Component)?.transform;
+                Vector3 fwd = actorTransform != null ? actorTransform.forward : Vector3.forward;
+                float angle = Mathf.Atan2(-fwd.x, fwd.z) * Mathf.Rad2Deg;
+                icon.arrow.localRotation = Quaternion.Euler(0f, 0f, angle);
+            }
+
+            bool isSolo = solo != null && c == solo;
+            if (icon.dot != null) icon.dot.rectTransform.localScale = Vector3.one * (isSolo ? 1.3f : 1f);
+            if (icon.ring != null) icon.ring.gameObject.SetActive(isSolo);
         }
         for (int i = used; i < crewIcons.Length; i++)
-            if (crewIcons[i] != null) crewIcons[i].gameObject.SetActive(false);
+            if (crewIcons[i] != null && crewIcons[i].root != null) crewIcons[i].root.gameObject.SetActive(false);
     }
 
     void PlaceIceWarningIcons()
     {
+        if (iceWarningIcons == null) return;
         var warnings = IceWarningCarry.All;
-        int used = 0;
-        for (int i = 0; i < warnings.Count && used < iceWarningIcons.Length; i++)
+        for (int i = 0; i < iceWarningIcons.Length; i++)
         {
-            var w = warnings[i];
-            if (w == null || !w.IsWaiting) continue;
-            var icon = iceWarningIcons[used++];
-            if (icon == null) continue;
-            icon.gameObject.SetActive(true);
-            icon.rectTransform.anchoredPosition = ToLocal(w.Position);
+            var icon = iceWarningIcons[i];
+            if (icon == null || icon.root == null) continue;
+
+            bool present = i < warnings.Count && warnings[i] != null && warnings[i].IsWaiting;
+            float target = present ? 1f : 0f;
+            iceFade[i] = Mathf.MoveTowards(iceFade[i], target, Time.unscaledDeltaTime / fadeSeconds);
+
+            bool active = iceFade[i] > 0.01f;
+            icon.root.gameObject.SetActive(active);
+            if (!active) continue;
+
+            if (present) icon.root.anchoredPosition = ToLocal(warnings[i].Position);
+            float pulse = 0.5f + 0.5f * Mathf.Sin(Time.time * IceWarningPulseCycles * Mathf.PI * 2f + i * 2.1f);
+            SetAlpha(icon.core, iceFade[i]);
+            SetAlpha(icon.glow, iceFade[i] * Mathf.Lerp(0.4f, 0.85f, pulse));
+            if (icon.glow != null) icon.glow.rectTransform.localScale = Vector3.one * (1f + 0.2f * pulse);
         }
-        for (int i = used; i < iceWarningIcons.Length; i++)
-            if (iceWarningIcons[i] != null) iceWarningIcons[i].gameObject.SetActive(false);
+    }
+
+    static void SetAlpha(Image img, float a)
+    {
+        if (img == null) return;
+        var c = img.color; c.a = a; img.color = c;
     }
 }
