@@ -63,6 +63,22 @@ public class Interactor : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// CallHelp (Q / gamepad X): asks for a hand at the station in range, else at this actor's active order's station.
+    /// CrewRoster turns it into a bot help job. Returns false when there's nowhere to call help to.
+    /// </summary>
+    public bool CallHelp()
+    {
+        StationType station;
+        if (NearestStation != null) station = NearestStation.Type;
+        else if (OrderDirector.Instance?.GetOrderFor(actor) is ActiveOrder order) station = order.Data.CheckStation;
+        else return false;
+
+        Debug.Log($"[Interactor] {CrewRegistry.SeatName(actor?.Seat ?? 0)} called for help at the {station}.");
+        GameEvents.RaiseHelpCalled(actor, station);
+        return true;
+    }
+
     void ReleaseStation()
     {
         currentStation?.Hold(actor, false);

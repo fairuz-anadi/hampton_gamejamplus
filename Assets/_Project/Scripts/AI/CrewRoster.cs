@@ -35,7 +35,7 @@ public class CrewRoster : MonoBehaviour
     [SerializeField] float requestLifetime = 15f;
     [SerializeField] Vector2 repairDelay = new Vector2(3f, 6f);
 
-    /// <summary>Seat colours, index = seat. Same as PlayerController's, so a seat looks the same for bots and humans.</summary>
+    /// <summary>Seat colours, index = seat. PlayerController and DebugSecondPlayer use these too, so a seat looks the same for bots and humans.</summary>
     public static readonly Color[] SeatColors =
     {
         Color.gray, Color.red, new Color(0.25f, 0.55f, 1f), Color.green, Color.yellow,

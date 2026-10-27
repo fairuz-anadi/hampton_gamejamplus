@@ -3,7 +3,7 @@ using UnityEngine.InputSystem;
 
 /// <summary>
 /// DEBUG ONLY: a second crew member driven by raw keys on the same keyboard (arrows to move,
-/// Right Ctrl/Shift/Enter for Interact/Report/Refuse), so 2-player flow is testable without a
+/// Right Ctrl/Shift/Enter/Alt for Interact/Report/Refuse/CallHelp), so 2-player flow is testable without a
 /// second device. Reads Keyboard.current directly, bypassing PlayerInput entirely, so it can't
 /// fight the real P1 Keyboard / P2-P3 Gamepad control schemes over device pairing. Self-destructs
 /// outside debug builds, and goes inactive entirely once PlayerSlots has real players (it must not
@@ -64,6 +64,7 @@ public class DebugSecondPlayer : MonoBehaviour, ICrewActor, IInteractSource, IRo
 
         if (kb.rightShiftKey.wasPressedThisFrame) OrderDirector.Instance?.Report(this);
         if (kb.enterKey.wasPressedThisFrame) OrderDirector.Instance?.Refuse(this);
+        if (kb.rightAltKey.wasPressedThisFrame && TryGetComponent(out Interactor interactor)) interactor.CallHelp();
     }
 
     public void SetRoom(string roomId) => zoneRoom = roomId;
@@ -80,7 +81,8 @@ public class DebugSecondPlayer : MonoBehaviour, ICrewActor, IInteractSource, IRo
     {
         var renderer = GetComponentInChildren<Renderer>();
         if (renderer == null) return;
-        var color = new Color(1f, 0.5f, 0f);
+        // Same seat colours as the bots and real players (CrewRoster.SeatColors is indexed by seat).
+        var color = CrewRoster.SeatColors[Mathf.Clamp(seat, 1, CrewRoster.SeatColors.Length - 1)];
         var mat = renderer.material;
         if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", color);
         else mat.color = color;
