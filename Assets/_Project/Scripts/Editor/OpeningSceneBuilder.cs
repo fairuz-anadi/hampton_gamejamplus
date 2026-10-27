@@ -134,27 +134,33 @@ public static class OpeningSceneBuilder
     static List<CinematicPath.Key> Route((Vector3 pos, Quaternion rot, float fov) final)
     {
         var finalLook = final.pos + final.rot * Vector3.forward * 6f;
+        // The ship is twice its first length (ShipLayout): the aerial shots aim half the promenade further forward, the
+        // fly-through keeps its rooms (P moves them forward) and gets a run down the promenade before the corridor.
+        var mid = new Vector3(0f, 0f, ShipLayout.Extra * 0.5f);
+        Vector3 P(Vector3 v) => ShipLayout.P(v);
         return new List<CinematicPath.Key>
         {
             // A: a voyage begins
-            K(0f, new Vector3(-58f, 48f, -72f), new Vector3(0f, 0f, 26f), 40f),
-            K(6f, new Vector3(-48f, 40f, -46f), new Vector3(0f, 0f, 22f), 41f, -3f),
-            K(12f, new Vector3(-38f, 31f, -20f), new Vector3(0f, 0.5f, 19f), 42f, -4f),
+            K(0f, new Vector3(-58f, 48f, -72f) + mid, new Vector3(0f, 0f, 26f) + mid, 40f),
+            K(6f, new Vector3(-48f, 40f, -46f) + mid, new Vector3(0f, 0f, 22f) + mid, 41f, -3f),
+            K(12f, new Vector3(-38f, 31f, -20f) + mid, new Vector3(0f, 0.5f, 19f) + mid, 42f, -4f),
             // B: the ship comes alive
-            K(17f, new Vector3(-27f, 20f, 1f), new Vector3(0f, 0.5f, 17f), 44f, -2.5f),
-            K(21f, new Vector3(-13f, 13f, 23f), new Vector3(0f, 0.5f, 24f), 46f, -1f),
-            K(25f, new Vector3(2.5f, 8.5f, 47f), new Vector3(0f, 1.5f, 32f), 48f, 1.5f),
+            K(17f, new Vector3(-27f, 20f, 1f) + mid, new Vector3(0f, 0.5f, 17f) + mid, 44f, -2.5f),
+            K(21f, P(new Vector3(-13f, 13f, 23f)), P(new Vector3(0f, 0.5f, 24f)), 46f, -1f),
+            K(25f, P(new Vector3(2.5f, 8.5f, 47f)), P(new Vector3(0f, 1.5f, 32f)), 48f, 1.5f),
             // C: entering the ship
-            K(29f, new Vector3(1.4f, 3.1f, 39f), new Vector3(0.9f, 1.8f, 28f), 50f),
+            K(29f, P(new Vector3(1.4f, 3.1f, 39f)), P(new Vector3(0.9f, 1.8f, 28f)), 50f),
             // Starboard of the wheel: clear of its status lamp (x 0, 2.35 m up) and above the telegraph (x 2.2).
-            K(32.5f, new Vector3(1.25f, 2.45f, 33f), new Vector3(0.7f, 1.8f, 24f), 52f),
-            K(35.5f, new Vector3(1.4f, 2.6f, 27.5f), new Vector3(0.6f, 1.8f, 18f), 52f),
-            K(38.5f, new Vector3(1.0f, 2.3f, 21f), new Vector3(0.3f, 1.8f, 10f), 51f),
-            K(42f, new Vector3(0.6f, 2.4f, 16.2f), new Vector3(-0.3f, 1.5f, 6f), 49f),
+            K(32.5f, P(new Vector3(1.25f, 2.45f, 33f)), P(new Vector3(0.7f, 1.8f, 24f)), 52f),
+            K(35.5f, P(new Vector3(1.4f, 2.6f, 27.5f)), P(new Vector3(0.6f, 1.8f, 18f)), 52f),
+            K(38.5f, P(new Vector3(1.0f, 2.3f, 21f)), new Vector3(0.3f, 1.8f, 30f), 51f),
+            // Down the promenade toward the corridor.
+            K(42f, new Vector3(0.8f, 2.4f, ShipLayout.InsertAt + ShipLayout.Extra * 0.5f), new Vector3(0f, 1.6f, 12f), 50f),
+            K(46f, new Vector3(0.6f, 2.4f, 16.2f), new Vector3(-0.3f, 1.5f, 6f), 49f),
             // D: the player is introduced
-            K(46f, new Vector3(0.0f, 2.7f, 13.6f), new Vector3(-0.6f, 1.3f, 5.6f), 47f),
-            K(50f, new Vector3(-0.5f, 3.05f, 11.9f), Vector3.Lerp(new Vector3(-0.7f, 1.2f, 5.4f), finalLook, 0.6f), 45.5f),
-            K(53f, final.pos, finalLook, final.fov, 0f, true),
+            K(50f, new Vector3(0.0f, 2.7f, 13.6f), new Vector3(-0.6f, 1.3f, 5.6f), 47f),
+            K(54f, new Vector3(-0.5f, 3.05f, 11.9f), Vector3.Lerp(new Vector3(-0.7f, 1.2f, 5.4f), finalLook, 0.6f), 45.5f),
+            K(57f, final.pos, finalLook, final.fov, 0f, true),
         };
     }
 
@@ -200,12 +206,13 @@ public static class OpeningSceneBuilder
         var porter = Actor(root, 4, "Porter", new Vector3(3.3f, 0.05f, 9.6f), 0f, controller, "Locomotion");
         Walk(porter, 1.2f, 0.4f, new Vector3(3.3f, 0.05f, 9.6f), new Vector3(3.3f, 0.05f, 15.2f), new Vector3(2.4f, 0.05f, 19f));
         Crate(porter);
-        Actor(root, 1, "Operator", new Vector3(-3.7f, 0.05f, 21.3f), -90f, controller, "Interact");
-        Actor(root, 4, "Navigator", new Vector3(-3.25f, 0.05f, 26.1f), -90f, controller, "Interact");
-        Actor(root, 2, "Helmsman", new Vector3(0f, 0.05f, 28.25f), 0f, controller, "Locomotion");
-        var officer = Actor(root, 3, "Officer", new Vector3(-3.7f, 0.05f, 33.0f), 90f, controller, "Locomotion");
-        Walk(officer, 1.0f, 2.5f, new Vector3(-3.7f, 0.05f, 33.0f), new Vector3(-1.3f, 0.05f, 33.0f));
-        Actor(root, 1, "Lookout", new Vector3(2.7f, 0.05f, 35.1f), 10f, controller, "Torch");
+        // Forward of the promenade: same spots in their rooms, moved forward with them (ShipLayout).
+        Actor(root, 1, "Operator", ShipLayout.P(new Vector3(-3.7f, 0.05f, 21.3f)), -90f, controller, "Interact");
+        Actor(root, 4, "Navigator", ShipLayout.P(new Vector3(-3.25f, 0.05f, 26.1f)), -90f, controller, "Interact");
+        Actor(root, 2, "Helmsman", ShipLayout.P(new Vector3(0f, 0.05f, 28.25f)), 0f, controller, "Locomotion");
+        var officer = Actor(root, 3, "Officer", ShipLayout.P(new Vector3(-3.7f, 0.05f, 33.0f)), 90f, controller, "Locomotion");
+        Walk(officer, 1.0f, 2.5f, ShipLayout.P(new Vector3(-3.7f, 0.05f, 33.0f)), ShipLayout.P(new Vector3(-1.3f, 0.05f, 33.0f)));
+        Actor(root, 1, "Lookout", ShipLayout.P(new Vector3(2.7f, 0.05f, 35.1f)), 10f, controller, "Torch");
     }
 
     static CinematicCrew Actor(Transform root, int seat, string name, Vector3 pos, float yaw, AnimatorController controller, string action)

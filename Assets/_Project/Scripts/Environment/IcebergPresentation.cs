@@ -64,7 +64,7 @@ public class IcebergPresentation : MonoBehaviour
 
         // The stem: the tip of the prow, else the bow end of the deck.
         var prow = GameObject.Find("Prow");
-        stem = prow != null && prow.TryGetComponent(out Renderer pr) ? new Vector3(0f, 0f, pr.bounds.max.z) : new Vector3(0f, 0f, 36f);
+        stem = prow != null && prow.TryGetComponent(out Renderer pr) ? new Vector3(0f, 0f, pr.bounds.max.z) : new Vector3(0f, 0f, ShipLayout.Z(36f));
         var sea = GameObject.Find("Sea");
         if (sea != null) seaY = sea.transform.position.y;
 

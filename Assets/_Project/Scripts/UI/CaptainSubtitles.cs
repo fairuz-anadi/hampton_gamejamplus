@@ -27,6 +27,9 @@ public class CaptainSubtitles : MonoBehaviour
     [Min(200f)] public float maxTextWidth = 980f;
     [Min(100f)] public float minTextWidth = 380f;
     public Vector2 padding = new Vector2(150f, 74f);
+    [Tooltip("Radio strip: the panel spans the screen and only its height follows the line (words wrap in a fixed column).")]
+    public bool strip;
+    [Min(40f)] public float stripMinHeight = 96f;
 
     public Style calm = new Style { trim = new Color(0.86f, 0.68f, 0.34f, 0.8f), label = new Color(0.86f, 0.68f, 0.34f), text = new Color(0.97f, 0.93f, 0.84f), tremble = 0f };
     public Style off = new Style { trim = new Color(0.6f, 0.68f, 0.78f, 0.8f), label = new Color(0.68f, 0.76f, 0.88f), text = new Color(0.9f, 0.93f, 0.98f), tremble = 0f };
@@ -72,6 +75,20 @@ public class CaptainSubtitles : MonoBehaviour
     void OnLineStarted(string finalText)
     {
         sizer.text = finalText;
+        if (strip)
+        {
+            // Words wrap in the strip's text column; the strip just gets taller for a long line. The layout must be
+            // current first, or the column reads as 0 wide and every word looks like its own line.
+            Canvas.ForceUpdateCanvases();
+            float column = line.rectTransform.rect.width;
+            if (column < 200f) column = maxTextWidth;
+            float h = sizer.cachedTextGeneratorForLayout.GetPreferredHeight(finalText, sizer.GetGenerationSettings(new Vector2(column, 0f))) / sizer.pixelsPerUnit;
+            line.rectTransform.sizeDelta = new Vector2(line.rectTransform.sizeDelta.x, Mathf.Max(h, 34f));
+            panel.sizeDelta = new Vector2(panel.sizeDelta.x, Mathf.Max(stripMinHeight, h + padding.y));
+            line.text = "";
+            target = 1f;
+            return;
+        }
         float width = Mathf.Clamp(sizer.preferredWidth, minTextWidth, maxTextWidth);
         sizer.rectTransform.sizeDelta = new Vector2(width, sizer.rectTransform.sizeDelta.y);
         float height = sizer.cachedTextGeneratorForLayout.GetPreferredHeight(finalText, sizer.GetGenerationSettings(new Vector2(width, 0f))) / sizer.pixelsPerUnit;
