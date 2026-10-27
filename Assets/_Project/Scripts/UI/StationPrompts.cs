@@ -47,6 +47,23 @@ public class StationPrompts : MonoBehaviour
         foreach (var (who, actor) in humans)
         {
             if (used >= prompts.Length || cam == null) break;
+
+            var interactor = who.GetComponent<Interactor>();
+            string key = HudText.KeyFor(HudText.Key.Interact, actor);
+
+            // Carrying something: the prompt belongs to the carrier, not any station spot.
+            if (interactor != null && interactor.IsCarrying)
+            {
+                Vector3 carryScreen = cam.WorldToScreenPoint(who.position + Vector3.up * heightAbove);
+                if (carryScreen.z > 0f)
+                {
+                    RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, carryScreen, null, out var carryLocal);
+                    prompts[used].Show(KeepOnScreen(carryLocal), "Carrying", interactor.PromptText, key, normalTint);
+                    used++;
+                }
+                continue;
+            }
+
             int best = -1;
             float bestDist = range * range;
             for (int i = 0; i < spots.Count; i++)
@@ -63,13 +80,20 @@ public class StationPrompts : MonoBehaviour
             RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, screen, null, out var local);
             local = KeepOnScreen(local);
 
-            string key = HudText.KeyFor(HudText.Key.Interact, actor);
-            if (s.station != null && s.station.IsBroken)
-                prompts[used].Show(local, HudText.StationName(s.type), "Hold to repair", key, repairTint);
-            else if (s.station != null && s.station.IsDone)
-                prompts[used].Show(local, HudText.StationName(s.type), "Done", key, doneTint);
-            else
-                prompts[used].Show(local, HudText.StationName(s.type), "Hold  ·  " + HudText.StationVerb(s.type), key, normalTint);
+            // When this human's own Interactor is the one holding this exact station, it already knows every
+            // special case (steer hint, lifeboat reopen, holder counts) — defer to it instead of guessing here.
+            bool owned = interactor != null && s.station != null && ReferenceEquals(interactor.NearestStation, s.station);
+            string action; Color tint;
+            if (owned && !string.IsNullOrEmpty(interactor.PromptText))
+            {
+                action = interactor.PromptText;
+                tint = s.station.IsBroken ? repairTint : s.station.IsDone ? doneTint : normalTint;
+            }
+            else if (s.station != null && s.station.IsBroken) { action = "Hold to repair"; tint = repairTint; }
+            else if (s.station != null && s.station.IsDone) { action = "Done"; tint = doneTint; }
+            else { action = "Hold  ·  " + HudText.StationVerb(s.type); tint = normalTint; }
+
+            prompts[used].Show(local, HudText.StationName(s.type), action, key, tint);
             used++;
         }
         for (int i = used; i < prompts.Length; i++) prompts[i].Hide();
