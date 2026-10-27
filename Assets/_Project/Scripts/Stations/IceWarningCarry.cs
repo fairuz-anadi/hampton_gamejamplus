@@ -29,6 +29,15 @@ public class IceWarningCarry : MonoBehaviour, ICarryItem
     public bool IsCarried => carrierActor != null;
     public Vector3 Position => transform.position;
 
+    /// <summary>Read-only view for UI (e.g. the minimap). Iterate by index; entries are never null, but check anyway.</summary>
+    public static IReadOnlyList<IceWarningCarry> All => all;
+
+    /// <summary>True while this warning is sitting at the desk or being carried, i.e. visible and pickupable.</summary>
+    public bool IsWaiting => IceWarnings.Instance != null && IceWarnings.Instance.StatusOf(warningNumber) == IceWarnings.Status.Waiting;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetStatics() => all.Clear();
+
     void Awake()
     {
         homePosition = transform.position;
