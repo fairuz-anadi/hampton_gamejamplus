@@ -7,10 +7,11 @@ using UnityEngine.UI;
 /// Ship's camera and crew presentation, added at runtime so Ship.unity stays untouched. Owner: Samprity.
 ///   The iceberg finale: the follow camera eases back for more sea ahead, the overview tilts forward over the bow so
 ///   everyone sees the berg coming, and both shake as it closes (IcebergPresentation).
-///   One human player: the third-person follow camera behind them (AutoFollowCamera), W/A/S/D relative to it.
-///   Two or three humans on one screen: the scene's fixed overview camera, so everyone stays in view.
+///   The third-person follow camera (AutoFollowCamera) always follows the lowest-seat human on screen, 1-3 of them;
+///   that seat's mouse/right-stick look (Rabib) orbits it, the others just ride along.
 ///   Everyone (players and bots) wears their seat's crew model instead of a capsule (CrewVisual).
 ///   Coming from Begin Voyage: holds black until the camera is in place, then fades in.
+///   Locks the cursor the moment someone's actually being followed; PauseMenu and GameSystems let go of it again.
 /// </summary>
 [DefaultExecutionOrder(100)] // after AutoFollowCamera, so the iceberg shake lands on top of its pose
 public class GameplayCameraRig : MonoBehaviour
@@ -29,6 +30,7 @@ public class GameplayCameraRig : MonoBehaviour
     readonly List<PlayerController> humans = new List<PlayerController>();
     float nextScan;
     float started;
+    bool cursorLocked;
 
     Image fade;
     float fadeFrom = -1f;
@@ -116,11 +118,11 @@ public class GameplayCameraRig : MonoBehaviour
         }
         humans.Sort((a, b) => a.Seat.CompareTo(b.Seat));
 
-        if (humans.Count == 1) Follow(humans[0]);
-        else if (humans.Count > 1) Overview();
+        // One screen, 1-3 humans: the lowest seat always owns the camera (and the mouse-look that drives it).
+        if (humans.Count > 0) Follow(humans[0]);
 
         // Whatever happens, never leave the screen black for long.
-        if (fade != null && fadeFrom < 0f && (follow != null || humans.Count > 1 || Time.unscaledTime - started > 2.5f))
+        if (fade != null && fadeFrom < 0f && (follow != null || Time.unscaledTime - started > 2.5f))
             fadeFrom = Time.unscaledTime;
     }
 
@@ -144,6 +146,10 @@ public class GameplayCameraRig : MonoBehaviour
     {
         if (cam == null) return;
         if (follow != null && follow.enabled && followed == player) return;
+        // Switching whose camera this is: the old target's mover must stop pointing at it, or their own leftover
+        // look input (still read every frame by their own PlayerController) would fight the new owner's.
+        if (followed != null && followed.TryGetComponent(out ThirdPersonMover prevMover) && prevMover.followCamera == follow)
+            prevMover.followCamera = null;
         followed = player;
         if (follow == null && !cam.TryGetComponent(out follow)) follow = cam.gameObject.AddComponent<AutoFollowCamera>();
         follow.enabled = true;
@@ -152,17 +158,13 @@ public class GameplayCameraRig : MonoBehaviour
         if (follow.mover != null) follow.mover.followCamera = follow;
         ApplySettings();
         follow.SnapToTarget();
-    }
 
-    void Overview()
-    {
-        if (cam == null || follow == null || !follow.enabled) return;
-        follow.enabled = false;
-        foreach (var h in humans)
-            if (h.TryGetComponent(out ThirdPersonMover m)) m.followCamera = null;
-        followed = null;
-        cam.transform.SetPositionAndRotation(overviewPos, overviewRot);
-        cam.fieldOfView = overviewFov;
+        if (!cursorLocked)
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+            cursorLocked = true;
+        }
     }
 
     void ApplySettings() => GameSettings.ApplyTo(follow);

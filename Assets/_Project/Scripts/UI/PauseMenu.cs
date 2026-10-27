@@ -7,6 +7,7 @@ using UnityEngine.InputSystem;
 /// Spawned with the core systems by GameSystems. Owner: Anadi.
 /// Rabib: don't bind Esc/Start to your own pause; call PauseMenu.Instance.Toggle() if your Pause action needs it.
 /// Drawn with IMGUI on a dark card in Samprity's type and colours (UiTheme), like the Results screen.
+/// Also frees the mouse cursor while paused (Rabib's mouse-look locks it during play) and re-locks it on Resume.
 /// </summary>
 public class PauseMenu : MonoBehaviour
 {
@@ -64,12 +65,16 @@ public class PauseMenu : MonoBehaviour
         IsPaused = true;
         selected = 0;
         Time.timeScale = 0f;
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
     }
 
     public void Resume()
     {
         IsPaused = false;
         Time.timeScale = 1f;
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 
     void Choose(int item)

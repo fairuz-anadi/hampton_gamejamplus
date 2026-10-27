@@ -22,8 +22,15 @@ public static class GameSystems
         // Entering Play mode in the Editor reports an internal mode, not Single, so only skip additive loads.
         if (mode == LoadSceneMode.Additive) return;
         Time.timeScale = 1f; // never carry a pause into the next scene
-        if (IsGameplayScene(scene.name)) Ensure(scene.name);
-        else if (scene.name == "Results" && Object.FindAnyObjectByType<ResultsScreen>() == null)
+        if (IsGameplayScene(scene.name))
+        {
+            Ensure(scene.name);
+            return;
+        }
+        // Mouse-look (Rabib) locks the cursor during gameplay; every non-gameplay scene gets it back.
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+        if (scene.name == "Results" && Object.FindAnyObjectByType<ResultsScreen>() == null)
             new GameObject("[Results]").AddComponent<ResultsScreen>();
         // MainMenu.unity now carries Samprity's 3D opening (OpeningDirector); the IMGUI menu is the fallback without it.
         else if (scene.name == "MainMenu" && Object.FindAnyObjectByType<MainMenuScreen>() == null && Object.FindAnyObjectByType<OpeningDirector>() == null)

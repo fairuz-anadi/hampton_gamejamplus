@@ -1,14 +1,17 @@
 using UnityEngine;
 
 /// <summary>
-/// Third-person follow camera that swings itself behind the character. There is no mouse or stick control. Owner: Samprity.
+/// Third-person follow camera that swings itself behind the character, or orbits under mouse/right-stick look
+/// input while the player's giving it (added by Rabib: PlayerController reads the Look action and calls
+/// SetLookInput each frame). Owner: Samprity.
 /// Put it on the Camera. It runs in LateUpdate, after the mover has moved.
 ///
 /// Tuning cheat sheet (all live in Play mode):
-///   distance / height  where the camera sits behind and above the focus point
-///   pitch              how far it looks down; lower than the arm's angle puts the character in the lower half of the screen
-///   rotationSmoothTime how lazily it swings round after a turn (bigger = lazier)
-///   recenterSpeed      the fastest it may swing, in degrees per second
+///   distance / height           where the camera sits behind and above the focus point
+///   pitch / pitchMin / pitchMax how far up/down it can look; also where the orbit arm sits
+///   rotationSmoothTime          how lazily it swings round after a turn (bigger = lazier)
+///   recenterSpeed               the fastest it may swing, in degrees per second
+///   mouseLookSensitivity / stickLookSensitivity  how fast look input turns the camera
 /// </summary>
 [DisallowMultipleComponent]
 public class AutoFollowCamera : MonoBehaviour
@@ -25,10 +28,22 @@ public class AutoFollowCamera : MonoBehaviour
     [Min(0.5f)] public float distance = 4.8f;
     [Tooltip("Metres above the focus point.")]
     public float height = 2.2f;
-    [Tooltip("Degrees the camera looks down.")]
-    [Range(0f, 89f)] public float pitch = 22f;
+    [Tooltip("Degrees the camera looks down. Also the orbit arm's starting elevation; look input and pitchMin/pitchMax move it from here.")]
+    [Range(-30f, 89f)] public float pitch = 22f;
     [Tooltip("Vertical field of view. 0 leaves the Camera's own value alone.")]
     [Range(0f, 100f)] public float fieldOfView = 45f;
+
+    [Header("Look input")]
+    [Tooltip("Degrees the camera turns per pixel of mouse movement.")]
+    public float mouseLookSensitivity = 0.12f;
+    [Tooltip("Degrees per second at full gamepad right-stick deflection.")]
+    public float stickLookSensitivity = 120f;
+    [Tooltip("How far up the player can look.")]
+    public float pitchMin = -10f;
+    [Tooltip("How far down the player can look.")]
+    public float pitchMax = 70f;
+    [Tooltip("Seconds of no look input before the camera settles back behind the character.")]
+    public float lookIdleBeforeRecenter = 1.5f;
 
     [Header("Follow")]
     [Tooltip("Seconds to catch up with the character's position. Small = tight, big = floaty.")]
@@ -74,6 +89,9 @@ public class AutoFollowCamera : MonoBehaviour
     float lift, liftVelocity;
     int turnSign;
     bool initialised;
+    float defaultPitch;
+    Vector2 lookThisFrame;
+    float lastLookTime = -999f;
 
     /// <summary>The camera's facing around Y, 0-360. The mover measures W/A/S/D against this.</summary>
     public float Yaw => Mathf.Repeat(yaw, 360f);
@@ -81,10 +99,17 @@ public class AutoFollowCamera : MonoBehaviour
     public float CurrentArm => arm;
     public float FullArm => new Vector2(distance, height).magnitude;
 
+    /// <summary>
+    /// PlayerController calls this once a frame with degrees to turn this frame — already scaled for mouse vs
+    /// gamepad and, for the stick, by deltaTime, so this just adds it to yaw/pitch.
+    /// </summary>
+    public void SetLookInput(Vector2 degreesThisFrame) => lookThisFrame = degreesThisFrame;
+
     void Start()
     {
         if (mover == null && target != null) mover = target.GetComponent<ThirdPersonMover>();
         if (target == null && mover != null) target = mover.transform;
+        defaultPitch = pitch;
         ApplyFieldOfView();
         SnapToTarget();
     }
@@ -107,6 +132,8 @@ public class AutoFollowCamera : MonoBehaviour
         yaw = TargetYaw();
         yawVelocity = 0f;
         turnSign = 0;
+        pitch = defaultPitch;
+        lastLookTime = -999f;
         arm = FullArm;
         armVelocity = 0f;
         lift = liftVelocity = 0f;
@@ -125,6 +152,7 @@ public class AutoFollowCamera : MonoBehaviour
             focus = followSmoothTime > 0f
                 ? Vector3.SmoothDamp(focus, FocusPoint(), ref focusVelocity, followSmoothTime, Mathf.Infinity, dt)
                 : FocusPoint();
+            ApplyLook();
             UpdateYaw(dt);
         }
 
@@ -156,8 +184,29 @@ public class AutoFollowCamera : MonoBehaviour
         transform.SetPositionAndRotation(camPos, rot);
     }
 
+    /// <summary>Applies this frame's look input to yaw/pitch, unless the iceberg finale owns the camera.</summary>
+    void ApplyLook()
+    {
+        bool icebergActive = IcebergPresentation.Instance != null && IcebergPresentation.Instance.Active;
+        if (!icebergActive && lookThisFrame.sqrMagnitude > 0.0000001f)
+        {
+            yaw = Mathf.Repeat(yaw + lookThisFrame.x, 360f);
+            pitch = Mathf.Clamp(pitch - lookThisFrame.y, pitchMin, pitchMax); // moving the mouse up looks up
+            lastLookTime = Time.time;
+        }
+        lookThisFrame = Vector2.zero;
+    }
+
     void UpdateYaw(float dt)
     {
+        // The player's actively orbiting: leave yaw alone, don't fight them with the auto-recenter below.
+        if (Time.time - lastLookTime < lookIdleBeforeRecenter)
+        {
+            yawVelocity = 0f;
+            turnSign = 0;
+            return;
+        }
+
         bool moving = mover == null || mover.IsMoving;
         if (!moving && !recenterWhenIdle)
         {
@@ -184,11 +233,12 @@ public class AutoFollowCamera : MonoBehaviour
         yaw = Mathf.Repeat(yaw, 360f);
     }
 
-    /// <summary>The arm from the focus to the camera, tilted up by extra degrees of lift.</summary>
+    /// <summary>The arm from the focus to the camera, tilted up by extra degrees of lift. Elevation follows
+    /// pitch, so the camera orbits to where it's looking instead of sitting at a fixed height while the view tilts.</summary>
     Vector3 ArmDirection(float extraLift)
     {
-        float elevation = Mathf.Atan2(height, distance) * Mathf.Rad2Deg + extraLift;
-        float e = Mathf.Clamp(elevation, -80f, 85f) * Mathf.Deg2Rad;
+        float elevation = Mathf.Clamp(pitch + extraLift, -80f, 85f);
+        float e = elevation * Mathf.Deg2Rad;
         return Quaternion.Euler(0f, yaw, 0f) * new Vector3(0f, Mathf.Sin(e), -Mathf.Cos(e));
     }
 

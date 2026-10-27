@@ -2,15 +2,16 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 /// <summary>
-/// Human-controlled crew member: joining, seat, Report/Refuse/CallHelp. Owner: Rabib.
+/// Human-controlled crew member: joining, seat, Report/Refuse/CallHelp, mouse/stick look. Owner: Rabib.
 /// Walking is done by ThirdPersonMover (Samprity): this feeds it the Move action. The mover keeps the camera's facing
 /// fixed while a direction is held, so the follow camera turning behind the player doesn't bend the path.
+/// Look (mouse delta / right stick) goes straight to whichever AutoFollowCamera is following this player, if any.
 /// </summary>
 [RequireComponent(typeof(CharacterController), typeof(PlayerInput))]
 public class PlayerController : MonoBehaviour, ICrewActor, IInteractSource, IRoomTarget
 {
     PlayerInput playerInput;
-    InputAction moveAction, interactAction, reportAction, refuseAction, callHelpAction;
+    InputAction moveAction, interactAction, reportAction, refuseAction, callHelpAction, lookAction;
     ThirdPersonMover mover;
     Interactor interactor;
 
@@ -33,6 +34,7 @@ public class PlayerController : MonoBehaviour, ICrewActor, IInteractSource, IRoo
         reportAction = playerInput.actions["Report"];
         refuseAction = playerInput.actions["Refuse"];
         callHelpAction = playerInput.actions["CallHelp"];
+        lookAction = playerInput.actions["Look"];
         interactor = GetComponent<Interactor>();
 
         // Each player reads its own device through PlayerInput, so the mover must not read the keyboard itself.
@@ -56,6 +58,20 @@ public class PlayerController : MonoBehaviour, ICrewActor, IInteractSource, IRoo
         if (reportAction.WasPerformedThisFrame()) OrderDirector.Instance?.Report(this);
         if (refuseAction.WasPerformedThisFrame()) OrderDirector.Instance?.Refuse(this);
         if (callHelpAction.WasPerformedThisFrame() && interactor != null) interactor.CallHelp();
+        ReadLook();
+    }
+
+    /// <summary>
+    /// Mouse delta is already a this-frame pixel amount; a gamepad stick is a -1..1 rate, so it needs deltaTime.
+    /// Only has any effect once the camera's actually following this player (GameplayCameraRig sets that).
+    /// </summary>
+    void ReadLook()
+    {
+        if (mover.followCamera == null) return;
+        Vector2 look = lookAction.ReadValue<Vector2>();
+        bool gamepad = playerInput.currentControlScheme == "Gamepad";
+        float sens = gamepad ? mover.followCamera.stickLookSensitivity * Time.deltaTime : mover.followCamera.mouseLookSensitivity;
+        mover.followCamera.SetLookInput(look * sens);
     }
 
     public void SetRoom(string roomId) => zoneRoom = roomId;
