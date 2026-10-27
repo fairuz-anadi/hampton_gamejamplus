@@ -174,7 +174,7 @@ public class OpeningDirector : MonoBehaviour
         SetBase(ocean, rise * Mathf.Lerp(0.85f, 0.35f, inside));
         SetBase(music, Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(1f, 9f, t)) * 0.55f);
         SetBase(engine, inside * 0.5f);
-        SetBase(footsteps, inside * 0.3f * (1f - Mathf.InverseLerp(44f, 50f, t)));
+        SetBase(footsteps, inside * 0.3f * (1f - Mathf.InverseLerp(48f, 54f, t))); // 4 s later since the promenade run
     }
 
     static void SetBase(AudioSource src, float v)

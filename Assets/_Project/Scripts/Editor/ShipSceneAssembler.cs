@@ -22,10 +22,11 @@ public static class ShipSceneAssembler
     const string DeckPrefab = "Assets/_Project/Prefabs/Environment/ShipDeck.prefab";
     const string PlayerPrefab = "Assets/_Project/Prefabs/Crew/Player.prefab";
 
-    // The deck runs stern to bow along +Z from 0 to 36 m and is 12 m wide.
-    static readonly Vector3 DeckCentre = new Vector3(0f, 0f, 18f);
-    // 55° down as the plan suggests; far and wide enough that stern and bow both fit on screen.
-    const float CameraPitch = 55f, CameraDistance = 50f, CameraFov = 45f;
+    // The deck runs stern to bow along +Z from 0 to ShipLayout.DeckLength and is 12 m wide.
+    static readonly Vector3 DeckCentre = new Vector3(0f, 0f, ShipLayout.DeckLength * 0.5f);
+    // 55° down as the plan suggests; far and wide enough that stern and bow both fit on screen (50 m back per 36 m of deck).
+    const float CameraPitch = 55f, CameraFov = 45f;
+    static readonly float CameraDistance = 50f * ShipLayout.DeckLength / 36f;
 
     [MenuItem("Port/Assemble Ship Scene")]
     public static void Assemble()
@@ -83,7 +84,7 @@ public static class ShipSceneAssembler
         var rot = Quaternion.Euler(CameraPitch, 0f, 0f);
         cam.transform.SetPositionAndRotation(DeckCentre - rot * Vector3.forward * CameraDistance, rot);
         cam.fieldOfView = CameraFov;
-        cam.farClipPlane = Mathf.Max(cam.farClipPlane, 200f);
+        cam.farClipPlane = Mathf.Max(cam.farClipPlane, CameraDistance * 3f);
     }
 
     static void EnsureStations(GameObject deck)
@@ -116,16 +117,18 @@ public static class ShipSceneAssembler
     static void EnsureIceWarning(GameObject deck, int number)
     {
         string name = "IceWarning_" + number;
-        if (GameObject.Find(name) != null) return;
         var marker = FindDeep(deck.transform, "PickUp_IceWarning");
         var desk = FindDeep(deck.transform, "Station_Wireless");
         if (marker == null && desk == null) { Debug.LogWarning("[ShipSceneAssembler] Couldn't place the ice warnings."); return; }
+        var at = marker != null ? marker.position : desk.position + Vector3.up * 0.9f;
+        // Already placed: follow the marker, in case the deck changed (the ship got longer).
+        var existing = GameObject.Find(name);
+        if (existing != null) { existing.transform.position = at + new Vector3(0.28f * (number - 2), 0f, 0f); return; }
 
         var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
         go.name = name;
         Object.DestroyImmediate(go.GetComponent<BoxCollider>());
         go.transform.localScale = new Vector3(0.22f, 0.02f, 0.3f);
-        var at = marker != null ? marker.position : desk.position + Vector3.up * 0.9f;
         go.transform.position = at + new Vector3(0.28f * (number - 2), 0f, 0f);
 
         var warn = go.AddComponent<IceWarningCarry>();
@@ -136,11 +139,13 @@ public static class ShipSceneAssembler
 
     static void EnsureCarryItem(GameObject deck, string itemName, string orderAsset, string pickupStation)
     {
-        if (GameObject.Find(itemName) != null) return;
         var station = FindDeep(deck.transform, pickupStation);
         var spot = station != null ? station.Find("WorkSpot_A") : null;
         var order = AssetDatabase.LoadAssetAtPath<OrderData>($"Assets/_Project/Data/Resources/Orders/{orderAsset}.asset");
         if (station == null || order == null) { Debug.LogWarning($"[ShipSceneAssembler] Couldn't place {itemName}."); return; }
+        // Already placed: follow its station, in case the deck changed (the ship got longer).
+        var existing = GameObject.Find(itemName);
+        if (existing != null) { existing.transform.position = (spot != null ? spot.position : station.position) + new Vector3(0f, 0.9f, 0f); return; }
 
         var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
         go.name = itemName;

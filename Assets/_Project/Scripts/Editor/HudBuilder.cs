@@ -19,7 +19,7 @@ public static class HudBuilder
     static readonly Color Cream = new Color(0.96f, 0.92f, 0.82f);
     static readonly Color Gold = new Color(0.95f, 0.78f, 0.42f);
 
-    static Font regular, bold, italic;
+    static Font regular, bold, italic, typewriter;
     static Sprite pill, banner, band, softDisc, ringThin, dialTicks, diamond, sunIcon, moonIcon, keyRound, disc, iconCaptain, iconSafety, iconCrew, iconSpeaker;
 
     [MenuItem("Port/Samprity/Build HUD")]
@@ -61,6 +61,7 @@ public static class HudBuilder
         regular = AssetDatabase.LoadAssetAtPath<Font>($"{UI}/Fonts/CrimsonText-SemiBold.ttf");
         bold = AssetDatabase.LoadAssetAtPath<Font>($"{UI}/Fonts/CrimsonText-Bold.ttf");
         italic = AssetDatabase.LoadAssetAtPath<Font>($"{UI}/Fonts/CrimsonText-SemiBoldItalic.ttf");
+        typewriter = AssetDatabase.LoadAssetAtPath<Font>($"{UI}/Fonts/SpecialElite-Regular.ttf");
         pill = Sprite("soft_pill", 30);
         banner = Sprite("soft_banner", 0);
         band = Sprite("soft_band", 0);
@@ -117,6 +118,7 @@ public static class HudBuilder
 
         BuildMeters(root.transform);
         BuildDial(root.transform);
+        BuildReadout(root.transform);
         BuildOrders(root.transform);
         BuildPrompts(root.transform, (RectTransform)root.transform);
         BuildSubtitles(root.transform);
@@ -190,6 +192,42 @@ public static class HudBuilder
         comp.phaseName = name;
     }
 
+    /// <summary>
+    /// The ship's instruments (Riham's OffMoments), right-aligned to the left of the dial: label in small gold capitals,
+    /// value in cream. The wireless message drops in at the top centre, clear of the meters, dial and orders.
+    /// </summary>
+    static void BuildReadout(Transform parent)
+    {
+        const float rowH = 32f, valueW = 150f, labelW = 190f;
+        var box = Box(parent, "ShipReadout", new Vector2(1f, 1f), new Vector2(-222f, -36f), new Vector2(valueW + labelW + 40f, rowH * 4f + 20f), new Vector2(1f, 1f));
+        var group = box.gameObject.AddComponent<CanvasGroup>();
+        group.alpha = 0f;
+        Img(box, "Shade", pill, new Color(0.03f, 0.04f, 0.07f, 0.5f), Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, Image.Type.Sliced);
+        Text Row(int i, string name)
+        {
+            float y = -10f - i * rowH;
+            Txt(box, name + "Label", regular, 16, Gold, Spaced(name.ToUpperInvariant()), new Vector2(1f, 1f), new Vector2(-valueW - 24f, y - 4f), new Vector2(labelW, rowH), TextAnchor.MiddleRight);
+            return Txt(box, name, regular, 23, Cream, "", new Vector2(1f, 1f), new Vector2(-16f, y), new Vector2(valueW, rowH), TextAnchor.MiddleRight);
+        }
+        var r = box.gameObject.AddComponent<ShipReadout>();
+        r.group = group;
+        r.compass = Row(0, "Compass");
+        r.wheel = Row(1, "Wheel");
+        r.clock = Row(2, "Clock");
+        r.eta = Row(3, "Port");
+
+        var msg = Box(parent, "WirelessMessage", new Vector2(0.5f, 1f), new Vector2(0f, -28f), new Vector2(820f, 76f), new Vector2(0.5f, 1f));
+        var msgGroup = msg.gameObject.AddComponent<CanvasGroup>();
+        msgGroup.alpha = 0f;
+        Img(msg, "Shade", pill, new Color(0.03f, 0.04f, 0.07f, 0.78f), Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, Image.Type.Sliced);
+        Txt(msg, "Label", regular, 16, Gold, Spaced("WIRELESS"), new Vector2(0f, 0.5f), new Vector2(28f, 0f), new Vector2(120f, 26f), TextAnchor.MiddleLeft).rectTransform.pivot = new Vector2(0f, 0.5f);
+        var text = Txt(msg, "Text", typewriter, 20, Cream, "", new Vector2(0f, 0.5f), new Vector2(150f, 0f), new Vector2(640f, 64f), TextAnchor.MiddleLeft);
+        text.rectTransform.pivot = new Vector2(0f, 0.5f);
+        text.horizontalOverflow = HorizontalWrapMode.Wrap;
+        r.wirelessGroup = msgGroup;
+        r.wireless = text;
+    }
+
     /// <summary>Right side, under the dial: orders as quest-tracker entries.</summary>
     static void BuildOrders(Transform parent)
     {
@@ -222,6 +260,11 @@ public static class HudBuilder
         var line = Txt(body, "CaptainLine", italic, 25, Color.white, "“Morning, crew.”", new Vector2(0f, 1f), new Vector2(104f, -32f), new Vector2(496f, 62f), TextAnchor.UpperLeft);
         line.horizontalOverflow = HorizontalWrapMode.Wrap;
         line.lineSpacing = 0.9f;
+        // Long orders shrink to fit the two lines above the footer instead of running into "Where" and the hints.
+        line.verticalOverflow = VerticalWrapMode.Truncate;
+        line.resizeTextForBestFit = true;
+        line.resizeTextMinSize = 16;
+        line.resizeTextMaxSize = 25;
         var where = Txt(body, "Where", regular, 19, Cream, "Boiler", new Vector2(0f, 0f), new Vector2(104f, 10f), new Vector2(260f, 26f), TextAnchor.LowerLeft);
 
         var hints = Box(body, "Hints", new Vector2(1f, 0f), new Vector2(-18f, 8f), new Vector2(300f, 34f), new Vector2(1f, 0f));
@@ -300,29 +343,46 @@ public static class HudBuilder
         }
     }
 
-    /// <summary>The Captain's line, bottom centre, on a soft band that fades at both ends.</summary>
+    /// <summary>
+    /// The Captain over the ship's speaker, as an old radio strip: a slim dark bar along the bottom of the screen with
+    /// a hairline of the part's colour on top, the speaker and "THE CAPTAIN" at the left, and his words typed out in a
+    /// typewriter face. The bar spans the screen; only its height follows a long line (CaptainSubtitles.strip).
+    /// </summary>
     static void BuildSubtitles(Transform parent)
     {
-        var box = Box(parent, "CaptainSubtitles", new Vector2(0.5f, 0f), new Vector2(0f, 34f), new Vector2(1400f, 220f), new Vector2(0.5f, 0f));
+        const float headWidth = 300f, textLeft = headWidth + 36f, textRight = 80f;
+        var box = Box(parent, "CaptainSubtitles", new Vector2(0.5f, 0f), Vector2.zero, new Vector2(0f, 220f), new Vector2(0.5f, 0f));
+        box.anchorMin = new Vector2(0f, 0f);
+        box.anchorMax = new Vector2(1f, 0f);
+        box.sizeDelta = new Vector2(0f, 220f);
         var group = box.gameObject.AddComponent<CanvasGroup>();
         group.alpha = 0f;
-        var panelRt = Box(box, "Panel", new Vector2(0.5f, 0f), Vector2.zero, new Vector2(900f, 120f), new Vector2(0.5f, 0f));
-        Img(panelRt, "Band", band, new Color(0.02f, 0.03f, 0.06f, 0.78f), Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, Image.Type.Simple);
-        // A hairline of the part's colour across the top of the band.
-        var trim = Img(panelRt, "Trim", band, Gold, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, -10f), new Vector2(-120f, 2f), Image.Type.Simple);
-        var head = Box(panelRt, "Head", new Vector2(0.5f, 1f), new Vector2(0f, -16f), new Vector2(240f, 28f), new Vector2(0.5f, 1f));
-        var horn = Img(head, "Speaker", iconSpeaker, Gold, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(26f, 0f), new Vector2(30f, 30f), Image.Type.Simple);
-        var label = Txt(head, "Label", regular, 18, Gold, Spaced("THE CAPTAIN"), new Vector2(0f, 0.5f), new Vector2(48f, 0f), new Vector2(190f, 26f), TextAnchor.MiddleLeft);
+        var panelRt = Box(box, "Panel", new Vector2(0.5f, 0f), Vector2.zero, new Vector2(0f, 96f), new Vector2(0.5f, 0f));
+        panelRt.anchorMin = new Vector2(0f, 0f);
+        panelRt.anchorMax = new Vector2(1f, 0f);
+        panelRt.sizeDelta = new Vector2(0f, 96f);
+        Img(panelRt, "Band", null, new Color(0.02f, 0.025f, 0.04f, 0.88f), Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, Image.Type.Simple);
+        // A hairline of the part's colour along the top edge of the strip.
+        var trim = Img(panelRt, "Trim", null, Gold, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, -1f), new Vector2(0f, 2f), Image.Type.Simple);
+        // Left: the ship's speaker and who's talking, then a thin divider.
+        var head = Box(panelRt, "Head", new Vector2(0f, 1f), new Vector2(40f, -22f), new Vector2(headWidth - 40f, 30f), new Vector2(0f, 1f));
+        var horn = Img(head, "Speaker", iconSpeaker, Gold, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(17f, 0f), new Vector2(34f, 34f), Image.Type.Simple);
+        var label = Txt(head, "Label", regular, 20, Gold, Spaced("THE CAPTAIN"), new Vector2(0f, 0.5f), new Vector2(46f, 0f), new Vector2(headWidth - 86f, 28f), TextAnchor.MiddleLeft);
         label.rectTransform.pivot = new Vector2(0f, 0.5f);
-        var line = Txt(panelRt, "Line", italic, 32, Color.white, "", new Vector2(0.5f, 1f), new Vector2(0f, -48f), new Vector2(700f, 44f), TextAnchor.UpperCenter);
+        Txt(panelRt, "Channel", regular, 15, new Color(Cream.r, Cream.g, Cream.b, 0.55f), Spaced("SHIP'S SPEAKER"), new Vector2(0f, 1f), new Vector2(86f, -56f), new Vector2(headWidth - 86f, 22f), TextAnchor.UpperLeft);
+        Img(panelRt, "Divider", null, new Color(Gold.r, Gold.g, Gold.b, 0.35f), new Vector2(0f, 0f), new Vector2(0f, 1f), new Vector2(headWidth, 0f), new Vector2(1f, -28f), Image.Type.Simple);
+        // Right: his words, typed out, left-aligned in a column that wraps; the strip grows for a long line.
+        var line = Txt(panelRt, "Line", typewriter, 30, Color.white, "", new Vector2(0f, 1f), new Vector2(textLeft, -24f), new Vector2(0f, 40f), TextAnchor.UpperLeft);
+        Column(line.rectTransform, textLeft, textRight);
         line.horizontalOverflow = HorizontalWrapMode.Wrap;
-        line.lineSpacing = 0.92f;
+        line.lineSpacing = 1.05f;
         // Invisible twin of the line, used only to measure the finished line before it types out.
-        var sizer = Txt(panelRt, "Sizer", italic, 32, new Color(0f, 0f, 0f, 0f), "", new Vector2(0.5f, 1f), new Vector2(0f, -48f), new Vector2(700f, 44f), TextAnchor.UpperCenter);
+        var sizer = Txt(panelRt, "Sizer", typewriter, 30, new Color(0f, 0f, 0f, 0f), "", new Vector2(0f, 1f), new Vector2(textLeft, -24f), new Vector2(0f, 40f), TextAnchor.UpperLeft);
+        Column(sizer.rectTransform, textLeft, textRight);
         sizer.horizontalOverflow = HorizontalWrapMode.Wrap;
-        sizer.lineSpacing = 0.92f;
+        sizer.lineSpacing = 1.05f;
         Object.DestroyImmediate(sizer.GetComponent<Shadow>());
-        var staticText = Txt(panelRt, "Static", regular, 20, new Color(0.82f, 0.84f, 0.88f), Spaced("~ kssshhht ~"), new Vector2(0.5f, 1f), new Vector2(0f, 24f), new Vector2(500f, 26f), TextAnchor.LowerCenter);
+        var staticText = Txt(panelRt, "Static", typewriter, 22, new Color(0.82f, 0.84f, 0.88f), Spaced("~ kssshhht ~"), new Vector2(1f, 1f), new Vector2(-textRight, 30f), new Vector2(400f, 28f), TextAnchor.LowerRight);
         staticText.enabled = false;
 
         var subs = box.gameObject.AddComponent<CaptainSubtitles>();
@@ -334,11 +394,23 @@ public static class HudBuilder
         subs.staticText = staticText;
         subs.trim = trim;
         subs.horn = horn;
-        subs.padding = new Vector2(320f, 74f);
+        subs.strip = true;
+        subs.stripMinHeight = 96f;
+        subs.padding = new Vector2(0f, 50f);
         subs.maxTextWidth = 1000f;
         subs.calm = new CaptainSubtitles.Style { trim = new Color(Gold.r, Gold.g, Gold.b, 0.9f), label = Gold, text = Color.white, tremble = 0f };
         subs.off = new CaptainSubtitles.Style { trim = new Color(0.66f, 0.76f, 0.9f, 0.9f), label = new Color(0.72f, 0.8f, 0.92f), text = new Color(0.92f, 0.95f, 1f), tremble = 0f };
         subs.truth = new CaptainSubtitles.Style { trim = new Color(0.9f, 0.22f, 0.18f, 0.95f), label = new Color(1f, 0.42f, 0.36f), text = new Color(1f, 0.9f, 0.86f), tremble = 1.4f };
+    }
+
+    /// <summary>Stretches a top-anchored text across its parent, inset from the left and right edges.</summary>
+    static void Column(RectTransform rt, float left, float right)
+    {
+        rt.anchorMin = new Vector2(0f, 1f);
+        rt.anchorMax = new Vector2(1f, 1f);
+        rt.pivot = new Vector2(0f, 1f);
+        rt.offsetMin = new Vector2(left, rt.offsetMin.y);
+        rt.offsetMax = new Vector2(-right, rt.offsetMax.y);
     }
 
     /// <summary>Letter-spaced capitals, the way the reference sets its small labels.</summary>
@@ -492,7 +564,7 @@ public static class HudBuilder
             "I know the wireless is busy. I know who's at it.", true, "Afternoon");
         Shot("3_truth", 3, 64, 33, 40, 64,
             new (OrderData, int, int, bool, float)[0],
-            new Vector3(0f, 0.05f, 26.3f), 0f, "Station_Wheel", "Steer",
+            ShipLayout.P(new Vector3(0f, 0.05f, 26.3f)), 0f, "Station_Wheel", "Steer",
             "You want to know why. Fine. No one remembers a careful captain. They remember the fastest crossing, and the name on the front page.", false, "Night");
 
         cam.targetTexture = null;

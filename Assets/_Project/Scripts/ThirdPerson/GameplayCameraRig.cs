@@ -188,8 +188,9 @@ public class GameplayCameraRig : MonoBehaviour
         {
             // Shared screen: from the deck overview to just aft of the bridge, high up: the wheel at the bottom of the
             // frame, the bow and the berg ahead.
-            var bowView = new Vector3(0f, 19f, 4f);
-            var look = Quaternion.LookRotation(new Vector3(0f, 0f, 75f) - bowView);
+            // On the longer ship (ShipLayout) the same view sits the promenade's length further forward.
+            var bowView = new Vector3(0f, 19f, 4f + ShipLayout.Extra);
+            var look = Quaternion.LookRotation(new Vector3(0f, 0f, ShipLayout.Z(75f)) - bowView);
             cam.transform.SetPositionAndRotation(Vector3.Lerp(overviewPos, bowView, k), Quaternion.Slerp(overviewRot, look, k));
             cam.fieldOfView = Mathf.Lerp(overviewFov, 50f, k);
         }

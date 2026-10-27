@@ -85,10 +85,11 @@ public static class ShipDeckBuilder
 
         BuildBoiler(stationT, propT);
         BuildCorridor(stationT, propT);
-        BuildWireless(stationT, propT);
-        BuildBridge(stationT, propT);
-        BuildBow(propT);
+        BuildPromenade(propT);
+        // The rooms forward of the promenade keep their own layout, just ShipLayout.Extra further toward the bow.
+        Forward(stationT, propT, (s, pr) => { BuildWireless(s, pr); BuildBridge(s, pr); BuildBow(pr); });
         BuildDetails(propT);
+        ShiftForward(propT.Find("Details"));
         BuildCraft(propT);
         BuildExterior(hullT);
         var fxT = Group(t, "Atmosphere");
@@ -114,12 +115,59 @@ public static class ShipDeckBuilder
         return root;
     }
 
+    // ---------- Length (ShipLayout): a promenade between the Corridor and the Wireless room ----------
+
+    /// <summary>Bulkheads with a doorway: Boiler|Corridor, Corridor|Promenade, Promenade|Wireless, Wireless|Bridge, and the bridge front.</summary>
+    static readonly float[] Bulkheads = { 8f, 16f, ShipLayout.Z(16f), ShipLayout.Z(24f), ShipLayout.Z(32f) };
+    static readonly float BridgeFront = ShipLayout.Z(32f);
+
+    /// <summary>Builds rooms laid out in the old coordinates under a group pushed forward, then hands their pieces back to
+    /// the usual parents, so names and paths (Station_*, Markers, DropPoint_Bridge) stay exactly as before.</summary>
+    static void Forward(Transform stations, Transform props, System.Action<Transform, Transform> build)
+    {
+        var s = Group(stations, "_Forward");
+        var p = Group(props, "_Forward");
+        s.localPosition = p.localPosition = new Vector3(0f, 0f, ShipLayout.Extra);
+        build(s, p);
+        foreach (var (temp, parent) in new[] { (s, stations), (p, props) })
+        {
+            while (temp.childCount > 0) temp.GetChild(0).SetParent(parent, true);
+            Object.DestroyImmediate(temp.gameObject);
+        }
+    }
+
+    /// <summary>Moves a group's pieces that sit forward of the promenade by ShipLayout.Extra.</summary>
+    static void ShiftForward(Transform group)
+    {
+        if (group == null) return;
+        foreach (Transform c in group)
+            if (c.localPosition.z >= ShipLayout.InsertAt) c.localPosition += new Vector3(0f, 0f, ShipLayout.Extra);
+    }
+
+    /// <summary>The promenade itself: a long passage with benches, lifebuoys and the odd crate along the walls.
+    /// Floors, walls, trim, lamps and portholes come from the length-aware loops elsewhere.</summary>
+    static void BuildPromenade(Transform props)
+    {
+        var d = Group(props, "Promenade");
+        float z0 = ShipLayout.InsertAt, z1 = ShipLayout.Z(ShipLayout.InsertAt);
+        Kit(d, "Furniture", "rug_rectangle_stripes_B", new Vector3(0f, 0.06f, z0 + 6f), 90f, null, false, Runner("Ship_RunnerRed", new Color(0.44f, 0.13f, 0.1f)));
+        Kit(d, "Furniture", "rug_rectangle_stripes_B", new Vector3(0f, 0.06f, z1 - 6f), 90f, null, false, Runner("Ship_RunnerRed", new Color(0.44f, 0.13f, 0.1f)));
+        for (float z = z0 + 10f; z < z1 - 4f; z += 10f)
+        {
+            float side = Mathf.Repeat(z, 20f) < 10f ? -1f : 1f;
+            Kit(d, "Dungeon", "barrel_small_stack", new Vector3(4.6f * side, 0f, z), 0f);
+            Lifebuoy(d, new Vector3(5.46f * -side, 1.5f, z + 3f), side > 0f ? 90f : -90f);
+        }
+        Speaker(props, "Speaker_Promenade", new Vector3(-5.4f, 2.5f, (z0 + z1) * 0.5f), 90f);
+    }
+
     static void BuildHullAndSea(Transform p)
     {
         // Ship's side below the deck, and the sea. The camera sees these over the low walls.
-        Prim(PrimitiveType.Cube, "HullBody", p, new Vector3(0f, -1.3f, 17.5f), Vector3.zero, new Vector3(13.2f, 2.6f, 37.5f), hull);
-        Prim(PrimitiveType.Cube, "HullBand", p, new Vector3(0f, -0.15f, 17.5f), Vector3.zero, new Vector3(13.4f, 0.3f, 37.7f), cream, false);
-        var seaGo = Prim(PrimitiveType.Plane, "Sea", p, new Vector3(0f, -2.2f, 18f), Vector3.zero, new Vector3(60f, 1f, 60f), sea);
+        float len = ShipLayout.DeckLength, mid = (len - 1f) * 0.5f;
+        Prim(PrimitiveType.Cube, "HullBody", p, new Vector3(0f, -1.3f, mid), Vector3.zero, new Vector3(13.2f, 2.6f, len + 1.5f), hull);
+        Prim(PrimitiveType.Cube, "HullBand", p, new Vector3(0f, -0.15f, mid), Vector3.zero, new Vector3(13.4f, 0.3f, len + 1.7f), cream, false);
+        var seaGo = Prim(PrimitiveType.Plane, "Sea", p, new Vector3(0f, -2.2f, len * 0.5f), Vector3.zero, new Vector3(60f, 1f, 60f), sea);
         Object.DestroyImmediate(seaGo.GetComponent<Collider>());
         seaGo.isStatic = false;
         seaGo.AddComponent<SeaScroll>();
@@ -128,22 +176,25 @@ public static class ShipDeckBuilder
         var floor = new GameObject("DeckCollider");
         floor.transform.SetParent(p, false);
         var bc = floor.AddComponent<BoxCollider>();
-        bc.center = new Vector3(0f, -0.25f, 18f);
-        bc.size = new Vector3(12f, 0.6f, 36f);
+        bc.center = new Vector3(0f, -0.25f, ShipLayout.DeckLength * 0.5f);
+        bc.size = new Vector3(12f, 0.6f, ShipLayout.DeckLength);
         floor.isStatic = true;
     }
 
     static void BuildFloors(Transform p)
     {
-        for (int zi = 0; zi < 9; zi++)
+        for (float z = 2f; z < ShipLayout.DeckLength; z += 4f)
         for (int xi = -1; xi <= 1; xi++)
         {
-            float z = 2f + zi * 4f, x = xi * 4f;
+            float x = xi * 4f;
+            // Pick the floor by where this tile was on the 36 m deck; the promenade is planked like the wireless room.
+            bool promenade = z >= ShipLayout.InsertAt && z < ShipLayout.Z(ShipLayout.InsertAt);
+            float oz = promenade ? ShipLayout.InsertAt : z >= ShipLayout.InsertAt ? z - ShipLayout.Extra : z;
             string piece; Material mat = null;
-            if (z < 4f && x != 0f) piece = "floor_tile_big_grate";             // stokehold grating either side of the boiler
-            else if (z < 8f) { piece = "floor_tile_large"; mat = darkFloor; }  // boiler: sooty stone
-            else if (z < 16f) { piece = "floor_tile_large"; mat = StylizedLook.Get("KK_StoneFloor"); }   // corridor
-            else if (z < 32f) { piece = "floor_wood_large"; mat = StylizedLook.Get("KK_WoodFloor"); }    // wireless, bridge
+            if (oz < 4f && x != 0f) piece = "floor_tile_big_grate";             // stokehold grating either side of the boiler
+            else if (oz < 8f) { piece = "floor_tile_large"; mat = darkFloor; }  // boiler: sooty stone
+            else if (oz < 16f) { piece = "floor_tile_large"; mat = StylizedLook.Get("KK_StoneFloor"); }   // corridor
+            else if (oz < 32f) { piece = "floor_wood_large"; mat = StylizedLook.Get("KK_WoodFloor"); }    // promenade, wireless, bridge
             else { piece = "floor_wood_large_dark"; mat = StylizedLook.Get("KK_WoodFloor"); }            // bow deck
             Kit(p, "Dungeon", piece, new Vector3(x, 0f, z), 0f, null, false, mat);
         }
@@ -153,7 +204,7 @@ public static class ShipDeckBuilder
     {
         var s = new Vector3(1f, WallScaleY, 1f);
         // Ship's sides: every other module has a window (porthole).
-        for (int i = 0; i < 8; i++)
+        for (int i = 0; 2f + i * 4f < BridgeFront; i++)
         {
             float z = 2f + i * 4f;
             string piece = i % 2 == 1 ? "wall_window_open" : "wall";
@@ -163,9 +214,9 @@ public static class ShipDeckBuilder
         // Stern.
         for (int xi = -1; xi <= 1; xi++) Kit(p, "Dungeon", "wall", new Vector3(xi * 4f, 0f, 0f), 0f, s, true, navyWall);
         // Bulkheads between rooms with a 4 m doorway in the middle; the bridge's front has windows.
-        foreach (float z in new[] { 8f, 16f, 24f, 32f })
+        foreach (float z in Bulkheads)
         {
-            string piece = z == 32f ? "wall_window_open" : "wall";
+            string piece = z == BridgeFront ? "wall_window_open" : "wall";
             Kit(p, "Dungeon", piece, new Vector3(-4f, 0f, z), 0f, s, true, navyWall);
             Kit(p, "Dungeon", piece, new Vector3(4f, 0f, z), 0f, s, true, navyWall);
         }
@@ -178,9 +229,10 @@ public static class ShipDeckBuilder
     {
         Room(p, "Boiler", new Vector3(0f, 1.5f, 4f), new Vector3(12f, 3f, 8f));
         Room(p, "Corridor", new Vector3(0f, 1.5f, 12f), new Vector3(12f, 3f, 8f));
-        Room(p, "Wireless", new Vector3(0f, 1.5f, 20f), new Vector3(12f, 3f, 8f));
-        Room(p, "Bridge", new Vector3(0f, 1.5f, 28f), new Vector3(12f, 3f, 8f));
-        Room(p, "Bow", new Vector3(0f, 1.5f, 34f), new Vector3(12f, 3f, 4f));
+        Room(p, "Promenade", new Vector3(0f, 1.5f, ShipLayout.InsertAt + ShipLayout.Extra * 0.5f), new Vector3(12f, 3f, ShipLayout.Extra));
+        Room(p, "Wireless", ShipLayout.P(new Vector3(0f, 1.5f, 20f)), new Vector3(12f, 3f, 8f));
+        Room(p, "Bridge", ShipLayout.P(new Vector3(0f, 1.5f, 28f)), new Vector3(12f, 3f, 8f));
+        Room(p, "Bow", ShipLayout.P(new Vector3(0f, 1.5f, 34f)), new Vector3(12f, 3f, 4f));
     }
 
     // ---------- Rooms and stations ----------
@@ -356,17 +408,22 @@ public static class ShipDeckBuilder
     {
         var lamps = new List<Light>();
         // Wall sconces, so no bulbs hang in the middle of the camera's view. side = which way the wall faces.
+        float prom = ShipLayout.InsertAt;
         var spots = new (string name, Vector3 pos, float side)[]
         {
             ("Lamp_Boiler", new Vector3(-5.25f, 2.3f, 5.5f), 1f),
             ("Lamp_Corridor", new Vector3(-1.25f, 2.3f, 13.5f), 1f),
-            ("Lamp_Wireless", new Vector3(5.25f, 2.3f, 18.5f), -1f),
-            ("Lamp_Bridge", new Vector3(-5.25f, 2.3f, 28.5f), 1f),
+            ("Lamp_Promenade_A", new Vector3(-5.25f, 2.3f, prom + 8f), 1f),
+            ("Lamp_Promenade_B", new Vector3(5.25f, 2.3f, prom + 20f), -1f),
+            ("Lamp_Promenade_C", new Vector3(-5.25f, 2.3f, prom + 32f), 1f),
+            ("Lamp_Wireless", ShipLayout.P(new Vector3(5.25f, 2.3f, 18.5f)), -1f),
+            ("Lamp_Bridge", ShipLayout.P(new Vector3(-5.25f, 2.3f, 28.5f)), 1f),
         };
         foreach (var (name, pos, side) in spots)
         {
             var l = PointLight(p, name, pos, new Color(1f, 0.76f, 0.48f), 2.2f, 11f);
-            l.shadows = LightShadows.Soft;
+            // The promenade's lamps light the long walk but cast no shadows, to keep the shadowed lights to the rooms.
+            l.shadows = name.Contains("Promenade") ? LightShadows.None : LightShadows.Soft;
             l.shadowStrength = 0.85f;
             l.shadowNearPlane = 0.3f;
             Prim(PrimitiveType.Cube, "Bracket", l.transform, new Vector3(-0.12f * side, 0f, 0f), Vector3.zero, new Vector3(0.25f, 0.08f, 0.08f), brass, false);
@@ -441,7 +498,7 @@ public static class ShipDeckBuilder
     static void BuildExterior(Transform p)
     {
         var e = Group(p, "Exterior");
-        for (float z = 1.5f; z <= 34.6f; z += 1.5f)
+        for (float z = 1.5f; z <= ShipLayout.Z(34.6f); z += 1.5f)
             foreach (float side in new[] { -1f, 1f })
                 Prim(PrimitiveType.Cylinder, "Porthole", e, new Vector3(6.61f * side, -0.95f, z), new Vector3(0f, 0f, 90f), new Vector3(0.24f, 0.02f, 0.24f), portholeGlow, false);
 
@@ -451,7 +508,7 @@ public static class ShipDeckBuilder
         Prim(PrimitiveType.Cylinder, "Top", funnel, new Vector3(0f, 10.35f, 0f), Vector3.zero, new Vector3(2.66f, 0.4f, 2.66f), coal, false);
 
         var mast = Group(e, "Foremast");
-        mast.localPosition = new Vector3(0f, 0f, 34.6f);
+        mast.localPosition = new Vector3(0f, 0f, ShipLayout.Z(34.6f));
         Prim(PrimitiveType.Cylinder, "Mast", mast, new Vector3(0f, 6f, 0f), Vector3.zero, new Vector3(0.25f, 6f, 0.25f), darkWood, false);
         Prim(PrimitiveType.Cylinder, "CrowsNest", mast, new Vector3(0f, 8.6f, 0f), Vector3.zero, new Vector3(1.1f, 0.45f, 1.1f), darkWood, false);
         Rigging(mast, new Vector3(0f, 11.5f, 0f), new Vector3(-5.8f, 0.9f, -1.6f));
@@ -467,7 +524,8 @@ public static class ShipDeckBuilder
     /// <summary>A raked prow ahead of the bow railing and a rounded stern, so the hull isn't a box.</summary>
     static void BuildProwAndStern(Transform e)
     {
-        const float half = 6.6f, keel = -2.7f, stemZ = 42.5f, bowZ = 36.2f, sheer = 0.7f;
+        const float half = 6.6f, keel = -2.7f, sheer = 0.7f;
+        float stemZ = ShipLayout.Z(42.5f), bowZ = ShipLayout.Z(36.2f);
         var m = new Mesh { name = "Prow" };
         var verts = new List<Vector3>();
         var tris = new List<int>();
@@ -541,8 +599,8 @@ public static class ShipDeckBuilder
         foreach (float side in new[] { -1f, 1f })
             Strip(w, side < 0 ? "BowWave_Port" : "BowWave_Starboard", foam, 52f, 52, repeat * 0.5f, s =>
             {
-                float z = 42.2f - s;
-                float hullX = z > 36.2f ? 6.6f * (42.5f - z) / 6.3f : 6.62f;
+                float z = ShipLayout.Z(42.2f) - s;
+                float hullX = z > ShipLayout.Z(36.2f) ? 6.6f * (ShipLayout.Z(42.5f) - z) / 6.3f : 6.62f;
                 float spread = 0.5f + s * 0.05f;
                 float a = Mathf.Min(s, 1f) * Mathf.Pow(1f - s / 52f, 0.8f) * 0.9f;
                 return (new Vector3(side * (hullX + 0.02f), y + 0.01f, z), new Vector3(side * (hullX + spread + 0.6f), y + 0.01f, z), a);
@@ -551,7 +609,7 @@ public static class ShipDeckBuilder
         var sprayMat = ParticleMat("Ship_Spray", new Color(0.95f, 0.97f, 1f, 0.55f));
         foreach (float side in new[] { -1f, 1f })
         {
-            var spray = Particles(e, "BowSpray", new Vector3(side * 0.6f, -1.9f, 41.4f), sprayMat, 26f, 1.1f, new Vector2(0.25f, 0.7f), new Vector2(1.5f, 3.2f), 20f, new Vector3(side * 0.8f, 0f, -3.5f), 80);
+            var spray = Particles(e, "BowSpray", new Vector3(side * 0.6f, -1.9f, ShipLayout.Z(41.4f)), sprayMat, 26f, 1.1f, new Vector2(0.25f, 0.7f), new Vector2(1.5f, 3.2f), 20f, new Vector3(side * 0.8f, 0f, -3.5f), 80);
             spray.transform.localRotation = Quaternion.Euler(-55f, side * 40f, 0f);
             var main = spray.main;
             main.gravityModifier = 0.6f;
@@ -653,12 +711,14 @@ public static class ShipDeckBuilder
         Particles(p, "ValveLeak", new Vector3(-2.5f, 2.45f, 1.05f), steamMat, 6f, 1.6f, new Vector2(0.15f, 0.35f), new Vector2(0.6f, 1.0f), 8f, Vector3.zero, 40);
         Particles(p, "FireboxEmbers", new Vector3(0f, 1.0f, 3.95f), emberMat, 5f, 1.4f, new Vector2(0.03f, 0.06f), new Vector2(0.4f, 1.1f), 25f, Vector3.zero, 40);
         foreach (var (name, z) in new[] { ("Dust_Boiler", 4f), ("Dust_Corridor", 12f), ("Dust_Wireless", 20f), ("Dust_Bridge", 28f) })
-            Dust(p, name, new Vector3(0f, 1.4f, z));
+            Dust(p, name, new Vector3(0f, 1.4f, ShipLayout.Z(z)));
+        for (int i = 0; i < 3; i++)
+            Dust(p, "Dust_Promenade_" + i, new Vector3(0f, 1.4f, ShipLayout.InsertAt + 6f + i * 14f));
 
         // Deck probe for brass and iron, and a high, wide one so the open sea reflects the sky rather than the
         // deck's insides. PartMood re-renders both as the sky changes (they'd keep the run-start sky otherwise).
-        Probe(p, "ReflectionProbe", new Vector3(0f, 1.6f, 18f), new Vector3(16f, 8f, 40f), 128, 2);
-        Probe(p, "ReflectionProbe_Sea", new Vector3(0f, 14f, 18f), new Vector3(4000f, 60f, 4000f), 64, 0); // out to the horizon
+        Probe(p, "ReflectionProbe", new Vector3(0f, 1.6f, ShipLayout.DeckLength * 0.5f), new Vector3(16f, 8f, ShipLayout.DeckLength + 4f), 128, 2);
+        Probe(p, "ReflectionProbe_Sea", new Vector3(0f, 14f, ShipLayout.DeckLength * 0.5f), new Vector3(4000f, 60f, 4000f), 64, 0); // out to the horizon
     }
 
     static ReflectionProbe Probe(Transform p, string name, Vector3 pos, Vector3 size, int resolution, int importance)
@@ -823,12 +883,12 @@ public static class ShipDeckBuilder
 
         // Wooden skirting where every wall meets the deck: grounds the walls and hides the seam.
         foreach (float side in new[] { -1f, 1f })
-            Prim(PrimitiveType.Cube, "Skirting_Hull", c, new Vector3(hullFace * side - 0.02f * side, 0.09f, 16f), Vector3.zero, new Vector3(0.07f, 0.16f, 31f), darkWood, false);
+            Prim(PrimitiveType.Cube, "Skirting_Hull", c, new Vector3(hullFace * side - 0.02f * side, 0.09f, BridgeFront * 0.5f), Vector3.zero, new Vector3(0.07f, 0.16f, BridgeFront - 1f), darkWood, false);
         Prim(PrimitiveType.Cube, "Skirting_Stern", c, new Vector3(0f, 0.09f, 0.52f), Vector3.zero, new Vector3(11f, 0.16f, 0.07f), darkWood, false);
-        foreach (float z in new[] { 8f, 16f, 24f, 32f })
+        foreach (float z in Bulkheads)
             foreach (float face in new[] { -0.52f, 0.52f })
             {
-                if (z == 32f && face > 0f) continue; // the bow side of the bridge front is open deck
+                if (z == BridgeFront && face > 0f) continue; // the bow side of the bridge front is open deck
                 foreach (float side in new[] { -1f, 1f })
                     Prim(PrimitiveType.Cube, "Skirting_Bulkhead", c, new Vector3(4f * side, 0.09f, z + face), Vector3.zero, new Vector3(3.9f, 0.16f, 0.07f), darkWood, false);
             }
@@ -836,7 +896,7 @@ public static class ShipDeckBuilder
             Prim(PrimitiveType.Cube, "Skirting_Store", c, new Vector3(-1.48f, 0.09f, z), Vector3.zero, new Vector3(0.07f, 0.16f, 3.9f), darkWood, false);
 
         // Iron joint strips where the hull plates meet, every 4 m.
-        for (float z = 4f; z < 32f; z += 4f)
+        for (float z = 4f; z < BridgeFront; z += 4f)
             foreach (float side in new[] { -1f, 1f })
                 Prim(PrimitiveType.Cube, "PlateJoint", c, new Vector3(hullFace * side - 0.03f * side, wallTop * 0.5f, z), Vector3.zero, new Vector3(0.08f, wallTop, 0.16f), steel, false);
 
@@ -857,20 +917,23 @@ public static class ShipDeckBuilder
         foreach (float y in new[] { WainscotTop + 0.18f, wallTop - 0.25f })
         {
             foreach (float side in new[] { -1f, 1f })
-                Row(new Vector3(hullFace * side, y, 0.8f), new Vector3(hullFace * side, y, 31.4f), 0.45f, new Vector3(-side, 0f, 0f));
-            foreach (float z in new[] { 8f, 16f, 24f })
+                Row(new Vector3(hullFace * side, y, 0.8f), new Vector3(hullFace * side, y, BridgeFront - 0.6f), 0.45f, new Vector3(-side, 0f, 0f));
+            foreach (float z in Bulkheads)
+            {
+                if (z == BridgeFront) continue; // the bridge front has windows, no rivet rows
                 foreach (float face in new[] { -0.5f, 0.5f })
                     foreach (float side in new[] { -1f, 1f })
                         Row(new Vector3(2.15f * side, y, z + face), new Vector3(5.4f * side, y, z + face), 0.45f, new Vector3(0f, 0f, Mathf.Sign(face)));
+            }
         }
         CombinedMesh(c, "Rivets", rivets, brass, "Rivets");
 
         // Brass handrail on brackets along the wireless room and the bridge.
         foreach (float side in new[] { -1f, 1f })
         {
-            Pipe(c, "Handrail", new Vector3((hullFace - 0.12f) * side, 1.0f, 24f), new Vector3(90f, 0f, 0f), 15f, 0.06f, brass);
+            Pipe(c, "Handrail", new Vector3((hullFace - 0.12f) * side, 1.0f, ShipLayout.Z(24f)), new Vector3(90f, 0f, 0f), 15f, 0.06f, brass);
             for (float z = 17f; z <= 31f; z += 2f)
-                Prim(PrimitiveType.Cube, "RailBracket", c, new Vector3((hullFace - 0.06f) * side, 1.0f, z), Vector3.zero, new Vector3(0.12f, 0.05f, 0.04f), brass, false);
+                Prim(PrimitiveType.Cube, "RailBracket", c, new Vector3((hullFace - 0.06f) * side, 1.0f, ShipLayout.Z(z)), Vector3.zero, new Vector3(0.12f, 0.05f, 0.04f), brass, false);
         }
 
         // Coiled rope: on the bow, by the muster bell.
@@ -878,8 +941,8 @@ public static class ShipDeckBuilder
         StylizedLook.Style(rope, StylizedLook.Role.Prop);
         rope.SetFloat("_Grain", 0.35f);
         rope.SetFloat("_NoiseScale", 2.5f);
-        RopeCoil(c, new Vector3(-3.6f, 0.05f, 34.6f), 0.55f, rope);
-        RopeCoil(c, new Vector3(3.4f, 0.05f, 33.4f), 0.45f, rope);
+        RopeCoil(c, ShipLayout.P(new Vector3(-3.6f, 0.05f, 34.6f)), 0.55f, rope);
+        RopeCoil(c, ShipLayout.P(new Vector3(3.4f, 0.05f, 33.4f)), 0.45f, rope);
         RopeCoil(c, new Vector3(4.6f, 0.05f, 9.0f), 0.4f, rope);
 
         // A few tools left where the work happens.
@@ -940,14 +1003,14 @@ public static class ShipDeckBuilder
 
         // Hull sides, both rooms' worth, stern to the bridge front.
         foreach (float side in new[] { -1f, 1f })
-            Run(true, hullFace * side, -side, 0.55f, 31.45f);
+            Run(true, hullFace * side, -side, 0.55f, BridgeFront - 0.55f);
         // Stern, behind the boiler.
         Run(false, 0.5f, 1f, -hullFace, hullFace);
         // Bulkheads either side of each doorway, on both faces; the bridge front only on its inside.
-        foreach (float z in new[] { 8f, 16f, 24f, 32f })
+        foreach (float z in Bulkheads)
             foreach (float face in new[] { -0.5f, 0.5f })
             {
-                if (z == 32f && face > 0f) continue;
+                if (z == BridgeFront && face > 0f) continue;
                 foreach (float side in new[] { -1f, 1f })
                     Run(false, z + face, Mathf.Sign(face), side < 0f ? -hullFace : 2.05f, side < 0f ? -2.05f : hullFace);
             }
