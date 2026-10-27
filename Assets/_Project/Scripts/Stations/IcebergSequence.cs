@@ -63,6 +63,17 @@ public class IcebergSequence : MonoBehaviour
     float impactTimer = -1f;
     float damage01; // 0 head-on .. 1 scrape, drives shake and water height
 
+    /// <summary>Samprity's IcebergPresentation draws its own gauge and turns this debug bar off while it does.</summary>
+    public static bool DrawDebugGui = true;
+    /// <summary>
+    /// Set by Samprity's GameplayCameraRig in Ship: it frames the finale and shakes the camera itself (using
+    /// ImpactShake), so the zoom and shake here stand aside instead of fighting the follow camera.
+    /// </summary>
+    public static bool CameraHandledExternally;
+
+    /// <summary>During the beat after the hit: how hard to shake, by the damage, fading out. 0 otherwise.</summary>
+    public float ImpactShake => impactTimer >= 0f ? damage01 * (1f - Mathf.Clamp01(impactTimer / impactBeat)) : 0f;
+
     /// <summary>Current heading off the iceberg in degrees, 0 = head-on.</summary>
     public float Heading => heading;
     public float SecondsLeft => running ? Mathf.Max(0f, steerSeconds - elapsed) : 0f;
@@ -154,7 +165,7 @@ public class IcebergSequence : MonoBehaviour
     void TickImpactBeat()
     {
         impactTimer += Time.deltaTime;
-        if (cam != null)
+        if (cam != null && !CameraHandledExternally)
         {
             float fade = 1f - Mathf.Clamp01(impactTimer / impactBeat);
             var offset = Random.insideUnitSphere * maxShake * damage01 * fade;
@@ -175,6 +186,7 @@ public class IcebergSequence : MonoBehaviour
     /// <summary>Eases the deck camera part of the way toward a view of the bow and the iceberg.</summary>
     void ZoomCamera(float t)
     {
+        if (CameraHandledExternally) return;
         if (cam == null)
         {
             cam = Camera.main;
@@ -245,7 +257,7 @@ public class IcebergSequence : MonoBehaviour
     void OnGUI()
     {
         if (impactTimer >= 0f) { DrawFlood(); return; }
-        if (!running) return;
+        if (!running || !DrawDebugGui) return;
 
         const float w = 420f, h = 18f;
         float x = (Screen.width - w) * 0.5f, y = 20f;

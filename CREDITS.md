@@ -28,6 +28,7 @@ Nothing yet.
 | Font | Author | Licence | Source | Used for |
 |---|---|---|---|---|
 | Crimson Text (SemiBold, Bold, Italic, SemiBold Italic) | Sebastian Kosch | SIL OFL 1.1 | [Google Fonts](https://fonts.google.com/specimen/Crimson+Text) | All HUD text |
+| Cinzel (Black, Bold) | Natanael Gama | SIL OFL 1.1 | [Google Fonts](https://fonts.google.com/specimen/Cinzel) | Title logo lettering (rendered to Art/UI/Title/TitleLogo.png; licence beside it) |
 | Special Elite | Astigmatic | Apache 2.0 | [Google Fonts](https://fonts.google.com/specimen/Special+Elite) | Wireless messages (typewriter) |
 
 Licence files sit next to the fonts in `Assets/_Project/Art/UI/Fonts`. The HUD icons and shapes in `Art/UI/Sprites` were drawn for this project.

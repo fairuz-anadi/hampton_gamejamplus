@@ -151,9 +151,30 @@ public class CrewRoster : MonoBehaviour
         var pos = SpawnPosition(seat);
         GameObject go;
         var prefab = seat - 1 < botPrefabs.Length ? botPrefabs[seat - 1] : null;
+        // Nothing assigned here (CrewAISystems spawns this roster): Samprity's crew model for the seat, from Resources.
+        if (prefab == null)
+        {
+            var crew = CrewVisualSet.Load();
+            if (crew != null && seat - 1 < crew.crew.Length) prefab = crew.crew[seat - 1];
+        }
         if (prefab != null)
         {
             go = Instantiate(prefab, pos, Quaternion.identity, transform);
+            // Crew models stand with their feet at the root: a person-sized agent, and a body for players to bump into.
+            if (go.GetComponent<NavMeshAgent>() == null)
+            {
+                var agent = go.AddComponent<NavMeshAgent>();
+                agent.baseOffset = 0f;
+                agent.height = 1.8f;
+                agent.radius = 0.35f;
+            }
+            if (go.GetComponent<Collider>() == null)
+            {
+                var body = go.AddComponent<CapsuleCollider>();
+                body.center = new Vector3(0f, 0.9f, 0f);
+                body.height = 1.8f;
+                body.radius = 0.3f;
+            }
         }
         else
         {

@@ -5,11 +5,14 @@ using UnityEngine.UI;
 
 /// <summary>
 /// Ship's camera and crew presentation, added at runtime so Ship.unity stays untouched. Owner: Samprity.
+///   The iceberg finale: the follow camera eases back for more sea ahead, the overview tilts forward over the bow so
+///   everyone sees the berg coming, and both shake as it closes (IcebergPresentation).
 ///   One human player: the third-person follow camera behind them (AutoFollowCamera), W/A/S/D relative to it.
 ///   Two or three humans on one screen: the scene's fixed overview camera, so everyone stays in view.
 ///   Everyone (players and bots) wears their seat's crew model instead of a capsule (CrewVisual).
 ///   Coming from Begin Voyage: holds black until the camera is in place, then fades in.
 /// </summary>
+[DefaultExecutionOrder(100)] // after AutoFollowCamera, so the iceberg shake lands on top of its pose
 public class GameplayCameraRig : MonoBehaviour
 {
     public static GameplayCameraRig Instance { get; private set; }
@@ -29,6 +32,10 @@ public class GameplayCameraRig : MonoBehaviour
 
     Image fade;
     float fadeFrom = -1f;
+
+    IcebergPresentation iceberg;
+    float finale;               // 0 = normal framing, 1 = iceberg framing
+    float followDistance = -1f, followHeight, followPitch;
 
     public bool IsFollowing => follow != null && follow.enabled;
     public PlayerController Followed => followed;
@@ -51,6 +58,13 @@ public class GameplayCameraRig : MonoBehaviour
         Instance = this;
         visuals = CrewVisualSet.Load();
         if (OpeningDirector.HandoffPending) BuildFade();
+        iceberg = gameObject.AddComponent<IcebergPresentation>();
+        IcebergSequence.CameraHandledExternally = true; // this rig frames and shakes the finale
+    }
+
+    void OnDisable()
+    {
+        IcebergSequence.CameraHandledExternally = false;
     }
 
     void OnDestroy()
@@ -152,6 +166,43 @@ public class GameplayCameraRig : MonoBehaviour
     }
 
     void ApplySettings() => GameSettings.ApplyTo(follow);
+
+    // ---------- Iceberg finale ----------
+
+    void LateUpdate()
+    {
+        if (cam == null) return;
+        bool on = iceberg != null && iceberg.Active;
+        finale = Mathf.MoveTowards(finale, on ? 1f : 0f, Time.deltaTime / 2.5f);
+        float k = Mathf.SmoothStep(0f, 1f, finale);
+
+        if (IsFollowing)
+        {
+            // Up a little and level out: the horizon (where the berg comes from) moves down into the frame.
+            if (followDistance < 0f) { followDistance = follow.distance; followHeight = follow.height; followPitch = follow.pitch; }
+            follow.distance = Mathf.Lerp(followDistance, followDistance * 1.3f, k);
+            follow.height = Mathf.Lerp(followHeight, followHeight * 1.45f, k);
+            follow.pitch = Mathf.Lerp(followPitch, 8f, k);
+        }
+        else if (k > 0f || on)
+        {
+            // Shared screen: from the deck overview to just aft of the bridge, high up: the wheel at the bottom of the
+            // frame, the bow and the berg ahead.
+            var bowView = new Vector3(0f, 19f, 4f);
+            var look = Quaternion.LookRotation(new Vector3(0f, 0f, 75f) - bowView);
+            cam.transform.SetPositionAndRotation(Vector3.Lerp(overviewPos, bowView, k), Quaternion.Slerp(overviewRot, look, k));
+            cam.fieldOfView = Mathf.Lerp(overviewFov, 50f, k);
+        }
+
+        float shake = iceberg != null ? iceberg.Shake : 0f;
+        if (shake > 0.001f)
+        {
+            float t = Time.time * 17f;
+            var jitter = new Vector3(Mathf.PerlinNoise(t, 0.3f) - 0.5f, Mathf.PerlinNoise(0.7f, t) - 0.5f, 0f) * 0.22f * shake;
+            cam.transform.position += cam.transform.rotation * jitter;
+            cam.transform.rotation *= Quaternion.Euler(0f, 0f, (Mathf.PerlinNoise(t * 0.6f, 2.1f) - 0.5f) * 3f * shake);
+        }
+    }
 
     // ---------- Fade in from Begin Voyage ----------
 

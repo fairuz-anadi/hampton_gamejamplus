@@ -63,6 +63,9 @@ public static class OpeningSceneBuilder
         menu.italicFont = Font("CrimsonText-SemiBoldItalic");
         menu.diamond = Sprite("diamond");
         menu.speakerIcon = Sprite("icon_speaker");
+        menu.titleLogo = TitleLogo();
+        menu.keycap = Sprite("keycap");
+        menu.disc = Sprite("disc");
         menu.hoverSound = Clip("SFX/UI_Hover");
         menu.confirmSound = Clip("SFX/UI_Confirm");
 
@@ -366,6 +369,24 @@ public static class OpeningSceneBuilder
         a = ScriptableObject.CreateInstance<T>();
         AssetDatabase.CreateAsset(a, path);
         return a;
+    }
+
+    /// <summary>The title lockup from Tools/make_title_logo.py, imported as a crisp UI sprite.</summary>
+    static Sprite TitleLogo()
+    {
+        const string path = Ui + "/Title/TitleLogo.png";
+        if (AssetImporter.GetAtPath(path) is TextureImporter ti &&
+            (ti.textureType != TextureImporterType.Sprite || ti.mipmapEnabled || ti.maxTextureSize < 2048))
+        {
+            ti.textureType = TextureImporterType.Sprite;
+            ti.spriteImportMode = SpriteImportMode.Single;
+            ti.alphaIsTransparency = true;
+            ti.mipmapEnabled = false;
+            ti.maxTextureSize = 2048;
+            ti.textureCompression = TextureImporterCompression.CompressedHQ;
+            ti.SaveAndReimport();
+        }
+        return AssetDatabase.LoadAssetAtPath<Sprite>(path);
     }
 
     static Font Font(string name) => AssetDatabase.LoadAssetAtPath<Font>($"{Ui}/Fonts/{name}.ttf");
