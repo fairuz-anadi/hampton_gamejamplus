@@ -56,6 +56,7 @@ public static class ShipDeckBuilder
 
         EditorSceneManager.SaveScene(scene, ScenePath);
         HudBuilder.AddToSandbox(); // the rebuild wiped the scene; put the HUD back
+        IcebergBuilder.Build();    // the finale's iceberg, from the same materials
         AssetDatabase.SaveAssets();
         Debug.Log($"[ShipDeck] Built {PrefabPath} and {ScenePath}");
     }

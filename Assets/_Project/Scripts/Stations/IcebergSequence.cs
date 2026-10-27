@@ -44,6 +44,9 @@ public class IcebergSequence : MonoBehaviour
     Vector3 bow;
     GameObject iceberg;
 
+    /// <summary>Samprity's IcebergPresentation draws its own gauge and turns this debug bar off while it does.</summary>
+    public static bool DrawDebugGui = true;
+
     /// <summary>Current heading off the iceberg in degrees, 0 = head-on.</summary>
     public float Heading => heading;
     public float SecondsLeft => running ? Mathf.Max(0f, steerSeconds - elapsed) : 0f;
@@ -169,7 +172,7 @@ public class IcebergSequence : MonoBehaviour
 
     void OnGUI()
     {
-        if (!running) return;
+        if (!running || !DrawDebugGui) return;
 
         const float w = 420f, h = 18f;
         float x = (Screen.width - w) * 0.5f, y = 20f;
