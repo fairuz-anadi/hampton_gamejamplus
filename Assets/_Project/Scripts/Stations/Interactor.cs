@@ -35,8 +35,9 @@ public class Interactor : MonoBehaviour
             if (NearestStation is Wheel w && w.SteeringOpen)
                 return w.IsBroken ? "Repair Wheel" : "Steer  ·  hold + Left/Right";
             if (NearestStation is Doors d && d.CanUnlock) return $"Reopen lifeboat store {d.ActiveHolders}/{d.NeededHolders}";
-            if (NearestStation is Station s && s.NeededHolders > 1) return $"{s.Type}  {s.ActiveHolders}/{s.NeededHolders}";
-            return NearestStation.Type.ToString();
+            if (NearestStation is Station s && s.NeededHolders > 1)
+                return $"Hold  ·  {HudText.StationVerb(s.Type)}  {s.ActiveHolders}/{s.NeededHolders}";
+            return "Hold  ·  " + HudText.StationVerb(NearestStation.Type);
         }
     }
 
