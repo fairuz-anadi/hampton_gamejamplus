@@ -155,6 +155,21 @@ public class Interactor : MonoBehaviour
         else if (NearestStation is Doors d && d.CanUnlock) text = $"[Hold Interact] Reopen lifeboat store {d.ActiveHolders}/{d.NeededHolders}";
         else if (NearestStation is Station s && s.NeededHolders > 1) text = $"[Hold Interact] {s.Type} {s.ActiveHolders}/{s.NeededHolders}";
         else text = $"[Hold Interact] {NearestStation.Type}";
-        GUI.Label(new Rect(screen.x - 80, Screen.height - screen.y, 220, 20), text);
+        float x = screen.x - 80, y = Screen.height - screen.y;
+        GUI.Label(new Rect(x, y, 220, 20), text);
+
+        // Progress bar under the prompt while the work (or repair) is under way: red while broken, green when done.
+        if (carriedItem == null && NearestStation is Station st && !(st is Wheel sw && sw.SteeringOpen))
+        {
+            float p = st.IsDone && !st.IsBroken ? 1f : st.Progress01;
+            if (p <= 0f && st.ActiveHolders == 0) return;
+            var bar = new Rect(x, y + 20, 120, 8);
+            var old = GUI.color;
+            GUI.color = new Color(0f, 0f, 0f, 0.6f);
+            GUI.DrawTexture(bar, Texture2D.whiteTexture);
+            GUI.color = st.IsBroken ? new Color(0.9f, 0.35f, 0.25f) : st.IsDone ? new Color(0.35f, 0.85f, 0.4f) : new Color(0.95f, 0.8f, 0.3f);
+            GUI.DrawTexture(new Rect(bar.x, bar.y, bar.width * p, bar.height), Texture2D.whiteTexture);
+            GUI.color = old;
+        }
     }
 }
