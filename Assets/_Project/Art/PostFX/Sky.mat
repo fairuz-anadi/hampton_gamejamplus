@@ -23,24 +23,37 @@ Material:
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
-    m_TexEnvs: []
+    m_TexEnvs:
+    - _NoiseTex:
+        m_Texture: {fileID: 2800000, guid: f4da307420aa59546875eaaf1f73e0c7, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
     - _AtmosphereThickness: 1.05
-    - _Exposure: 1.3
+    - _CloudCover: 0.35
+    - _CloudDarkness: 0.55
+    - _CloudScale: 0.6
+    - _Exposure: 1.2
+    - _HazeAmount: 0.65
     - _HorizonBlend: 0.45
+    - _MieG: 0.8
+    - _MoonStrength: 0
     - _Stars: 0
     - _SunDisk: 2
     - _SunSize: 0.035
     - _SunSizeConvergence: 6
+    - _SunStrength: 1
+    - _Turbidity: 0.8
     m_Colors:
+    - _CloudWind: {r: 0.004, g: -0.012, b: 0, a: 0}
     - _GroundColor: {r: 0.32, g: 0.4, b: 0.5, a: 1}
     - _HorizonColor: {r: 0.74, g: 0.83, b: 0.92, a: 1}
     - _MoonColor: {r: 0, g: 0, b: 0, a: 1}
     - _MoonDir: {r: 0, g: 0.7, b: -0.7, a: 0}
-    - _SkyTint: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+    - _SkyTint: {r: 1, g: 1, b: 1, a: 1}
     - _SunColor: {r: 1, g: 0.95, b: 0.85, a: 1}
-    - _SunDir: {r: 0, g: 0.6, b: 0.8, a: 0}
+    - _SunDir: {r: -0.32898992, g: 0.819152, b: -0.4698463, a: 0}
     - _ZenithColor: {r: 0.33, g: 0.53, b: 0.8, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

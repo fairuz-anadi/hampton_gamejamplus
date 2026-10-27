@@ -128,8 +128,8 @@ public static class RenderLookSetup
     }
 
     /// <summary>
-    /// The painted gradient sky (Port/Sky), saved with daytime colours. PartMood drives a runtime copy from the clock:
-    /// zenith and horizon colours, sun and moon, stars at night, tinted per story part.
+    /// The physical sky (Port/Sky): scattering, clouds and stars, saved with noon values. PartMood drives a runtime copy
+    /// from the clock (sun and moon) and the story part (tint, cloud cover).
     /// </summary>
     static void BuildSky()
     {
@@ -137,13 +137,18 @@ public static class RenderLookSetup
         var mat = AssetDatabase.LoadAssetAtPath<Material>(SkyMaterialPath);
         if (mat == null) { mat = new Material(shader); AssetDatabase.CreateAsset(mat, SkyMaterialPath); }
         mat.shader = shader;
-        mat.SetColor("_ZenithColor", new Color(0.33f, 0.53f, 0.8f));
+        mat.SetVector("_SunDir", (Quaternion.Euler(55f, 35f, 0f) * Vector3.back));
+        mat.SetFloat("_SunStrength", 1f);
+        mat.SetFloat("_MoonStrength", 0f);
+        mat.SetFloat("_Exposure", 1.2f);
+        mat.SetFloat("_Turbidity", 0.8f);
+        mat.SetFloat("_MieG", 0.8f);
+        mat.SetColor("_SkyTint", Color.white);
         mat.SetColor("_HorizonColor", new Color(0.74f, 0.83f, 0.92f));
-        mat.SetColor("_GroundColor", new Color(0.32f, 0.4f, 0.5f));
-        mat.SetFloat("_HorizonBlend", 0.45f);
-        mat.SetColor("_SunColor", new Color(1f, 0.95f, 0.85f));
-        mat.SetColor("_MoonColor", Color.black);
+        mat.SetFloat("_HazeAmount", 0.65f);
         mat.SetFloat("_Stars", 0f);
+        mat.SetTexture("_NoiseTex", AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/_Project/Art/Textures/PainterlyNoise.png"));
+        mat.SetFloat("_CloudCover", 0.35f);
         EditorUtility.SetDirty(mat);
     }
     /// <summary>Tileable ripple normal map for the sea, from a few layered sine waves.</summary>

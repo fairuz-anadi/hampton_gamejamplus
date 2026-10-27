@@ -494,7 +494,7 @@ public static class ShipDeckBuilder
         var deck = Object.Instantiate(prow, e);
         deck.name = "Foredeck";
         deck.transform.localPosition = new Vector3(0f, 0.04f, 0f);
-        deck.GetComponent<MeshRenderer>().sharedMaterial = StylizedLook.Get("KK_WoodFloor");
+        deck.GetComponent<MeshRenderer>().sharedMaterial = darkWood; // triplanar grain: this mesh has no atlas UVs
         foreach (float side in new[] { -1f, 1f })
         {
             var from = new Vector3(side * (half - 0.15f), 0.5f, bowZ);

@@ -26,8 +26,10 @@ public class PartMood : MonoBehaviour
         [Range(0f, 1f)] public float flicker;
         [Tooltip("Multiplies the lamps' brightness.")]
         public float lampStrength;
-        [Tooltip("Multiplies the sky overhead (0.5 grey = unchanged).")]
+        [Tooltip("Multiplies the sky (0.5 grey = unchanged).")]
         public Color skyTint;
+        [Tooltip("How much of the sky the clouds cover.")]
+        [Range(0f, 1f)] public float cloudCover;
     }
 
     public DayNightCycle cycle;
@@ -37,10 +39,8 @@ public class PartMood : MonoBehaviour
     [Min(0f)] public float lampMaxIntensity = 3.2f;
     [Tooltip("Post-processing volumes for Calm, Off and Truth, crossfaded with the overlays.")]
     public UnityEngine.Rendering.Volume calmVolume, offVolume, truthVolume;
-    [Tooltip("Port/Sky gradient sky. A runtime copy follows the time of day and is tinted per part.")]
+    [Tooltip("Port/Sky (physical scattering, clouds, stars). A runtime copy follows the sun and moon and is tinted per part.")]
     public Material sky;
-    public Color dayZenith = new Color(0.33f, 0.53f, 0.8f), nightZenith = new Color(0.02f, 0.035f, 0.085f);
-    public Color moonGlow = new Color(0.85f, 0.9f, 1f);
     [Tooltip("Realtime reflection probes (refresh: via scripting), re-rendered as the sky changes so the sea and brass reflect the hour.")]
     public ReflectionProbe[] probes = new ReflectionProbe[0];
     [Min(0.1f)] public float probeRefreshSeconds = 2f;
@@ -53,19 +53,19 @@ public class PartMood : MonoBehaviour
     {
         ambientTint = Color.white, sunStrength = 1f, sunTint = Color.white,
         fogTint = Color.white, fogTintAmount = 0f, extraFog = 0f,
-        lampColor = new Color(1f, 0.8f, 0.55f), lampsForcedOn = 0f, flicker = 0f, lampStrength = 1f, skyTint = new Color(0.5f, 0.5f, 0.5f),
+        lampColor = new Color(1f, 0.8f, 0.55f), lampsForcedOn = 0f, flicker = 0f, lampStrength = 1f, skyTint = new Color(0.5f, 0.5f, 0.5f), cloudCover = 0.35f,
     };
     public Overlay off = new Overlay
     {
         ambientTint = new Color(0.86f, 0.9f, 1f), sunStrength = 0.55f, sunTint = new Color(0.88f, 0.93f, 1f),
         fogTint = new Color(0.6f, 0.65f, 0.7f), fogTintAmount = 0.5f, extraFog = 0.007f,
-        lampColor = new Color(0.85f, 0.9f, 1f), lampsForcedOn = 0.25f, flicker = 0.25f, lampStrength = 1f, skyTint = new Color(0.38f, 0.4f, 0.43f),
+        lampColor = new Color(0.85f, 0.9f, 1f), lampsForcedOn = 0.25f, flicker = 0.25f, lampStrength = 1f, skyTint = new Color(0.42f, 0.44f, 0.47f), cloudCover = 0.85f,
     };
     public Overlay truth = new Overlay
     {
         ambientTint = new Color(1.75f, 0.85f, 0.76f), sunStrength = 0.8f, sunTint = new Color(1f, 0.55f, 0.45f),
         fogTint = new Color(0.5f, 0.2f, 0.16f), fogTintAmount = 0.5f, extraFog = 0.01f,
-        lampColor = new Color(1f, 0.24f, 0.17f), lampsForcedOn = 1f, flicker = 0.55f, lampStrength = 1.5f, skyTint = new Color(0.55f, 0.26f, 0.22f),
+        lampColor = new Color(1f, 0.24f, 0.17f), lampsForcedOn = 1f, flicker = 0.55f, lampStrength = 1.5f, skyTint = new Color(0.55f, 0.26f, 0.22f), cloudCover = 0.6f,
     };
 
     Overlay from, to, current;
@@ -183,19 +183,16 @@ public class PartMood : MonoBehaviour
             if (tintSky)
             {
                 if (skyCopy == null) skyCopy = new Material(sky) { hideFlags = HideFlags.DontSave };
-                // Overhead: deep navy at night, blue by day leaning towards the ambient colour (dusk purples).
-                var zenith = Color.Lerp(nightZenith, Color.Lerp(dayZenith, d.ambientSky, 0.35f), d.daylight) * (o.skyTint * 2f);
-                skyCopy.SetColor("_ZenithColor", zenith);
-                skyCopy.SetColor("_HorizonColor", fog);
-                skyCopy.SetColor("_GroundColor", Color.Lerp(fog, zenith, 0.5f) * 0.6f);
-                if (sun != null)
-                {
-                    skyCopy.SetVector("_SunDir", -sun.transform.forward);
-                    skyCopy.SetColor("_SunColor", sun.color * Mathf.Clamp01(d.sunIntensity));
-                }
+                // The sky scatters from the sun's true height (the light never dips below 2 degrees), so twilight
+                // glows after sunset and the night goes dark by itself.
+                skyCopy.SetVector("_SunDir", Quaternion.Euler(d.sunElevation, d.sunYaw, 0f) * Vector3.back);
+                skyCopy.SetFloat("_SunStrength", o.sunStrength);
                 if (moon != null) skyCopy.SetVector("_MoonDir", -moon.transform.forward);
-                skyCopy.SetColor("_MoonColor", moonGlow * (1f - d.daylight));
+                skyCopy.SetFloat("_MoonStrength", 1f - d.daylight);
                 skyCopy.SetFloat("_Stars", Mathf.SmoothStep(0f, 1f, (0.6f - d.daylight) / 0.6f));
+                skyCopy.SetColor("_HorizonColor", fog);
+                skyCopy.SetColor("_SkyTint", o.skyTint * 2f);
+                skyCopy.SetFloat("_CloudCover", o.cloudCover);
                 RenderSettings.skybox = skyCopy;
             }
             else RenderSettings.skybox = sky;
@@ -253,5 +250,6 @@ public class PartMood : MonoBehaviour
         flicker = Mathf.Lerp(a.flicker, b.flicker, t),
         lampStrength = Mathf.Lerp(a.lampStrength, b.lampStrength, t),
         skyTint = Color.Lerp(a.skyTint, b.skyTint, t),
+        cloudCover = Mathf.Lerp(a.cloudCover, b.cloudCover, t),
     };
 }

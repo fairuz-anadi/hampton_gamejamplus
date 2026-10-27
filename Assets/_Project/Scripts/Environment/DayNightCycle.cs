@@ -23,6 +23,8 @@ public class DayNightCycle : MonoBehaviour
         public float skyExposure;
         /// <summary>0 at night, 1 in full daylight.</summary>
         public float daylight;
+        /// <summary>The sun's true height in degrees (the light itself never goes below 2), and its compass yaw.</summary>
+        public float sunElevation, sunYaw;
     }
 
     [Header("Clock")]
@@ -156,6 +158,8 @@ public class DayNightCycle : MonoBehaviour
             fogDensity = Mathf.Lerp(0.009f, 0.006f, daylight),
             lampLevel = 1f - Mathf.Clamp01((elevation - 2f) / 14f),
             skyExposure = Mathf.Lerp(nightSkyExposure, 1.3f, daylight),
+            sunElevation = elevation,
+            sunYaw = yaw,
         };
         return t;
     }
