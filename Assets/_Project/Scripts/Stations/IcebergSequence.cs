@@ -7,6 +7,8 @@ using UnityEngine;
 /// Interact at the Wheel steers with Move left/right (two steerers turn twice as fast, bots add nothing).
 /// At the end it calls GameManager.FinishIceberg(heading): 0 = head-on, EndingEvaluator folds the sign.
 /// A placeholder white iceberg ahead of the bow and an on-screen heading bar show how it's going.
+/// The camera eases in on the bow while steering. At impact there's a short beat before Results: the camera
+/// shakes and water rises up the screen, both harder the worse the hit (head-on, glancing, scrape).
 /// </summary>
 public class IcebergSequence : MonoBehaviour
 {
@@ -35,6 +37,15 @@ public class IcebergSequence : MonoBehaviour
     [SerializeField] Vector3 icebergSize = new Vector3(5f, 5f, 4f);
     [SerializeField] Color icebergColor = new Color(0.93f, 0.97f, 1f);
 
+    [Header("Camera and impact")]
+    [Tooltip("How far the camera moves from its deck view toward the bow (0 = stays put, 1 = right on the bow framing).")]
+    [SerializeField, Range(0f, 1f)] float zoomAmount = 0.55f;
+    [SerializeField] float zoomSeconds = 3f;
+    [Tooltip("Seconds between the hit and the Results screen: the shake and the water rising.")]
+    [SerializeField] float impactBeat = 2.5f;
+    [SerializeField] float maxShake = 0.6f;
+    [SerializeField] Color floodColor = new Color(0.08f, 0.22f, 0.35f, 0.55f);
+
     bool running;
     float elapsed;
     float heading;
@@ -43,6 +54,14 @@ public class IcebergSequence : MonoBehaviour
     Wheel wheel;
     Vector3 bow;
     GameObject iceberg;
+
+    Camera cam;
+    Vector3 camStartPos;
+    Quaternion camStartRot;
+    bool cameraMoved;
+    float impactAngle;
+    float impactTimer = -1f;
+    float damage01; // 0 head-on .. 1 scrape, drives shake and water height
 
     /// <summary>Current heading off the iceberg in degrees, 0 = head-on.</summary>
     public float Heading => heading;
@@ -105,7 +124,9 @@ public class IcebergSequence : MonoBehaviour
 
     void Update()
     {
+        if (impactTimer >= 0f) { TickImpactBeat(); return; }
         if (!running) return;
+        ZoomCamera(Mathf.Clamp01(elapsed / Mathf.Max(0.01f, zoomSeconds)));
 
         float steer = wheel != null ? wheel.SteerSum(deadzone, out steererCount) : 0f;
         if (wheel == null) steererCount = 0;
@@ -120,15 +141,65 @@ public class IcebergSequence : MonoBehaviour
 
     void Impact()
     {
-        float angle = heading;
+        impactAngle = heading;
+        running = false;
+        if (wheel != null) { wheel.SteeringOpen = false; wheel.ClearSteering(); }
+        var kind = EndingEvaluator.Classify(impactAngle);
+        damage01 = kind == ImpactKind.HeadOn ? 0.2f : kind == ImpactKind.Glancing ? 0.55f : 1f;
+        impactTimer = 0f;
+        Debug.Log($"[IcebergSequence] Impact at {impactAngle:0.0}° ({kind}).");
+    }
+
+    /// <summary>The beat after the hit: shake, water rising, then Results.</summary>
+    void TickImpactBeat()
+    {
+        impactTimer += Time.deltaTime;
+        if (cam != null)
+        {
+            float fade = 1f - Mathf.Clamp01(impactTimer / impactBeat);
+            var offset = Random.insideUnitSphere * maxShake * damage01 * fade;
+            cam.transform.position = Vector3.Lerp(camStartPos, BowCameraPos(), zoomAmount) + offset;
+        }
+        if (impactTimer < impactBeat) return;
+
+        impactTimer = -1f;
+        float angle = impactAngle;
         StopSteering();
-        Debug.Log($"[IcebergSequence] Impact at {angle:0.0}°.");
         if (GameManager.Instance != null) GameManager.Instance.FinishIceberg(angle);
+    }
+
+    // ---------- Camera ----------
+
+    Vector3 BowCameraPos() => bow + new Vector3(0f, 14f, -16f);
+
+    /// <summary>Eases the deck camera part of the way toward a view of the bow and the iceberg.</summary>
+    void ZoomCamera(float t)
+    {
+        if (cam == null)
+        {
+            cam = Camera.main;
+            if (cam == null) return;
+            camStartPos = cam.transform.position;
+            camStartRot = cam.transform.rotation;
+            cameraMoved = true;
+        }
+        float k = Mathf.SmoothStep(0f, 1f, t) * zoomAmount;
+        var lookRot = Quaternion.LookRotation((bow + Vector3.forward * 4f) - BowCameraPos(), Vector3.up);
+        cam.transform.SetPositionAndRotation(Vector3.Lerp(camStartPos, BowCameraPos(), k), Quaternion.Slerp(camStartRot, lookRot, k));
+    }
+
+    void RestoreCamera()
+    {
+        if (cameraMoved && cam != null) cam.transform.SetPositionAndRotation(camStartPos, camStartRot);
+        cameraMoved = false;
+        cam = null;
     }
 
     void StopSteering()
     {
         running = false;
+        impactTimer = -1f;
+        RestoreCamera();
         if (wheel != null)
         {
             wheel.SteeringOpen = false;
@@ -149,7 +220,11 @@ public class IcebergSequence : MonoBehaviour
         iceberg.transform.localScale = icebergSize;
         Destroy(iceberg.GetComponent<Collider>()); // scenery only, mustn't block anyone or the NavMesh
 
-        var mat = iceberg.GetComponent<Renderer>().material;
+        // A primitive's default material renders magenta in builds, so use the URP Lit one from Resources.
+        var renderer = iceberg.GetComponent<Renderer>();
+        var lit = Resources.Load<Material>("RuntimeLit");
+        if (lit != null) renderer.sharedMaterial = lit;
+        var mat = renderer.material;
         if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", icebergColor);
         else mat.color = icebergColor;
     }
@@ -169,6 +244,7 @@ public class IcebergSequence : MonoBehaviour
 
     void OnGUI()
     {
+        if (impactTimer >= 0f) { DrawFlood(); return; }
         if (!running) return;
 
         const float w = 420f, h = 18f;
@@ -188,6 +264,17 @@ public class IcebergSequence : MonoBehaviour
         string jammed = wheel != null && wheel.IsBroken ? "   WHEEL JAMMED, hold Interact to repair" : "";
         GUI.Label(new Rect(x, y + h + 8f, w + 200f, 22f),
             $"ICEBERG AHEAD   Impact in {SecondsLeft:0}s   Heading {heading:0}°   Steering: {steererCount}{jammed}");
+    }
+
+    /// <summary>Water rising up the screen after the hit; higher for worse damage.</summary>
+    void DrawFlood()
+    {
+        float rise = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(impactTimer / impactBeat)) * Mathf.Lerp(0.2f, 0.75f, damage01);
+        float h = Screen.height * rise;
+        var old = GUI.color;
+        GUI.color = floodColor;
+        GUI.DrawTexture(new Rect(0f, Screen.height - h, Screen.width, h), Texture2D.whiteTexture);
+        GUI.color = old;
     }
 
     static void Band(float x, float y, float w, float h, float from, float to, Color color)

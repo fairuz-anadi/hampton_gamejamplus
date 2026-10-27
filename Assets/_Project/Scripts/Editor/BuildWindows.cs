@@ -38,6 +38,7 @@ Interact (hold)       E           A
 Report done           R           Y
 Refuse                X           B
 Call for help         Q           X
+Muster vote (bell)    F           RB
 Pause                 Esc         Start
 
 Follow the Captain's orders. For each one you can obey, fake it, or refuse.

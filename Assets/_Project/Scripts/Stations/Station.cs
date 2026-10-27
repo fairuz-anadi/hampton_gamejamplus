@@ -78,6 +78,7 @@ public abstract class Station : MonoBehaviour, IStation
         if (workProgress >= workDuration)
         {
             IsDone = true;
+            StationSfx.PlayDone();
             OnWorkComplete();
         }
     }

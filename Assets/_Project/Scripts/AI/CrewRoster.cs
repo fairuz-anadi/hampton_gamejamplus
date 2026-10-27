@@ -161,7 +161,13 @@ public class CrewRoster : MonoBehaviour
             go.transform.SetParent(transform);
             go.transform.position = pos;
             var r = go.GetComponent<Renderer>();
-            if (r != null) r.material.SetColor("_BaseColor", SeatColors[seat]);
+            if (r != null)
+            {
+                // A primitive's default material renders magenta in builds, so use the URP Lit one from Resources.
+                var lit = Resources.Load<Material>("RuntimeLit");
+                if (lit != null) r.sharedMaterial = lit;
+                r.material.SetColor("_BaseColor", SeatColors[seat]);
+            }
             var agentSetup = go.AddComponent<NavMeshAgent>();
             agentSetup.baseOffset = 1f;
             agentSetup.height = 2f;
