@@ -290,11 +290,12 @@ public class CrewRoster : MonoBehaviour
         return r.repair ? null : bestStoker;
     }
 
-    /// <summary>True while a station is broken, or has an active order on it that isn't green yet.</summary>
+    /// <summary>True while a station is broken, has an active order on it that isn't green yet, or is the Doors with the lifeboat store waiting to be reopened.</summary>
     public static bool StationNeedsWork(StationType type)
     {
         var st = StationRegistry.Get(type);
         if (st != null && st.IsBroken) return true;
+        if (st is Doors doors && doors.CanUnlock) return true; // reopening the lifeboat store needs a second pair of hands
         var od = OrderDirector.Instance;
         if (od == null) return false;
         foreach (var o in od.Active)
