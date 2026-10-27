@@ -41,6 +41,8 @@ public class BotBrain : MonoBehaviour, ICrewActor
     public bool IsLockedOut => Time.time < lockedOutUntil;
 
     public BotMover Mover { get; private set; }
+    /// <summary>Holding Interact at a station right now (Samprity's crew models play their work animation).</summary>
+    public bool IsWorking => workingAt != null;
     public StokerBrain Stoker { get; private set; }
     public Vector3 Home { get; private set; }
 

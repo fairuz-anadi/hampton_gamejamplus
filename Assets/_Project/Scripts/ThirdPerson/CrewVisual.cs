@@ -3,8 +3,9 @@ using UnityEngine;
 /// <summary>
 /// Dresses a crew member (a player or a bot) in its seat's crew model, so Ship shows people instead of capsules.
 /// Owner: Samprity. Visual only: the capsule's renderer is hidden, its collider, controller and AI are untouched.
-/// The model walks, idles and works by its own Animator, from how fast the actor moves and, for players, whether
-/// they're holding Interact. GameplayCameraRig adds this to everyone in CrewRegistry.
+/// Bots that already are crew models (CrewRoster spawns them from the crew prefabs) keep their own model; this only
+/// gives them the animator with the work loop. The model walks and idles from how fast the actor moves, and plays
+/// its work loop while a player holds Interact or a bot works a station. GameplayCameraRig adds this to everyone.
 /// </summary>
 public class CrewVisual : MonoBehaviour
 {
@@ -14,6 +15,8 @@ public class CrewVisual : MonoBehaviour
 
     Animator animator;
     PlayerController player;
+    BotBrain bot;
+    bool driveSpeed = true;
     Vector3 lastPos;
     float speed;
     bool working;
@@ -23,6 +26,22 @@ public class CrewVisual : MonoBehaviour
     {
         if (actor == null || set == null || set.crew == null || set.crew.Length == 0) return null;
         if (actor.TryGetComponent(out CrewVisual existing)) return existing;
+
+        // Already a crew model (a bot spawned from Crew_N): keep it, swap in the animator that has the work loop.
+        var own = actor.GetComponentInChildren<Animator>();
+        if (own != null && actor.GetComponentInChildren<SkinnedMeshRenderer>() != null)
+        {
+            var v = actor.AddComponent<CrewVisual>();
+            v.animator = own;
+            if (set.controller != null) own.runtimeAnimatorController = set.controller;
+            own.applyRootMotion = false;
+            v.player = actor.GetComponent<PlayerController>();
+            v.bot = actor.GetComponent<BotBrain>();
+            v.driveSpeed = actor.GetComponent<BotMover>() == null; // BotMover already feeds Speed
+            v.lastPos = actor.transform.position;
+            return v;
+        }
+
         var prefab = set.crew[Mathf.Abs(seat - 1) % set.crew.Length];
         if (prefab == null) return null;
 
@@ -54,6 +73,7 @@ public class CrewVisual : MonoBehaviour
             visual.animator.cullingMode = AnimatorCullingMode.CullUpdateTransforms;
         }
         visual.player = actor.GetComponent<PlayerController>();
+        visual.bot = actor.GetComponent<BotBrain>();
         visual.lastPos = actor.transform.position;
 
         // A soft ring in the seat's colour under human players, so each player finds themselves at a glance.
@@ -79,10 +99,10 @@ public class CrewVisual : MonoBehaviour
         delta.y = 0f;
         lastPos = transform.position;
         speed = Mathf.Lerp(speed, delta.magnitude / dt, 1f - Mathf.Exp(-dt * 12f));
-        animator.SetFloat(SpeedHash, speed < 0.08f ? 0f : speed, 0.08f, dt);
+        if (driveSpeed) animator.SetFloat(SpeedHash, speed < 0.08f ? 0f : speed, 0.08f, dt);
 
-        // Holding Interact while standing still: put your back into it.
-        bool work = player != null && player.InteractHeld && speed < 0.3f;
+        // Holding Interact (or a bot working a station) while standing still: put your back into it.
+        bool work = ((player != null && player.InteractHeld) || (bot != null && bot.IsWorking)) && speed < 0.3f;
         if (work == working) return;
         working = work;
         if (animator.HasState(0, work ? WorkHash : LocomotionHash))
