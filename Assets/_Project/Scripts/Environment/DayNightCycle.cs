@@ -23,6 +23,8 @@ public class DayNightCycle : MonoBehaviour
         public float skyExposure;
         /// <summary>0 at night, 1 in full daylight.</summary>
         public float daylight;
+        /// <summary>The sun's true height in degrees (the light itself never goes below 2), and its compass yaw.</summary>
+        public float sunElevation, sunYaw;
     }
 
     [Header("Clock")]
@@ -58,7 +60,7 @@ public class DayNightCycle : MonoBehaviour
     [Tooltip("Moonlight strength at midnight.")]
     [Min(0f)] public float moonBrightness = 0.95f;
     [Tooltip("Sky brightness at midnight (1.3 = full day).")]
-    [Min(0f)] public float nightSkyExposure = 0.5f;
+    [Min(0f)] public float nightSkyExposure = 0.16f;
 
     /// <summary>0..1 through the day: 0 = dawn, ~0.36 = noon, dayShare = dusk, 0.86 = middle of the night.</summary>
     public float Phase { get; private set; }
@@ -67,13 +69,24 @@ public class DayNightCycle : MonoBehaviour
 
     float fastTo = -1f;
 
+    /// <summary>The clock running in the scene, for the HUD's sun/moon dial.</summary>
+    public static DayNightCycle Current { get; private set; }
+
     void OnEnable()
     {
+        Current = this;
         GameEvents.StateChanged += OnStateChanged;
         Phase = RunStartPhase;
     }
 
-    void OnDisable() => GameEvents.StateChanged -= OnStateChanged;
+    void OnDisable()
+    {
+        if (Current == this) Current = null;
+        GameEvents.StateChanged -= OnStateChanged;
+    }
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetStatics() => Current = null;
 
     void OnStateChanged(GameState s)
     {
@@ -145,6 +158,8 @@ public class DayNightCycle : MonoBehaviour
             fogDensity = Mathf.Lerp(0.009f, 0.006f, daylight),
             lampLevel = 1f - Mathf.Clamp01((elevation - 2f) / 14f),
             skyExposure = Mathf.Lerp(nightSkyExposure, 1.3f, daylight),
+            sunElevation = elevation,
+            sunYaw = yaw,
         };
         return t;
     }

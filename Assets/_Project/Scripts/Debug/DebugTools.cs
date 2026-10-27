@@ -13,7 +13,7 @@ using UnityEngine.InputSystem;
 /// </summary>
 public class DebugTools : MonoBehaviour
 {
-    bool visible = true;
+    bool visible = false; // starts hidden so the game reads clean; F9 shows it (Editor and Development builds only)
     bool revealStoker;
     int presetIndex;
 
