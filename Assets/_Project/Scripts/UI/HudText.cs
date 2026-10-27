@@ -20,9 +20,9 @@ public static class HudText
     public static string StationVerb(StationType t) => t switch
     {
         StationType.Boiler => "Shovel coal",
-        StationType.Wheel => "Steer",
-        StationType.Doors => "Pull lever",
-        StationType.Wireless => "Read message",
+        StationType.Wheel => "Hold the wheel",
+        StationType.Doors => "Pull levers",
+        StationType.Wireless => "Use the wireless",
         _ => "Work",
     };
 
