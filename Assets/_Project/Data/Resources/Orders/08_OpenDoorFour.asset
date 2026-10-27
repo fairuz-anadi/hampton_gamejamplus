@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: 08_OpenDoorFour
   m_EditorClassIdentifier: 
   part: 2
-  captainLine: "Open door four again. Let the air through."
+  captainLine: "Open door four again. Let the air through.\nIt's getting stuffy in here. Or I'm getting warm. One of the two. *hic*"
   voice: {fileID: 0}
   station: 2
   isCarry: 0

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: 04_WeatherReport
   m_EditorClassIdentifier: 
   part: 1
-  captainLine: "Log the weather report at the wireless desk."
+  captainLine: "Pop over to the wireless and log the weather.\nClear, calm, perfect. You can write that before you read it. Saves time."
   voice: {fileID: 0}
   station: 3
   isCarry: 0

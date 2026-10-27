@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: 03_CloseDoorFour
   m_EditorClassIdentifier: 
   part: 1
-  captainLine: "Close door four. Routine inspection."
+  captainLine: "Close door four. Routine inspection.\nNothing to worry about. I just like my doors the way I like my crew. Shut, and reliable."
   voice: {fileID: 0}
   station: 2
   isCarry: 0
