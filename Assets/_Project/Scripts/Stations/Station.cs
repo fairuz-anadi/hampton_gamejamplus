@@ -44,8 +44,31 @@ public abstract class Station : MonoBehaviour, IStation
 
     // Protected virtual so a station that needs its own OnEnable/OnDisable (Wireless) overrides these and calls
     // base. A plain "void OnEnable()" in a subclass would replace them silently and the station would never register.
-    protected virtual void OnEnable() => StationRegistry.Register(this);
-    protected virtual void OnDisable() => StationRegistry.Unregister(this);
+    protected virtual void OnEnable()
+    {
+        StationRegistry.Register(this);
+        GameEvents.StateChanged += OnStateChanged;
+    }
+
+    protected virtual void OnDisable()
+    {
+        StationRegistry.Unregister(this);
+        GameEvents.StateChanged -= OnStateChanged;
+    }
+
+    // A fresh run (first start, or GameManager.Restart()'s in-place fallback for scenes that aren't in Build
+    // Settings) only reloads the scene for Ship; a sandbox restart reuses this same Station instance, so without
+    // this it could stay broken or mid-repair from the previous run.
+    void OnStateChanged(GameState s)
+    {
+        if (s != GameState.Part1) return;
+        IsBroken = false;
+        IsDone = false;
+        workProgress = 0f;
+        repairProgress = 0f;
+        holders.Clear();
+        deliverers.Clear();
+    }
 
     public virtual void PrepareForOrder(ActiveOrder order)
     {
