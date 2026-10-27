@@ -63,6 +63,22 @@ public class Interactor : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// CallHelp (Q / gamepad X): asks for a hand at the station in range, else at this actor's active order's station.
+    /// CrewRoster turns it into a bot help job. Returns false when there's nowhere to call help to.
+    /// </summary>
+    public bool CallHelp()
+    {
+        StationType station;
+        if (NearestStation != null) station = NearestStation.Type;
+        else if (OrderDirector.Instance?.GetOrderFor(actor) is ActiveOrder order) station = order.Data.CheckStation;
+        else return false;
+
+        Debug.Log($"[Interactor] {CrewRegistry.SeatName(actor?.Seat ?? 0)} called for help at the {station}.");
+        GameEvents.RaiseHelpCalled(actor, station);
+        return true;
+    }
+
     void ReleaseStation()
     {
         currentStation?.Hold(actor, false);
@@ -124,6 +140,7 @@ public class Interactor : MonoBehaviour
 
         string text;
         if (carriedItem != null) text = "[Interact] Drop";
+        else if (NearestStation is Doors d && d.CanUnlock) text = $"[Hold Interact] Reopen lifeboat store {d.ActiveHolders}/{d.NeededHolders}";
         else if (NearestStation is Station s && s.NeededHolders > 1) text = $"[Hold Interact] {s.Type} {s.ActiveHolders}/{s.NeededHolders}";
         else text = $"[Hold Interact] {NearestStation.Type}";
         GUI.Label(new Rect(screen.x - 80, Screen.height - screen.y, 220, 20), text);

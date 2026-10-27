@@ -2,21 +2,17 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 /// <summary>
-/// Human-controlled crew member: joining, seat, Report/Refuse. Owner: Rabib.
+/// Human-controlled crew member: joining, seat, Report/Refuse/CallHelp. Owner: Rabib.
 /// Walking is done by ThirdPersonMover (Samprity): this feeds it the Move action. The mover keeps the camera's facing
 /// fixed while a direction is held, so the follow camera turning behind the player doesn't bend the path.
 /// </summary>
 [RequireComponent(typeof(CharacterController), typeof(PlayerInput))]
 public class PlayerController : MonoBehaviour, ICrewActor, IInteractSource, IRoomTarget
 {
-    static readonly Color[] SeatColors =
-    {
-        Color.red, new Color(0.25f, 0.55f, 1f), Color.green, Color.yellow,
-    };
-
     PlayerInput playerInput;
-    InputAction moveAction, interactAction, reportAction, refuseAction;
+    InputAction moveAction, interactAction, reportAction, refuseAction, callHelpAction;
     ThirdPersonMover mover;
+    Interactor interactor;
 
     public int Seat => Mathf.Max(1, playerInput.playerIndex + 1);
     public bool IsBot => false;
@@ -35,6 +31,8 @@ public class PlayerController : MonoBehaviour, ICrewActor, IInteractSource, IRoo
         interactAction = playerInput.actions["Interact"];
         reportAction = playerInput.actions["Report"];
         refuseAction = playerInput.actions["Refuse"];
+        callHelpAction = playerInput.actions["CallHelp"];
+        interactor = GetComponent<Interactor>();
 
         // Each player reads its own device through PlayerInput, so the mover must not read the keyboard itself.
         if (!TryGetComponent(out mover)) mover = gameObject.AddComponent<ThirdPersonMover>();
@@ -54,6 +52,7 @@ public class PlayerController : MonoBehaviour, ICrewActor, IInteractSource, IRoo
         mover.SetMoveInput(moveAction.ReadValue<Vector2>());
         if (reportAction.WasPerformedThisFrame()) OrderDirector.Instance?.Report(this);
         if (refuseAction.WasPerformedThisFrame()) OrderDirector.Instance?.Refuse(this);
+        if (callHelpAction.WasPerformedThisFrame() && interactor != null) interactor.CallHelp();
     }
 
     public void SetRoom(string roomId) => zoneRoom = roomId;
@@ -63,7 +62,8 @@ public class PlayerController : MonoBehaviour, ICrewActor, IInteractSource, IRoo
     {
         var renderer = GetComponentInChildren<Renderer>();
         if (renderer == null) return;
-        var color = SeatColors[Mathf.Clamp(Seat - 1, 0, SeatColors.Length - 1)];
+        // CrewRoster.SeatColors is indexed by seat (index 0 is unused grey), so a seat matches its bot colour.
+        var color = CrewRoster.SeatColors[Mathf.Clamp(Seat, 1, CrewRoster.SeatColors.Length - 1)];
         var mat = renderer.material;
         if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", color);
         else mat.color = color;
