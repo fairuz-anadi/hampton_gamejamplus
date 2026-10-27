@@ -21,7 +21,56 @@ The night sky, sea ripple texture, post-processing profiles and all ship props/s
 
 ## Audio
 
-Nothing yet.
+Freesound sounds are all CC0 1.0. Each one was trimmed, looped or sliced and levelled by `Tools/make_game_audio.py`
+from Freesound's high-quality preview. Everything is in `Assets/_Project/Audio`.
+
+| Game file(s) | Original sound | Author | Licence |
+|---|---|---|---|
+| `Ambience/Amb_SeaHull` | [Ocean Cruise Liner Ship](https://freesound.org/people/TiredHippo/sounds/317386/) | TiredHippo | CC0 1.0 |
+| `Ambience/Amb_SeaStorm` | [Storm at Sea](https://freesound.org/people/Codeine/sounds/331435/) | Codeine | CC0 1.0 |
+| `Ambience/Amb_Wind` | [Pacific Ocean Chile with strong wind](https://freesound.org/people/ibrizie/sounds/621161/) | ibrizie | CC0 1.0 |
+| `Ambience/Amb_Rigging` | [Stronger wind at a marina, rattling masts and rigging](https://freesound.org/people/Pfannkuchn/sounds/360633/) | Pfannkuchn | CC0 1.0 |
+| `Ambience/Amb_HullCreak` | [ship_creak](https://freesound.org/people/Walter_Odington/sounds/31574/) | Walter_Odington | CC0 1.0 |
+| `Ambience/Amb_Passengers` | [Crowd_Talking](https://freesound.org/people/ken788/sounds/386761/) | ken788 | CC0 1.0 |
+| `Ambience/Amb_Ballroom` | [Titanic - Philharmonie - Organ - Loin Du Bal](https://freesound.org/people/Ohrwurm/sounds/76904/) | Ohrwurm | CC0 1.0 |
+| `Ambience/Amb_Gull_01-04` | [seagulls 3](https://freesound.org/people/Snapper4298/sounds/166709/) | Snapper4298 | CC0 1.0 |
+| `Ambience/Amb_BoilerRoar` | [Fire Crackle with Roaring Chimney](https://freesound.org/people/TheWoodlandNomad/sounds/363091/) | TheWoodlandNomad | CC0 1.0 |
+| `Ambience/Amb_Pumps` | [old manual pump pumping water](https://freesound.org/people/Garuda1982/sounds/580670/) | Garuda1982 | CC0 1.0 |
+| `SFX/Steps/Step_Wood_01-08` | [Footsteps on hollow wood](https://freesound.org/people/florianreichelt/sounds/459970/) | florianreichelt | CC0 1.0 |
+| `SFX/Steps/Step_Metal_01-08` | [FOLEY_Footsteps_Metal_001](https://freesound.org/people/conleec/sounds/148462/) | conleec | CC0 1.0 |
+| `SFX/Stations/Sta_ShovelLoop` | [SpadeCoal](https://freesound.org/people/Hotlavaman/sounds/108676/) | Hotlavaman | CC0 1.0 |
+| `SFX/Stations/Sta_WheelCreak` | [Turning A Wooden Wheel 01](https://freesound.org/people/KVV_Audio/sounds/715478/) | KVV_Audio | CC0 1.0 |
+| `SFX/Stations/Sta_MorseLoop`, `Sta_MorseBurst` | [Lots of Morse Code](https://freesound.org/people/Buss1000/sounds/204968/) | Buss1000 | CC0 1.0 |
+| `SFX/Stations/Sta_Lever` | [Industrial Lever](https://freesound.org/people/Autobot8299/sounds/835550/) | Autobot8299 | CC0 1.0 |
+| `SFX/Stations/Sta_DoorClose` | [Heavy Metal Door (Close)](https://freesound.org/people/mrh4hn/sounds/426617/) | mrh4hn | CC0 1.0 |
+| `SFX/Stations/Sta_Paper` | [rustling paper](https://freesound.org/people/keweldog/sounds/181774/) | keweldog | CC0 1.0 |
+| `SFX/Stations/Sta_Clank` | [Clank1](https://freesound.org/people/BMacZero/sounds/94127/) | BMacZero | CC0 1.0 |
+| `SFX/Signals/Sig_OrderBell` | [bell ding 1](https://freesound.org/people/5ro4/sounds/611113/) | 5ro4 | CC0 1.0 |
+| `SFX/Signals/Sig_Tick` | [clock-tick-01](https://freesound.org/people/pbimal/sounds/534094/) | pbimal | CC0 1.0 |
+| `SFX/Signals/Sig_Success` | [bell8](https://freesound.org/people/creeeeak/sounds/531031/) | creeeeak | CC0 1.0 |
+| `SFX/Signals/Sig_Hm` | [Hmm reflexion male voice thinking](https://freesound.org/people/daalvinz/sounds/394231/) | daalvinz | CC0 1.0 |
+| `SFX/Signals/Sig_Hiss` | [Steam/hiss](https://freesound.org/people/wubitog/sounds/234782/) | wubitog | CC0 1.0 |
+| `SFX/Signals/Sig_Alarm` | [1920 Klaxon](https://freesound.org/people/groupe1bts/sounds/463593/) | groupe1bts | CC0 1.0 |
+| `SFX/Signals/Sig_Whistle` | ["Coach" Whistle](https://freesound.org/people/connersaw8/sounds/161662/) | connersaw8 | CC0 1.0 |
+| `SFX/Signals/Sig_Muster` | [6 Bell Ring](https://freesound.org/people/gsparrysound/sounds/582523/) | gsparrysound | CC0 1.0 |
+| `SFX/Captain/Cap_SpeakerOn`, `Cap_SpeakerOff` | [switch kick click](https://freesound.org/people/Ambiabstract/sounds/584729/) | Ambiabstract | CC0 1.0 |
+| `SFX/Captain/Cap_Crackle` | [Vinyl snap, crackle and pop redux](https://freesound.org/people/deleted_user_2906614/sounds/266786/) | (deleted Freesound user) | CC0 1.0 |
+| `SFX/Captain/Cap_Static` | [Radio Static](https://freesound.org/people/Takimeko/sounds/684896/) | Takimeko | CC0 1.0 |
+| `SFX/Finale/Fin_LookoutBell` | [triple bell](https://freesound.org/people/florianreichelt/sounds/563016/) | florianreichelt | CC0 1.0 |
+| `SFX/Finale/Fin_Drone` | [Textured Low Drone - Loop](https://freesound.org/people/kkenny101/sounds/871189/) | kkenny101 | CC0 1.0 |
+| `SFX/Finale/Fin_ImpactBoom` | [LASTING DEEP METALLIC BOOM](https://freesound.org/people/ROHHSADOTCOM/sounds/826217/) | ROHHSADOTCOM | CC0 1.0 |
+| `SFX/Finale/Fin_ImpactWood` | [Wooden Ship Break](https://freesound.org/people/Kodack/sounds/257752/) | Kodack | CC0 1.0 |
+| `SFX/Finale/Fin_ImpactIce` | [Ice cracking](https://freesound.org/people/timbreknight/sounds/342546/) | timbreknight | CC0 1.0 |
+| `SFX/Finale/Fin_Flood` | [Hull breach](https://freesound.org/people/jobro/sounds/244112/) | jobro | CC0 1.0 |
+| `Music/Mus_Waltz` | [Music Box - J. Brahms - Opus 39 - Waltz no 3](https://freesound.org/people/Flying_Deer_Fx/sounds/369405/) | Flying_Deer_Fx | CC0 1.0 |
+| `Music/Mus_Sustained` | [cello drone](https://freesound.org/people/carrieedick/sounds/465558/) | carrieedick | CC0 1.0 |
+| `Ambience/Amb_Engine` | ship-engine (Pixabay id 32705) | freesound_community on Pixabay | Pixabay Content License |
+| `Ambience/Amb_Horn` | cruise-ship-horn-harbour-saint-john (Pixabay id 62253) | freesound_community on Pixabay | Pixabay Content License |
+| `Ambience/Amb_Deck` | ship-ambience (Pixabay id 69497) | freesound_community on Pixabay | Pixabay Content License |
+
+The Pixabay Content License allows free use in games without credit, but it is not CC0. The plan allows "properly
+licensed" assets, so these are fine unless the jam rules say otherwise. The intro sounds (`Intro_*`, `UI_*`) and the
+Captain's blip voice were made for this project.
 
 ## Fonts
 

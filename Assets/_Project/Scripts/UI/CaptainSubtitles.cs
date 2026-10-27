@@ -93,7 +93,7 @@ public class CaptainSubtitles : MonoBehaviour
     void OnStatic(StokerBrain _)
     {
         staticLeft = staticSeconds;
-        if (staticVolume <= 0f) return;
+        if (staticVolume <= 0f || (AudioManager.Instance != null && AudioManager.Instance.HandlesStatic)) return;
         if (crackle == null)
         {
             crackle = gameObject.AddComponent<AudioSource>();

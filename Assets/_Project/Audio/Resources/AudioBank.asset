@@ -1,0 +1,84 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e1e241258338def40bad0b3459bdf237, type: 3}
+  m_Name: AudioBank
+  m_EditorClassIdentifier: Assembly-CSharp::AudioBank
+  mixer: {fileID: 24100000, guid: 9b96681d125801b4ca67328d42bc8744, type: 2}
+  music: {fileID: -4656951554460926398, guid: 9b96681d125801b4ca67328d42bc8744, type: 2}
+  ambience: {fileID: -1479823791815695062, guid: 9b96681d125801b4ca67328d42bc8744, type: 2}
+  sfx: {fileID: 1018642546373143427, guid: 9b96681d125801b4ca67328d42bc8744, type: 2}
+  stations: {fileID: -2265193429072967021, guid: 9b96681d125801b4ca67328d42bc8744, type: 2}
+  footsteps: {fileID: -5099175073427665920, guid: 9b96681d125801b4ca67328d42bc8744, type: 2}
+  voice: {fileID: -6049514020205637814, guid: 9b96681d125801b4ca67328d42bc8744, type: 2}
+  seaHull: {fileID: 8300000, guid: d9c7dc3f0530a97429e3a9f269282c97, type: 3}
+  seaStorm: {fileID: 8300000, guid: 14afeafd492ed71489df1bdacd223242, type: 3}
+  wind: {fileID: 8300000, guid: a6b766e766a36ca478892242f0dfc523, type: 3}
+  rigging: {fileID: 8300000, guid: e15a856e4d3d964458aba16f36ad2a2c, type: 3}
+  hullCreak: {fileID: 8300000, guid: a4e3f87847bb05747979ad1a5a19feeb, type: 3}
+  deckAmbience: {fileID: 8300000, guid: 5eabafe3e31b79646b55904ff2b89ddc, type: 3}
+  engine: {fileID: 8300000, guid: 3840e3f1a0322484483e6a834fd30e51, type: 3}
+  boilerRoar: {fileID: 8300000, guid: 783d7fb71675b1346a38302b68dea755, type: 3}
+  passengers: {fileID: 8300000, guid: 09f7a90943b51bb46aba178cfe03a089, type: 3}
+  ballroom: {fileID: 8300000, guid: 71dbe3b659e1da5469a8c01e387bb3c4, type: 3}
+  pumps: {fileID: 8300000, guid: a725374d584e3604092a4b22d6bc2c38, type: 3}
+  gulls:
+  - {fileID: 8300000, guid: 0d701bfe202af004bb6eb61b66d06c92, type: 3}
+  - {fileID: 8300000, guid: 9755a807f3105504bb8b355455b093c3, type: 3}
+  - {fileID: 8300000, guid: 29bbf80decdd31f4d976a254f547639d, type: 3}
+  - {fileID: 8300000, guid: b20a69e73219bb246805e0f6e7410fa1, type: 3}
+  horn: {fileID: 8300000, guid: 70c2ad2223a04104cb41980a2e940966, type: 3}
+  stepsWood:
+  - {fileID: 8300000, guid: 47cb78319b0626848a6150b7251f4359, type: 3}
+  - {fileID: 8300000, guid: 75329873ce45a0441b5d61e8f14747d1, type: 3}
+  - {fileID: 8300000, guid: 83387668c2577144895f80b4eceb8a97, type: 3}
+  - {fileID: 8300000, guid: 5670d1b24a69efa45b7a0b322c6124d7, type: 3}
+  - {fileID: 8300000, guid: 9a11b46e81a1c8042b515efce5261c0c, type: 3}
+  - {fileID: 8300000, guid: 08bb661590e4eba46996371669c5f071, type: 3}
+  - {fileID: 8300000, guid: a8789a5bf93998748987c99e57109ff3, type: 3}
+  - {fileID: 8300000, guid: be2c9e518a1d207408bf548e3a0a554b, type: 3}
+  stepsMetal:
+  - {fileID: 8300000, guid: 6a140ea987cd47b409d13ed71b0ead83, type: 3}
+  - {fileID: 8300000, guid: ff22cc47db273e64baf435dfc8ec91a3, type: 3}
+  - {fileID: 8300000, guid: 1d7bc904e57b91543a3496c410afedaf, type: 3}
+  - {fileID: 8300000, guid: 2ccf4c7f29e013e4a9ab319644c7eb6b, type: 3}
+  - {fileID: 8300000, guid: b791848bded57ea4da064c1005fceaef, type: 3}
+  - {fileID: 8300000, guid: fa732e8a51696a7468cc56363d81773f, type: 3}
+  - {fileID: 8300000, guid: 31a89a9dfadf18a49a9442ceacf7dfd5, type: 3}
+  - {fileID: 8300000, guid: 8c0eb72ca576d8540838ee9d1627eb31, type: 3}
+  shovelLoop: {fileID: 8300000, guid: 02d59b3d240d04b499fe519258712ab4, type: 3}
+  wheelCreak: {fileID: 8300000, guid: 5e80bcf747e08894bbe49813bbf70f8e, type: 3}
+  morseLoop: {fileID: 8300000, guid: 37eb4c588afe3b7478936d2db80b97ba, type: 3}
+  morseBurst: {fileID: 8300000, guid: 706763839667fcc4aab1e2febc457b0a, type: 3}
+  lever: {fileID: 8300000, guid: 0ab88516d0092594283a2f0ea3c39d44, type: 3}
+  doorClose: {fileID: 8300000, guid: 07aa9f168e0781a49b2790d140b9c7ca, type: 3}
+  paper: {fileID: 8300000, guid: a36c123f411a1aa45ac8ce25c854977e, type: 3}
+  clank: {fileID: 8300000, guid: a570d8c409c9d1a47b52c4a48e796ef6, type: 3}
+  orderBell: {fileID: 8300000, guid: f54c9026fba7225489c1b6418cb8af50, type: 3}
+  tick: {fileID: 8300000, guid: d14f2fa17e4b775409ff35f525fda61c, type: 3}
+  success: {fileID: 8300000, guid: c3b52f9ac45cb9845851b1a0913b5039, type: 3}
+  refuseHm: {fileID: 8300000, guid: 92bf7ea7a9774244284140b9beee39a7, type: 3}
+  sabotageHiss: {fileID: 8300000, guid: 4728fcd2313666c4eb699502ebb4d75b, type: 3}
+  brokenAlarm: {fileID: 8300000, guid: 0a5bac47fff23c24eb0b85bcacdfefed, type: 3}
+  helpWhistle: {fileID: 8300000, guid: 0ad70c2bc7886d841b10a85fbaaaf7cf, type: 3}
+  musterBell: {fileID: 8300000, guid: 1fc56a8de4be7b84cae61656c4291477, type: 3}
+  speakerOn: {fileID: 8300000, guid: 833780eebab75c74b9c01e7d43b54133, type: 3}
+  speakerOff: {fileID: 8300000, guid: bf2e65f678b8f414cbbaa937f87138a7, type: 3}
+  speakerCrackle: {fileID: 8300000, guid: 0ceb13775c0781846afffeb69b2edca9, type: 3}
+  staticBurst: {fileID: 8300000, guid: c747768bbb5e7a6448992ac7cc746ae8, type: 3}
+  lookoutBell: {fileID: 8300000, guid: c8071f3c8fdc1e14d8a6dc828f191613, type: 3}
+  drone: {fileID: 8300000, guid: c5f1002efc799624da838418bb528e48, type: 3}
+  impactBoom: {fileID: 8300000, guid: 7591831b224eab04aa8c47ad44667d66, type: 3}
+  impactWood: {fileID: 8300000, guid: 269dcf9f462db9546a325842d1ba4248, type: 3}
+  impactIce: {fileID: 8300000, guid: be0a839d58916b34885c6da6634c540b, type: 3}
+  flood: {fileID: 8300000, guid: b04f4259a2b4de04c9cd660842db9216, type: 3}
+  waltz: {fileID: 8300000, guid: 43ddce373fe157c4a9d65d275937372f, type: 3}
+  sustained: {fileID: 8300000, guid: 082ec321a154cef41aeeeb1311bc7657, type: 3}
