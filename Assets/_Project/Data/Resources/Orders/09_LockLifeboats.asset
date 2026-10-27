@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: 09_LockLifeboats
   m_EditorClassIdentifier: 
   part: 2
-  captainLine: "Lock the lifeboat store. Can't have people panicking over nothing."
+  captainLine: "Lock the lifeboat store.\nNobody needs a lifeboat on a night like this. A lifeboat is just a boat that's given up."
   voice: {fileID: 0}
   station: 2
   isCarry: 0

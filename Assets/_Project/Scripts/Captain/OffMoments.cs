@@ -10,8 +10,9 @@ using UnityEngine;
 ///   Ship's clock:      ClockText runs from 21:20 toward 23:40, and once in Part 2 it quietly skips back a minute.
 ///   ETA:               EtaText, "Promised Port: ETA 2 days", goes UP after every off order that's carried out,
 ///                      and reads "—" in Part 3.
-///   Scrambled warnings: WirelessMessage fires when an ice warning arrives, with more words blacked out each time.
-/// (Subtitles that correct themselves and the voice getting lower are in CaptainDirector.)
+///   Wireless:          WirelessMessage fires with the warning's text when an ice warning arrives. Words in
+///                      [brackets] in CaptainScript.IceWarningText would arrive blacked out (none are, right now).
+/// (The voice getting lower as he drinks is in CaptainDirector.)
 /// </summary>
 public class OffMoments : MonoBehaviour
 {
@@ -20,7 +21,7 @@ public class OffMoments : MonoBehaviour
     /// <summary>Simple IMGUI compass/clock/ETA panel until the real HUD exists.</summary>
     public static bool DrawFallbackHud = true;
 
-    /// <summary>An ice warning arrived at the Wireless desk: its number and its (scrambled) text.</summary>
+    /// <summary>An ice warning arrived at the Wireless desk: its number and its text.</summary>
     public static event System.Action<int, string> WirelessMessage;
 
     [Header("Compass")]
