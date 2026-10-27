@@ -124,6 +124,7 @@ public class Interactor : MonoBehaviour
 
         string text;
         if (carriedItem != null) text = "[Interact] Drop";
+        else if (NearestStation is Doors d && d.CanUnlock) text = $"[Hold Interact] Reopen lifeboat store {d.ActiveHolders}/{d.NeededHolders}";
         else if (NearestStation is Station s && s.NeededHolders > 1) text = $"[Hold Interact] {s.Type} {s.ActiveHolders}/{s.NeededHolders}";
         else text = $"[Hold Interact] {NearestStation.Type}";
         GUI.Label(new Rect(screen.x - 80, Screen.height - screen.y, 220, 20), text);
