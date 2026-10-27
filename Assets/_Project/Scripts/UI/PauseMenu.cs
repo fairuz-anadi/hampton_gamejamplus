@@ -6,7 +6,7 @@ using UnityEngine.InputSystem;
 /// Works with mouse, keyboard (arrows + Enter) and gamepad (d-pad + A, B to resume).
 /// Spawned with the core systems by GameSystems. Owner: Anadi.
 /// Rabib: don't bind Esc/Start to your own pause; call PauseMenu.Instance.Toggle() if your Pause action needs it.
-/// Samprity: placeholder drawn with IMGUI; restyle freely, the logic lives in Toggle/Resume and GameManager.
+/// Drawn with IMGUI on a dark card in Samprity's type and colours (UiTheme), like the Results screen.
 /// </summary>
 public class PauseMenu : MonoBehaviour
 {
@@ -20,7 +20,8 @@ public class PauseMenu : MonoBehaviour
     public bool IsPaused { get; private set; }
 
     int selected;
-    GUIStyle title, button, hint;
+    GUIStyle eyebrow, title, button, buttonSelected, hint;
+    Texture2D shadeTex, cardTex, brassTex, buttonTex, buttonHoverTex, selectedTex;
 
     void Awake()
     {
@@ -30,6 +31,8 @@ public class PauseMenu : MonoBehaviour
 
     void OnDestroy()
     {
+        foreach (var t in new[] { shadeTex, cardTex, brassTex, buttonTex, buttonHoverTex, selectedTex })
+            if (t != null) Destroy(t);
         if (Instance != this) return;
         Instance = null;
         if (IsPaused) Time.timeScale = 1f;
@@ -95,23 +98,67 @@ public class PauseMenu : MonoBehaviour
         float s = Screen.height / RefHeight;
         GUI.matrix = Matrix4x4.Scale(new Vector3(s, s, 1f));
         float w = Screen.width / s;
-        title ??= new GUIStyle(GUI.skin.label) { fontSize = 64, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
-        button ??= new GUIStyle(GUI.skin.button) { fontSize = 30 };
-        hint ??= new GUIStyle(GUI.skin.label) { fontSize = 22, alignment = TextAnchor.MiddleCenter };
+        EnsureStyles();
 
-        GUI.color = new Color(0f, 0f, 0f, 0.6f);
-        GUI.DrawTexture(new Rect(0f, 0f, w, RefHeight), Texture2D.whiteTexture);
-        GUI.color = Color.white;
+        // Shade the deck, then a dark card with a brass hairline, like the Results screen.
+        GUI.DrawTexture(new Rect(0f, 0f, w, RefHeight), shadeTex);
+        var card = new Rect(w * 0.5f - 260f, 220f, 520f, 640f);
+        GUI.DrawTexture(card, cardTex);
+        GUI.DrawTexture(new Rect(card.x, card.y, card.width, 2f), brassTex);
+        GUI.DrawTexture(new Rect(card.x, card.yMax - 2f, card.width, 2f), brassTex);
+        GUI.DrawTexture(new Rect(card.x, card.y, 2f, card.height), brassTex);
+        GUI.DrawTexture(new Rect(card.xMax - 2f, card.y, 2f, card.height), brassTex);
 
-        GUILayout.BeginArea(new Rect(w * 0.5f - 200f, 280f, 400f, 620f));
+        GUILayout.BeginArea(new Rect(card.x + 60f, card.y + 44f, card.width - 120f, card.height - 80f));
+        GUILayout.Label("T H E   S H I P   W A I T S", eyebrow);
         GUILayout.Label("Paused", title);
-        GUILayout.Space(24f);
+        GUILayout.Space(22f);
         for (int i = 0; i < Items.Length; i++)
         {
-            if (MenuControls.Button(Items[i], button, i == selected, GUILayout.Height(68f))) Choose(i);
-            GUILayout.Space(10f);
+            if (GUILayout.Button(Items[i], i == selected ? buttonSelected : button, GUILayout.Height(64f))) Choose(i);
+            GUILayout.Space(12f);
         }
-        GUILayout.Label("Arrows / d-pad to choose, Enter / A to pick, Esc / B to resume", hint);
+        GUILayout.FlexibleSpace();
+        GUILayout.Label("Arrows or d-pad to choose  ·  Enter or A to pick  ·  Esc or B to resume", hint);
         GUILayout.EndArea();
+    }
+
+    static Texture2D Solid(Color c)
+    {
+        var t = new Texture2D(1, 1) { hideFlags = HideFlags.DontSave };
+        t.SetPixel(0, 0, c);
+        t.Apply();
+        return t;
+    }
+
+    void EnsureStyles()
+    {
+        if (title != null) return;
+        var theme = UiTheme.Load();
+        Font titleFont = theme ? theme.title : null, bodyFont = theme ? theme.body : null;
+
+        shadeTex = Solid(new Color(0.02f, 0.025f, 0.04f, 0.62f));
+        cardTex = Solid(new Color(0.03f, 0.035f, 0.05f, 0.9f));
+        brassTex = Solid(new Color(UiTheme.Brass.r, UiTheme.Brass.g, UiTheme.Brass.b, 0.6f));
+        buttonTex = Solid(new Color(0.08f, 0.09f, 0.12f, 0.95f));
+        buttonHoverTex = Solid(new Color(0.14f, 0.15f, 0.19f, 0.95f));
+        selectedTex = Solid(UiTheme.Brass);
+
+        eyebrow = new GUIStyle(GUI.skin.label) { font = bodyFont, fontSize = 20, alignment = TextAnchor.MiddleCenter, normal = { textColor = UiTheme.Brass } };
+        title = new GUIStyle(GUI.skin.label) { font = titleFont, fontSize = 72, alignment = TextAnchor.MiddleCenter, fontStyle = titleFont != null ? FontStyle.Normal : FontStyle.Bold, normal = { textColor = UiTheme.Cream } };
+        hint = new GUIStyle(GUI.skin.label) { font = bodyFont, fontSize = 18, wordWrap = true, alignment = TextAnchor.MiddleCenter, normal = { textColor = UiTheme.DimCream } };
+        button = new GUIStyle(GUI.skin.button)
+        {
+            font = titleFont, fontSize = 30, alignment = TextAnchor.MiddleCenter, border = new RectOffset(0, 0, 0, 0),
+            normal = { background = buttonTex, textColor = UiTheme.Cream },
+            hover = { background = buttonHoverTex, textColor = UiTheme.Cream },
+            active = { background = buttonHoverTex, textColor = UiTheme.Brass },
+        };
+        var ink = new Color(0.08f, 0.07f, 0.05f);
+        buttonSelected = new GUIStyle(button)
+        {
+            normal = { background = selectedTex, textColor = ink },
+            hover = { background = selectedTex, textColor = ink },
+        };
     }
 }

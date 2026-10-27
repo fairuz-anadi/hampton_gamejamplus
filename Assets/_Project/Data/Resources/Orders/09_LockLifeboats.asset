@@ -20,7 +20,7 @@ MonoBehaviour:
   deliverTo: 2
   kind: 1
   needsTwo: 1
-  timer: 25
+  timer: 40
   locksLifeboats: 1
   obey:
     captainTrust: 6
