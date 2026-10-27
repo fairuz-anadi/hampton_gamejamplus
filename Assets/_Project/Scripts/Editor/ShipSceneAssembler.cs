@@ -13,6 +13,7 @@ using UnityEngine.InputSystem;
 ///   Rabib's player join on PlayerSpawn = the deck's Spawn_1 marker
 ///   Rabib's Boiler/Doors/Wheel/Wireless scripts on the deck's Station_* objects (status light = their StatusLight bulb)
 ///   Rabib's carry items for orders 2 and 10, at the Wireless desk and the Wheel
+///   Rabib's ice warnings MSG 1-3 on the deck's PickUp_IceWarning marker (they only show while waiting)
 /// </summary>
 public static class ShipSceneAssembler
 {
@@ -39,10 +40,11 @@ public static class ShipSceneAssembler
         EnsureStations(deck);
         EnsureCarryItem(deck, "PassengerList", "02_PassengerList", "Station_Wireless");
         EnsureCarryItem(deck, "CaptainsLog", "10_CaptainsLog", "Station_Wheel");
+        for (int n = 1; n <= 3; n++) EnsureIceWarning(deck, n);
 
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
-        Debug.Log("[ShipSceneAssembler] Ship.unity has the deck, a deck camera, player join, 4 stations and 2 carry items.");
+        Debug.Log("[ShipSceneAssembler] Ship.unity has the deck, a deck camera, player join, 4 stations, 2 carry items and 3 ice warnings.");
     }
 
     public static void AssembleBatch() => Assemble();
@@ -98,6 +100,28 @@ public static class ShipSceneAssembler
     }
 
     /// <summary>The item for a carry order, waiting beside the station where it's picked up.</summary>
+    /// <summary>One message slip per warning, side by side on the desk's pick-up marker.</summary>
+    static void EnsureIceWarning(GameObject deck, int number)
+    {
+        string name = "IceWarning_" + number;
+        if (GameObject.Find(name) != null) return;
+        var marker = FindDeep(deck.transform, "PickUp_IceWarning");
+        var desk = FindDeep(deck.transform, "Station_Wireless");
+        if (marker == null && desk == null) { Debug.LogWarning("[ShipSceneAssembler] Couldn't place the ice warnings."); return; }
+
+        var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        go.name = name;
+        Object.DestroyImmediate(go.GetComponent<BoxCollider>());
+        go.transform.localScale = new Vector3(0.22f, 0.02f, 0.3f);
+        var at = marker != null ? marker.position : desk.position + Vector3.up * 0.9f;
+        go.transform.position = at + new Vector3(0.28f * (number - 2), 0f, 0f);
+
+        var warn = go.AddComponent<IceWarningCarry>();
+        var so = new SerializedObject(warn);
+        so.FindProperty("warningNumber").intValue = number;
+        so.ApplyModifiedPropertiesWithoutUndo();
+    }
+
     static void EnsureCarryItem(GameObject deck, string itemName, string orderAsset, string pickupStation)
     {
         if (GameObject.Find(itemName) != null) return;
