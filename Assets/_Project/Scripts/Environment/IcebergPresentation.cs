@@ -95,7 +95,9 @@ public class IcebergPresentation : MonoBehaviour
         if (total < 0f && left > 0f) total = left; // the sequence starts its clock in the same event
         float t = total > 0f ? Mathf.Clamp01(1f - left / total) : 0f;
         Place(t, sequence.Heading);
-        Shake = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.82f, 1f, t));
+        // A rumble building as it closes; after the hit, Rabib's impact beat says how hard (worse damage, harder).
+        bool hit = total > 0f && left <= 0f;
+        Shake = hit ? Mathf.Clamp01(sequence.ImpactShake * 1.4f) : 0.75f * Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.82f, 1f, t));
 
         // Rabib's placeholder cube, if it's there: the real one stands in for it.
         var cube = GameObject.Find("[Iceberg]");

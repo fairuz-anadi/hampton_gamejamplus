@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: 02_PassengerList
   m_EditorClassIdentifier: 
   part: 1
-  captainLine: "Run the passenger list up to the bridge."
+  captainLine: "Passenger list to the bridge, please.\nTwo thousand souls aboard and only one of them steering. Bring me their names. It's only polite."
   voice: {fileID: 0}
   station: 3
   isCarry: 1

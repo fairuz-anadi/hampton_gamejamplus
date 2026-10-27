@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: 01_FeedBoiler
   m_EditorClassIdentifier: 
   part: 1
-  captainLine: "Morning, crew. Boiler two is hungry. Two shovels, quick now."
+  captainLine: "Morning! Boiler two needs coal and two people who aren't afraid of it.\nBig boiler. Big mouth. Eats like my uncle."
   voice: {fileID: 0}
   station: 0
   isCarry: 0

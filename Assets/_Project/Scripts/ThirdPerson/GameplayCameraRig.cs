@@ -59,6 +59,12 @@ public class GameplayCameraRig : MonoBehaviour
         visuals = CrewVisualSet.Load();
         if (OpeningDirector.HandoffPending) BuildFade();
         iceberg = gameObject.AddComponent<IcebergPresentation>();
+        IcebergSequence.CameraHandledExternally = true; // this rig frames and shakes the finale
+    }
+
+    void OnDisable()
+    {
+        IcebergSequence.CameraHandledExternally = false;
     }
 
     void OnDestroy()

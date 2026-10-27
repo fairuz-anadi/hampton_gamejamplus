@@ -470,7 +470,7 @@ public static class HudBuilder
             Vector3 screen = cam.WorldToScreenPoint(marker.transform.position + Vector3.up * prompts.heightAbove);
             var size = ((RectTransform)hud.transform).rect.size;
             var local = prompts.KeepOnScreen(new Vector2((screen.x / cam.pixelWidth - 0.5f) * size.x, (screen.y / cam.pixelHeight - 0.5f) * size.y));
-            prompts.prompts[0].Show(local, HudText.StationName((StationType)System.Enum.Parse(typeof(StationType), station.Substring(8))), "Hold  ·  " + verb, "E", prompts.normalTint);
+            prompts.prompts[0].Show(local, HudText.StationName((StationType)System.Enum.Parse(typeof(StationType), station.Substring(8))), "Hold  ·  " + verb, "E", prompts.normalTint, 0f);
             prompts.prompts[0].SnapIn();
             Canvas.ForceUpdateCanvases();
             cam.Render();

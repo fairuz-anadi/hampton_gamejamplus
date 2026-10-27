@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: 01_WhatIf
   m_EditorClassIdentifier:
   ending: 0
-  title: "What if..."
+  title: "Dawn"
   body: "You hit her head-on. The bow folded, the bulkheads held, and the ship limped on toward the port she was promised. Some argue a head-on hit could have saved her. Tonight, it did."
-  closingLine: "In April 1912, the real ship was lost."
+  closingLine: "She came in at dawn, a little dented. The papers said \"record crossing\". Nobody asked about the dent."

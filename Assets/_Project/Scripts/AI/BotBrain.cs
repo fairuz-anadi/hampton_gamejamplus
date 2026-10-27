@@ -11,7 +11,8 @@ using UnityEngine;
 ///      and fakes about half of the normal ones.
 ///   3. The Stoker's sabotage (StokerBrain).
 ///   4. A help or repair job handed out by CrewRoster.
-///   5. Idle near where it spawned.
+///   5. Honest bots carry waiting ice warnings from the Wireless desk to the Bridge.
+///   6. Idle near where it spawned.
 /// </summary>
 [RequireComponent(typeof(BotMover))]
 public class BotBrain : MonoBehaviour, ICrewActor
@@ -47,7 +48,7 @@ public class BotBrain : MonoBehaviour, ICrewActor
     public Vector3 Home { get; private set; }
 
     /// <summary>Free for a help or repair job: no order, no job, not locked out, not sabotaging.</summary>
-    public bool IsFree => !IsLockedOut && CurrentOrder == null && job == null && (Stoker == null || !Stoker.IsBusy);
+    public bool IsFree => !IsLockedOut && CurrentOrder == null && job == null && warning == null && (Stoker == null || !Stoker.IsBusy);
 
     public ActiveOrder CurrentOrder => OrderDirector.Instance != null ? OrderDirector.Instance.GetOrderFor(this) : null;
 
@@ -86,8 +87,15 @@ public class BotBrain : MonoBehaviour, ICrewActor
     Vector3 goalSpot;
     float arrivedAt = -1f;
     Station workingAt;
+    Wheel steeringAt;
 
     float nextWanderAt;
+
+    // The ice warning this bot is fetching or carrying. One bot per warning.
+    IceWarningCarry warning;
+    bool carryingWarning;
+    int fetchTries;
+    static readonly System.Collections.Generic.HashSet<IceWarningCarry> claimedWarnings = new System.Collections.Generic.HashSet<IceWarningCarry>();
 
     // ---------- Setup ----------
 
@@ -140,6 +148,7 @@ public class BotBrain : MonoBehaviour, ICrewActor
     {
         StopWorking();
         DropCarried();
+        LetGoOfWarning();
         CrewRegistry.Unregister(this);
     }
 
@@ -158,6 +167,7 @@ public class BotBrain : MonoBehaviour, ICrewActor
     {
         // Stations only count holders who refresh every frame, like a player holding Interact.
         if (workingAt != null) workingAt.Hold(this, true);
+        if (steeringAt != null) steeringAt.Steer(this, 0f);
 
         if (Time.time < nextThink) return;
         nextThink = Time.time + thinkInterval;
@@ -170,13 +180,24 @@ public class BotBrain : MonoBehaviour, ICrewActor
         if (gm != null && (gm.State == GameState.Iceberg || gm.State == GameState.Results))
         {
             StopWorking();
+            LetGoOfWarning();
+            DropCarried();
             Activity = "watching the bow";
+            // One honest bot takes the second place at the wheel. Bots add no steering (Rabib's rule),
+            // so the players' choices still decide the impact; it just shouldn't feel empty.
+            if (gm.State == GameState.Iceberg && IsWheelBuddy() && ReachStation(StationType.Wheel))
+            {
+                steeringAt = StationRegistry.Get(StationType.Wheel) as Wheel;
+                Activity = "holding the wheel";
+            }
             return;
         }
+        steeringAt = null;
 
         if (IsLockedOut)
         {
             StopWorking();
+            LetGoOfWarning();
             Activity = "locked out";
             Wander();
             return;
@@ -186,6 +207,7 @@ public class BotBrain : MonoBehaviour, ICrewActor
         if (order != null)
         {
             job = null;
+            LetGoOfWarning();
             TickOrder(order);
             return;
         }
@@ -206,6 +228,8 @@ public class BotBrain : MonoBehaviour, ICrewActor
             TickJob();
             return;
         }
+
+        if (!IsStoker && TickIceWarning()) return;
 
         StopWorking();
         Activity = "idle";
@@ -358,6 +382,104 @@ public class BotBrain : MonoBehaviour, ICrewActor
         carrying.Drop();
         carrying = null;
     }
+
+    /// <summary>The lowest-seat honest bot that isn't locked out.</summary>
+    bool IsWheelBuddy()
+    {
+        foreach (var c in CrewRegistry.All)
+            if (c.IsBot && !c.IsStoker && !c.IsLockedOut) return c == (ICrewActor)this;
+        return false;
+    }
+
+    // ---------- Ice warnings ----------
+
+    /// <summary>Fetch a waiting ice warning from the desk and carry it to the Bridge. True while busy with one.</summary>
+    bool TickIceWarning()
+    {
+        if (warning == null)
+        {
+            warning = FindWaitingWarning();
+            if (warning == null) return false;
+            claimedWarnings.Add(warning);
+            carryingWarning = false;
+            fetchTries = 0;
+        }
+
+        // Delivered, timed out or grabbed by someone else.
+        bool waiting = IceWarnings.Instance != null && IsWaiting(warning);
+        if (!waiting || (warning.IsCarried && !carryingWarning))
+        {
+            LetGoOfWarning();
+            return false;
+        }
+
+        StopWorking();
+        goal = null;
+        if (!carryingWarning)
+        {
+            Activity = "fetching an ice warning";
+            // The slip lies on the desk, so get as close as the desk allows and reach for it from there.
+            carryingWarning = warning.TryPickUp(this, transform);
+            if (carryingWarning) return true;
+            if (BotMover.FlatDistance(transform.position, warning.Position) > 0.8f && Mover.HasTarget)
+                return true; // still walking
+            if (BotMover.FlatDistance(transform.position, warning.Position) <= 1.6f || fetchTries > 15)
+            {
+                LetGoOfWarning(); // close and still can't take it, or can't get close: give up on this one
+                return false;
+            }
+            fetchTries++;
+            Mover.GoTo(BotMover.OnNavMesh(warning.Position, 3f), 0.3f);
+            return true;
+        }
+
+        Activity = "running an ice warning to the bridge";
+        // Rabib's drop point accepts it from a couple of metres, which matters because furniture is in the way.
+        if (warning.TryDeliver())
+        {
+            Mover.Stop();
+            LetGoOfWarning(false);
+            return true;
+        }
+        Mover.GoTo(BotMover.OnNavMesh(BridgeDropPoint(), 3f), 0.5f);
+        return true;
+    }
+
+    static IceWarningCarry FindWaitingWarning()
+    {
+        if (IceWarnings.Instance == null) return null;
+        foreach (var w in FindObjectsByType<IceWarningCarry>())
+            if (!w.IsCarried && !claimedWarnings.Contains(w) && IsWaiting(w)) return w;
+        return null;
+    }
+
+    /// <summary>IceWarningCarry hides its number, so ask whether any waiting warning sits at this one's spot.</summary>
+    static bool IsWaiting(IceWarningCarry w)
+    {
+        // Rabib only shows the warning's renderer while IceWarnings says it's Waiting.
+        var r = w.GetComponentInChildren<Renderer>();
+        return r == null || r.enabled;
+    }
+
+    static Vector3 BridgeDropPoint()
+    {
+        var marker = GameObject.Find("DropPoint_Bridge");
+        if (marker != null) return marker.transform.position;
+        var wheel = StationRegistry.Get(StationType.Wheel);
+        return wheel != null ? wheel.Position : Vector3.zero;
+    }
+
+    void LetGoOfWarning(bool drop = true)
+    {
+        if (warning == null) return;
+        if (drop && carryingWarning && warning != null) warning.Drop();
+        claimedWarnings.Remove(warning);
+        warning = null;
+        carryingWarning = false;
+    }
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetStatics() => claimedWarnings.Clear();
 
     // ---------- Help and repair jobs ----------
 

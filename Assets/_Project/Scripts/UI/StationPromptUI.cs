@@ -8,10 +8,12 @@ public class StationPromptUI : MonoBehaviour
     public RectTransform rect;
     public Text title, action, key;
     public Image keycap;
+    [Tooltip("Optional. Assign a filled Image to show a station-progress bar; left empty, progress is just ignored.")]
+    public Image progressFill;
 
     float alpha, target;
 
-    public void Show(Vector2 canvasPos, string titleText, string actionText, string keyText, Color tint)
+    public void Show(Vector2 canvasPos, string titleText, string actionText, string keyText, Color tint, float progress01)
     {
         rect.anchoredPosition = canvasPos;
         title.text = titleText;
@@ -19,6 +21,7 @@ public class StationPromptUI : MonoBehaviour
         key.text = keyText;
         keycap.color = tint;
         key.color = tint;
+        if (progressFill != null) progressFill.fillAmount = progress01;
         target = 1f;
     }
 

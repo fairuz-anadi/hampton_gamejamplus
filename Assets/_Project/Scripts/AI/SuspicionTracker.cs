@@ -28,6 +28,9 @@ public class SuspicionTracker : MonoBehaviour
     readonly List<Clue> clues = new List<Clue>(32);
     readonly float[] scores = new float[CrewRoster.SeatCount + 1];
 
+    [Tooltip("Suspicion fades: a score halves over this many seconds, so old clues matter less than fresh ones.")]
+    [SerializeField] float halfLife = 75f;
+
     public IReadOnlyList<Clue> Clues => clues;
 
     public static event System.Action<Clue> ClueAdded;
@@ -55,6 +58,12 @@ public class SuspicionTracker : MonoBehaviour
         GameEvents.StationBroken -= OnStationBroken;
         GameEvents.OrderResolved -= OnOrderResolved;
         GameEvents.StateChanged -= OnStateChanged;
+    }
+
+    void Update()
+    {
+        float keep = Mathf.Pow(0.5f, Time.deltaTime / halfLife);
+        for (int i = 0; i < scores.Length; i++) scores[i] *= keep;
     }
 
     void OnStateChanged(GameState s)
