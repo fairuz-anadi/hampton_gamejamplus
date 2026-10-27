@@ -6,7 +6,8 @@ using UnityEngine.SceneManagement;
 /// The run's state machine: Menu -> Part1 -> Part2 -> Part3 -> Iceberg -> Results. Owner: Anadi.
 ///
 /// Hooks for teammates:
-///   Riham:    GameEvents.TruthStarted fires when the 12 orders are done. Set truthSeconds to the monologue length.
+///   Riham:    GameEvents.TruthStarted fires when the 12 orders are done. The iceberg waits for
+///             CaptainDirector.MonologueSeconds (plus a beat), or truthSeconds if that's longer.
 ///   Rabib:    IcebergSequence sets GameManager.Instance.IcebergHandledExternally = true in Awake,
 ///             listens for GameState.Iceberg, and calls FinishIceberg(angle) at impact.
 /// </summary>
@@ -15,8 +16,10 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance { get; private set; }
 
     [SerializeField] bool startRunOnPlay = true;
-    [Tooltip("How long Part 3's monologue runs before the iceberg scene. Riham sets this to the real length.")]
+    [Tooltip("Shortest time Part 3 runs before the iceberg. It stretches to fit the Captain's monologue.")]
     [SerializeField] float truthSeconds = 30f;
+    [Tooltip("Silence after the Captain's last word, before the lookout bell.")]
+    [SerializeField] float afterMonologueBeat = 1.5f;
     [Tooltip("Used only while there is no IcebergSequence in the scene.")]
     [SerializeField] float placeholderIcebergSeconds = 5f;
     [SerializeField] string resultsScene = "Results";
@@ -101,8 +104,18 @@ public class GameManager : MonoBehaviour
     {
         if (State < GameState.Part3) SetState(GameState.Part3);
         GameEvents.RaiseTruthStarted();
-        yield return new WaitForSeconds(truthSeconds);
+        yield return new WaitForSeconds(TruthWaitSeconds);
         StartIceberg();
+    }
+
+    /// <summary>How long Part 3 lasts before the iceberg: never cuts the Captain off mid-monologue.</summary>
+    public float TruthWaitSeconds
+    {
+        get
+        {
+            var captain = CaptainDirector.Instance;
+            return captain != null ? Mathf.Max(truthSeconds, captain.MonologueSeconds + afterMonologueBeat) : truthSeconds;
+        }
     }
 
     public void StartIceberg()

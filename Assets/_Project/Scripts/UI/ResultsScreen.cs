@@ -63,6 +63,7 @@ public class ResultsScreen : MonoBehaviour
         GUILayout.Label(RunRecord.StokerSeat > 0
             ? $"The Stoker was {CrewRegistry.SeatName(RunRecord.StokerSeat)}."
             : "There was no Stoker aboard this time.", body);
+        if (StokerBrain.Log.Count > 0) GUILayout.Label("What the Stoker did: " + string.Join(" · ", StokerBrain.Log), small);
         GUILayout.Space(12f);
 
         GUILayout.Label("What each choice cost", small);
