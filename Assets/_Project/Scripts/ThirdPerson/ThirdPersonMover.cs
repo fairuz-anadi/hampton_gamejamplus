@@ -153,7 +153,9 @@ public class ThirdPersonMover : MonoBehaviour
         if (hasInput)
         {
             float inputAngle = Mathf.Atan2(input.x, input.y) * Mathf.Rad2Deg;
-            if (!latched || Mathf.Abs(Mathf.DeltaAngle(inputAngle, latchedInputAngle)) > relatchAngle)
+            // Mouse look: the player aims the camera, so W always means "where I'm looking", read every frame.
+            if (CameraSteeredByPlayer()) referenceYaw = CurrentCameraYaw();
+            else if (!latched || Mathf.Abs(Mathf.DeltaAngle(inputAngle, latchedInputAngle)) > relatchAngle)
             {
                 referenceYaw = CurrentCameraYaw();
                 latchedInputAngle = inputAngle;
@@ -186,6 +188,13 @@ public class ThirdPersonMover : MonoBehaviour
         }
 
         if (hasSpeedParam) animator.SetFloat(speedHash, speed, 0.08f, dt);
+    }
+
+    bool CameraSteeredByPlayer()
+    {
+        var cam = followCamera;
+        if (cam == null && Camera.main != null) Camera.main.TryGetComponent(out cam);
+        return cam != null && cam.PlayerSteers;
     }
 
     float CurrentCameraYaw()

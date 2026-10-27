@@ -28,6 +28,7 @@ public class HUD : MonoBehaviour
     {
         var gm = GameManager.Instance;
         bool show = gm == null || (gm.State >= GameState.Part1 && gm.State <= GameState.Iceberg);
+        if (PauseMenu.Instance != null && PauseMenu.Instance.IsPaused) show = false; // nothing peeks round the pause card
         root.alpha = Mathf.MoveTowards(root.alpha, show ? 1f : 0f, Time.unscaledDeltaTime / fadeSeconds);
     }
 

@@ -1,7 +1,9 @@
 using UnityEngine;
 
 /// <summary>
-/// Third-person follow camera that swings itself behind the character. There is no mouse or stick control. Owner: Samprity.
+/// Third-person follow camera. With mouseLook on (the default), the mouse turns it round the character and tilts it,
+/// smoothed; a gamepad's right stick does the same, and the cursor is locked while playing. With mouseLook off it
+/// swings itself behind the character as before. Owner: Samprity (mouse look: Anadi).
 /// Put it on the Camera. It runs in LateUpdate, after the mover has moved.
 ///
 /// Tuning cheat sheet (all live in Play mode):
@@ -42,6 +44,18 @@ public class AutoFollowCamera : MonoBehaviour
     [Tooltip("Keep settling behind the character after it stops. Off = the camera coasts to a stop where it is.")]
     public bool recenterWhenIdle = true;
 
+    [Header("Mouse look")]
+    [Tooltip("The mouse (or right stick) turns the camera; it no longer swings behind the character by itself.")]
+    public bool mouseLook = true;
+    [Tooltip("Degrees per pixel of mouse movement at the middle Camera turn setting.")]
+    [Min(0.01f)] public float mouseSensitivity = 0.14f;
+    [Tooltip("Degrees per second at full right-stick deflection.")]
+    [Min(1f)] public float stickSpeed = 160f;
+    [Tooltip("Seconds the turn takes to catch up with the mouse. Small = snappy, big = floaty.")]
+    [Range(0f, 0.3f)] public float lookSmoothTime = 0.06f;
+    [Tooltip("How far the mouse may tilt the view up or down from the framing pitch, in degrees.")]
+    public Vector2 pitchRange = new Vector2(-14f, 30f);
+
     [Header("Collision")]
     [Tooltip("Layers that block the camera (walls, machinery). The character's own colliders are always ignored.")]
     public LayerMask collisionMask = ~0;
@@ -74,6 +88,10 @@ public class AutoFollowCamera : MonoBehaviour
     float lift, liftVelocity;
     int turnSign;
     bool initialised;
+    float lookYaw, lookPitch, tilt, tiltVelocity;
+
+    /// <summary>True while the player steers the camera themselves; the mover then reads the live camera facing.</summary>
+    public bool PlayerSteers => mouseLook;
 
     /// <summary>The camera's facing around Y, 0-360. The mover measures W/A/S/D against this.</summary>
     public float Yaw => Mathf.Repeat(yaw, 360f);
@@ -106,6 +124,8 @@ public class AutoFollowCamera : MonoBehaviour
         focusVelocity = Vector3.zero;
         yaw = TargetYaw();
         yawVelocity = 0f;
+        lookYaw = yaw;
+        lookPitch = tilt = tiltVelocity = 0f;
         turnSign = 0;
         arm = FullArm;
         armVelocity = 0f;
@@ -147,7 +167,7 @@ public class AutoFollowCamera : MonoBehaviour
         Vector3 camPos = focus + armDir * arm;
 
         // Up close (pushed in by a wall) blend towards looking straight at the character so it stays in frame.
-        var framed = Quaternion.Euler(Mathf.Min(89f, pitch + lift), yaw, 0f);
+        var framed = Quaternion.Euler(Mathf.Clamp(pitch + lift + tilt, -10f, 89f), yaw, 0f);
         Vector3 toFocus = focus - camPos;
         var rot = toFocus.sqrMagnitude > 1e-4f
             ? Quaternion.Slerp(Quaternion.LookRotation(toFocus, Vector3.up), framed, Mathf.Clamp01(arm / fullArm))
@@ -158,6 +178,7 @@ public class AutoFollowCamera : MonoBehaviour
 
     void UpdateYaw(float dt)
     {
+        if (mouseLook) { UpdateLook(dt); return; }
         bool moving = mover == null || mover.IsMoving;
         if (!moving && !recenterWhenIdle)
         {
@@ -184,10 +205,44 @@ public class AutoFollowCamera : MonoBehaviour
         yaw = Mathf.Repeat(yaw, 360f);
     }
 
+    /// <summary>
+    /// Mouse / right stick: the input moves a target yaw and tilt, and the camera eases toward them, so a flick of the
+    /// mouse turns the view smoothly instead of in steps. Input is ignored while paused or when the cursor is free.
+    /// </summary>
+    void UpdateLook(float dt)
+    {
+        float speed = Mathf.Lerp(0.5f, 1.8f, GameSettings.CameraTurn); // Settings > Camera turn speed
+        bool paused = Time.timeScale <= 0f || (PauseMenu.Instance != null && PauseMenu.Instance.IsPaused);
+        if (!paused)
+        {
+            var mouse = UnityEngine.InputSystem.Mouse.current;
+            if (mouse != null && Cursor.lockState == CursorLockMode.Locked)
+            {
+                Vector2 d = mouse.delta.ReadValue();
+                lookYaw += d.x * mouseSensitivity * speed;
+                lookPitch -= d.y * mouseSensitivity * speed;
+            }
+            foreach (var pad in UnityEngine.InputSystem.Gamepad.all)
+            {
+                Vector2 s = pad.rightStick.ReadValue();
+                if (s.sqrMagnitude < 0.02f) continue;
+                lookYaw += s.x * stickSpeed * speed * dt;
+                lookPitch -= s.y * stickSpeed * speed * 0.6f * dt;
+            }
+            lookPitch = Mathf.Clamp(lookPitch, pitchRange.x, pitchRange.y);
+        }
+        // Keep the target close to the current yaw so the smoothing never takes the long way round.
+        lookYaw = yaw + Mathf.DeltaAngle(yaw, lookYaw);
+        yaw = lookSmoothTime > 0f ? Mathf.SmoothDamp(yaw, lookYaw, ref yawVelocity, lookSmoothTime, Mathf.Infinity, dt) : lookYaw;
+        tilt = lookSmoothTime > 0f ? Mathf.SmoothDamp(tilt, lookPitch, ref tiltVelocity, lookSmoothTime, Mathf.Infinity, dt) : lookPitch;
+        yaw = Mathf.Repeat(yaw, 360f);
+        lookYaw = yaw + Mathf.DeltaAngle(yaw, lookYaw);
+    }
+
     /// <summary>The arm from the focus to the camera, tilted up by extra degrees of lift.</summary>
     Vector3 ArmDirection(float extraLift)
     {
-        float elevation = Mathf.Atan2(height, distance) * Mathf.Rad2Deg + extraLift;
+        float elevation = Mathf.Atan2(height, distance) * Mathf.Rad2Deg + extraLift + tilt;
         float e = Mathf.Clamp(elevation, -80f, 85f) * Mathf.Deg2Rad;
         return Quaternion.Euler(0f, yaw, 0f) * new Vector3(0f, Mathf.Sin(e), -Mathf.Cos(e));
     }

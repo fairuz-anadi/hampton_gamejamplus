@@ -4,6 +4,8 @@ using UnityEngine.UI;
 /// <summary>
 /// One Captain's order on screen: who it's for, his line, where, a timer ring, and the Report/Refuse keys.
 /// Slides in when issued, stamps the result, then fades out. Owner: Samprity.
+/// A player's own order slides in from the right edge with a brass flash and sits on top (OrderCards); a bot's
+/// order is dimmed and a little smaller, so the eye goes to what's yours (Anadi).
 /// </summary>
 public class OrderCardUI : MonoBehaviour
 {
@@ -18,17 +20,42 @@ public class OrderCardUI : MonoBehaviour
     [Tooltip("Seconds left when the ring turns red and pulses.")]
     public float urgentBelow = 5f;
 
+    [Tooltip("How far a new order slides in from, in canvas units to the right.")]
+    public float slideFrom = 420f;
+    [Tooltip("Opacity and scale of an order a bot is handling, so the player's own stand out.")]
+    [Range(0.2f, 1f)] public float crewAlpha = 0.68f;
+    [Range(0.6f, 1f)] public float crewScale = 0.9f;
+
     public ActiveOrder Order { get; private set; }
     public bool IsFree => Order == null && !leaving;
+    /// <summary>This card is a player's order (not a bot's).</summary>
+    public bool ForPlayer { get; private set; }
 
     float appear;
     float holdResult;
     bool leaving;
+    float flash;
+    Image flashImage;
 
     void Awake()
     {
         if (group != null) group.alpha = 0f;
         if (stamp != null) stamp.enabled = false;
+        if (body != null) body.pivot = new Vector2(1f, 0.5f); // a dimmed crew card shrinks toward the screen edge
+        // A brass wash over the card's pill, flashed when a player's order arrives.
+        var pill = body != null ? body.Find("Pill") : null;
+        if (pill != null && pill.TryGetComponent(out Image src))
+        {
+            flashImage = new GameObject("Flash", typeof(RectTransform), typeof(Image)).GetComponent<Image>();
+            flashImage.transform.SetParent(pill.parent, false);
+            flashImage.transform.SetSiblingIndex(pill.GetSiblingIndex() + 1);
+            flashImage.sprite = src.sprite;
+            flashImage.type = src.type;
+            flashImage.raycastTarget = false;
+            var r = flashImage.rectTransform;
+            r.anchorMin = Vector2.zero; r.anchorMax = Vector2.one; r.offsetMin = r.offsetMax = Vector2.zero;
+            flashImage.color = new Color(0.86f, 0.68f, 0.34f, 0f);
+        }
     }
 
     public void Bind(ActiveOrder o)
@@ -44,6 +71,9 @@ public class OrderCardUI : MonoBehaviour
     {
         leaving = false;
         holdResult = 0f;
+        ForPlayer = human;
+        appear = 0f;
+        flash = human ? 1f : 0f;
         // Doubled spaces: the bold face's space is too narrow to read at this size.
         string seatName = HudText.Seat(seat).ToUpperInvariant().Replace(" ", "  ");
         header.text = seat > 0 ? $"ORDER  {number}     ·     {seatName}" : $"ORDER  {number}";
@@ -95,7 +125,7 @@ public class OrderCardUI : MonoBehaviour
         float dt = Time.unscaledDeltaTime;
         if (Order != null)
         {
-            appear = Mathf.MoveTowards(appear, 1f, dt * 4f);
+            appear = Mathf.MoveTowards(appear, 1f, dt * 2.6f);
             SetTimer(Order.TimeLeft, Order.Data.timer);
         }
         else if (leaving)
@@ -112,7 +142,29 @@ public class OrderCardUI : MonoBehaviour
 
     void Apply()
     {
-        if (group != null) group.alpha = appear;
-        if (body != null) body.anchoredPosition = new Vector2(0f, (1f - Mathf.SmoothStep(0f, 1f, appear)) * 36f);
+        float dim = ForPlayer || leaving ? 1f : crewAlpha;
+        if (group != null) group.alpha = Mathf.Clamp01(appear * 1.6f) * dim;
+        if (body != null)
+        {
+            // Slides in from the right with a little overshoot; leaves by fading where it is.
+            float x = leaving ? 0f : (1f - EaseOutBack(appear)) * slideFrom;
+            body.anchoredPosition = new Vector2(x, 0f);
+            float s = ForPlayer || leaving ? 1f : crewScale;
+            body.localScale = Vector3.one * s;
+        }
+        if (flashImage != null)
+        {
+            flash = Mathf.MoveTowards(flash, 0f, Time.unscaledDeltaTime * 1.6f);
+            var c = flashImage.color;
+            c.a = 0.4f * flash * flash;
+            flashImage.color = c;
+        }
+    }
+
+    static float EaseOutBack(float t)
+    {
+        t = Mathf.Clamp01(t);
+        const float c1 = 1.4f, c3 = c1 + 1f;
+        return 1f + c3 * Mathf.Pow(t - 1f, 3f) + c1 * Mathf.Pow(t - 1f, 2f);
     }
 }
