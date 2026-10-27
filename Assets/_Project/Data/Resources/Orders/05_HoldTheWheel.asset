@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: 05_HoldTheWheel
   m_EditorClassIdentifier: 
   part: 1
-  captainLine: "Two hands on the wheel. Hold her steady while I check the charts."
+  captainLine: "Two hands on the wheel. Hold her steady while I check the charts.\nGently now. She's a lady, not a wheelbarrow."
   voice: {fileID: 0}
   station: 1
   isCarry: 0

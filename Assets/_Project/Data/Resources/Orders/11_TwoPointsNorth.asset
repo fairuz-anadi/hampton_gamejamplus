@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: 11_TwoPointsNorth
   m_EditorClassIdentifier: 
   part: 2
-  captainLine: "Two points north. The compass is wrong, not me. Trust me."
+  captainLine: "Two points north. The compassh is wrong, not me.\nWho got you this far? Me. Who's got the hat? Me. Who's the rum for? Also me. TWO POINTS NORTH."
   voice: {fileID: 0}
   station: 1
   isCarry: 0

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: 12_FullAhead
   m_EditorClassIdentifier: 
   part: 3
-  captainLine: "Full ahead. History remembers the fast, not the careful."
+  captainLine: "Full ahead.\nWe're close now. I can feel it."
   voice: {fileID: 0}
   station: 0
   isCarry: 0

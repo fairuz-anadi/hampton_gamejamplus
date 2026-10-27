@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: 03_CaptainWins
   m_EditorClassIdentifier:
   ending: 2
-  title: "The Captain wins"
-  body: "His name will be in every paper. The lies held, the Stoker did its work, and the sea did the rest. Below is what each choice cost."
-  closingLine: "No one remembers a careful captain. That was the lie."
+  title: "Record Time"
+  body: "The ship went down fast, just as she'd been told to. Below is every order that was followed, and what it cost."
+  closingLine: "Every order was his. Every \"yes\" was yours."

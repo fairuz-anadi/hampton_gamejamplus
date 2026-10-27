@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: 07_FileIceWarning
   m_EditorClassIdentifier: 
   part: 2
-  captainLine: "An ice message? Old news. File it away. Unread."
+  captainLine: "An ice message? Old news. File it away. Unread.\nDon't look at me like that. If I read every gloomy telegram, we'd never leave port. *clink*"
   voice: {fileID: 0}
   station: 3
   isCarry: 0
