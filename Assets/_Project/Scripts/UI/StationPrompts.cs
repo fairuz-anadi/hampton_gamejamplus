@@ -58,7 +58,7 @@ public class StationPrompts : MonoBehaviour
                 if (carryScreen.z > 0f)
                 {
                     RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, carryScreen, null, out var carryLocal);
-                    prompts[used].Show(KeepOnScreen(carryLocal), "Carrying", interactor.PromptText, key, normalTint);
+                    prompts[used].Show(KeepOnScreen(carryLocal), "Carrying", interactor.PromptText, key, normalTint, 0f);
                     used++;
                 }
                 continue;
@@ -93,11 +93,18 @@ public class StationPrompts : MonoBehaviour
             else if (s.station != null && s.station.IsDone) { action = "Done"; tint = doneTint; }
             else { action = "Hold  ·  " + HudText.StationVerb(s.type); tint = normalTint; }
 
-            prompts[used].Show(local, HudText.StationName(s.type), action, key, tint);
+            float progress01 = owned ? interactor.HoldProgress01 : StationProgress01(s.station);
+            prompts[used].Show(local, HudText.StationName(s.type), action, key, tint, progress01);
             used++;
         }
         for (int i = used; i < prompts.Length; i++) prompts[i].Hide();
     }
+
+    /// <summary>Progress for a station nobody's own Interactor is currently credited with holding (bots, far spots).</summary>
+    static float StationProgress01(IStation station) =>
+        station is Station s && !(s is Wheel w && w.SteeringOpen)
+            ? (s.IsDone && !s.IsBroken ? 1f : s.Progress01)
+            : 0f;
 
     /// <summary>Keeps a prompt (pivot at its bottom centre) on screen, below the order cards and above the subtitles.</summary>
     public Vector2 KeepOnScreen(Vector2 local)
