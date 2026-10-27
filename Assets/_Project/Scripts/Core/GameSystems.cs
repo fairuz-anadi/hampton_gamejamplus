@@ -46,6 +46,7 @@ public static class GameSystems
         go.AddComponent<PauseMenu>();
         go.AddComponent<StationSfx>(); // placeholder tones until the real SFX arrive
         go.AddComponent<SmartStamp>(); // speed reward on screen
+        go.AddComponent<CursorLock>(); // mouse look: cursor hidden while playing
         if ((sceneName ?? SceneManager.GetActiveScene().name) == "Ship") go.AddComponent<IntroCard>();
         // Debug keys exist in the Editor and Development builds only, never in the release zip.
         if (Debug.isDebugBuild) go.AddComponent<DebugTools>();

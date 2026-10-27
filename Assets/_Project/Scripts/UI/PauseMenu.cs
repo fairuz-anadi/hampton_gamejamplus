@@ -119,7 +119,7 @@ public class PauseMenu : MonoBehaviour
             GUILayout.Space(12f);
         }
         GUILayout.FlexibleSpace();
-        GUILayout.Label("Arrows or d-pad to choose  ·  Enter or A to pick  ·  Esc or B to resume", hint);
+        GUILayout.Label("Enter / A to pick   ·   Esc / B to resume", hint);
         GUILayout.EndArea();
     }
 

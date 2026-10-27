@@ -118,7 +118,8 @@ public static class ShipDeckBuilder
     // ---------- Length (ShipLayout): a promenade between the Corridor and the Wireless room ----------
 
     /// <summary>Bulkheads with a doorway: Boiler|Corridor, Corridor|Promenade, Promenade|Wireless, Wireless|Bridge, and the bridge front.</summary>
-    static readonly float[] Bulkheads = { 8f, 16f, ShipLayout.Z(16f), ShipLayout.Z(24f), ShipLayout.Z(32f) };
+    static readonly float[] Bulkheads =
+        { 8f, 16f, ShipLayout.InsertAt + 12f, ShipLayout.InsertAt + 24f, ShipLayout.Z(16f), ShipLayout.Z(24f), ShipLayout.Z(32f) };
     static readonly float BridgeFront = ShipLayout.Z(32f);
 
     /// <summary>Builds rooms laid out in the old coordinates under a group pushed forward, then hands their pieces back to
@@ -144,21 +145,70 @@ public static class ShipDeckBuilder
             if (c.localPosition.z >= ShipLayout.InsertAt) c.localPosition += new Vector3(0f, 0f, ShipLayout.Extra);
     }
 
-    /// <summary>The promenade itself: a long passage with benches, lifebuoys and the odd crate along the walls.
-    /// Floors, walls, trim, lamps and portholes come from the length-aware loops elsewhere.</summary>
+    // The promenade is three rooms, bow-ward from the corridor: a passenger saloon, the galley and mess, and the crew's
+    // quarters. Bulkheads with a doorway part them (Bulkheads); furniture keeps to the walls (|x| >= 2.6) so the
+    // middle 4 m stays clear for players and the bots' NavMesh.
+    static readonly float SaloonEnd = ShipLayout.InsertAt + 12f, GalleyEnd = ShipLayout.InsertAt + 24f;
+
+    /// <summary>The saloon, galley and quarters. Floors, walls, trim, lamps and portholes come from the length-aware loops.</summary>
     static void BuildPromenade(Transform props)
     {
-        var d = Group(props, "Promenade");
         float z0 = ShipLayout.InsertAt, z1 = ShipLayout.Z(ShipLayout.InsertAt);
-        Kit(d, "Furniture", "rug_rectangle_stripes_B", new Vector3(0f, 0.06f, z0 + 6f), 90f, null, false, Runner("Ship_RunnerRed", new Color(0.44f, 0.13f, 0.1f)));
-        Kit(d, "Furniture", "rug_rectangle_stripes_B", new Vector3(0f, 0.06f, z1 - 6f), 90f, null, false, Runner("Ship_RunnerRed", new Color(0.44f, 0.13f, 0.1f)));
-        for (float z = z0 + 10f; z < z1 - 4f; z += 10f)
+        const float port = -1f, stbd = 1f;
+        float Face(float side) => side < 0f ? 90f : -90f; // furniture against a side wall faces into the room
+
+        // Saloon: a couch corner to port, two small dining tables to starboard, pictures and a long rug.
+        var s = Group(props, "Saloon");
+        Kit(s, "Furniture", "rug_rectangle_stripes_B", new Vector3(0f, 0.06f, z0 + 6f), 90f, null, false, Runner("Ship_RunnerRed", new Color(0.44f, 0.13f, 0.1f)));
+        Kit(s, "Furniture", "couch_pillows", new Vector3(4.75f * port, 0f, z0 + 3.4f), Face(port));
+        Kit(s, "Furniture", "table_low", new Vector3(3.4f * port, 0f, z0 + 3.4f), 0f);
+        Kit(s, "Furniture", "armchair_pillows", new Vector3(4.6f * port, 0f, z0 + 7.2f), Face(port));
+        Kit(s, "Furniture", "armchair", new Vector3(4.6f * port, 0f, z0 + 9.2f), Face(port));
+        Kit(s, "Furniture", "table_small", new Vector3(3.3f * port, 0f, z0 + 8.2f), 0f);
+        Kit(s, "Furniture", "lamp_standing", new Vector3(5.0f * port, 0f, z0 + 1.0f), 0f);
+        foreach (float z in new[] { z0 + 3.2f, z0 + 8.2f })
         {
-            float side = Mathf.Repeat(z, 20f) < 10f ? -1f : 1f;
-            Kit(d, "Dungeon", "barrel_small_stack", new Vector3(4.6f * side, 0f, z), 0f);
-            Lifebuoy(d, new Vector3(5.46f * -side, 1.5f, z + 3f), side > 0f ? 90f : -90f);
+            Kit(s, "Restaurant", "table_round_A", new Vector3(3.9f * stbd, 0f, z), 0f);
+            Kit(s, "Restaurant", "chair_A", new Vector3(3.9f * stbd, 0f, z - 1.05f), 0f);
+            Kit(s, "Restaurant", "chair_A", new Vector3(3.9f * stbd, 0f, z + 1.05f), 180f);
         }
-        Speaker(props, "Speaker_Promenade", new Vector3(-5.4f, 2.5f, (z0 + z1) * 0.5f), 90f);
+        Kit(s, "Furniture", "pictureframe_large_B", new Vector3(5.42f * stbd, 1.45f, z0 + 5.7f), -90f, null, false);
+        Kit(s, "Furniture", "pictureframe_medium", new Vector3(5.42f * port, 1.5f, z0 + 5.4f), 90f, null, false);
+        Kit(s, "Furniture", "shelf_B_large_decorated", new Vector3(4.8f * stbd, 0f, SaloonEnd - 0.9f), 180f);
+
+        // Galley and mess: the cooking line along the port wall, a long mess table and stores to starboard.
+        var g = Group(props, "Galley");
+        string[] line = { "kitchencounter_straight_A_backsplash", "stove_multi_decorated", "kitchencounter_straight_A_decorated", "kitchencounter_sink_backsplash" };
+        for (int i = 0; i < line.Length; i++)
+            Kit(g, "Restaurant", line[i], new Vector3(4.95f * port, 0f, SaloonEnd + 2.2f + i * 2f), Face(port));
+        Kit(g, "Restaurant", "fridge_A_decorated", new Vector3(4.95f * port, 0f, SaloonEnd + 10.6f), Face(port));
+        Kit(g, "Restaurant", "kitchentable_A_large_decorated", new Vector3(4.0f * stbd, 0f, SaloonEnd + 5f), 90f);
+        for (int i = 0; i < 3; i++)
+            Kit(g, "Restaurant", "chair_stool", new Vector3(2.85f * stbd, 0f, SaloonEnd + 3.8f + i * 1.2f), 0f);
+        Kit(g, "Dungeon", "barrel_large", new Vector3(4.9f * stbd, 0f, SaloonEnd + 9.0f), 0f);
+        Kit(g, "Restaurant", "crate_potatoes", new Vector3(4.8f * stbd, 0f, SaloonEnd + 10.6f), 15f);
+        Kit(g, "Restaurant", "crate_carrots", new Vector3(3.9f * stbd, 0f, SaloonEnd + 10.9f), -10f);
+
+        // Crew quarters: bunks along both walls, a sea chest against the wall beside each, lockers and a rug down the middle.
+        var q = Group(props, "Quarters");
+        Kit(q, "Furniture", "rug_rectangle_A", new Vector3(0f, 0.06f, GalleyEnd + 8f), 90f, null, false);
+        for (int i = 0; i < 3; i++)
+        {
+            float z = GalleyEnd + 2.4f + i * 4.6f;
+            Kit(q, "Furniture", i % 2 == 0 ? "bed_single_A" : "bed_single_B", new Vector3(4.4f * port, 0f, z), Face(port));
+            if (i < 2) Kit(q, "Dungeon", "chest", new Vector3(4.85f * port, 0f, z + 2.3f), Face(port));
+        }
+        for (int i = 0; i < 2; i++)
+        {
+            float z = GalleyEnd + 3.6f + i * 4.6f;
+            Kit(q, "Furniture", "bed_single_B", new Vector3(4.4f * stbd, 0f, z), Face(stbd));
+            Kit(q, "Furniture", "cabinet_small_decorated", new Vector3(4.95f * stbd, 0f, z + 2.1f), Face(stbd));
+        }
+        Kit(q, "Furniture", "cabinet_medium_decorated", new Vector3(4.95f * stbd, 0f, z1 - 2.8f), Face(stbd));
+        Kit(q, "Dungeon", "barrel_small_stack", new Vector3(4.6f * port, 0f, z1 - 1.4f), 0f);
+        Lifebuoy(q, new Vector3(5.46f * stbd, 1.5f, z1 - 1.2f), -90f);
+
+        Speaker(props, "Speaker_Promenade", new Vector3(5.4f, 2.5f, z0 + 1.5f), -90f);
     }
 
     static void BuildHullAndSea(Transform p)
@@ -191,7 +241,9 @@ public static class ShipDeckBuilder
             bool promenade = z >= ShipLayout.InsertAt && z < ShipLayout.Z(ShipLayout.InsertAt);
             float oz = promenade ? ShipLayout.InsertAt : z >= ShipLayout.InsertAt ? z - ShipLayout.Extra : z;
             string piece; Material mat = null;
-            if (oz < 4f && x != 0f) piece = "floor_tile_big_grate";             // stokehold grating either side of the boiler
+            if (promenade && z >= SaloonEnd && z < GalleyEnd) { piece = "floor_tile_large"; mat = StylizedLook.Get("KK_StoneFloor"); } // galley tiles
+            else if (promenade && z >= GalleyEnd) { piece = "floor_wood_large_dark"; mat = StylizedLook.Get("KK_WoodFloor"); }     // quarters
+            else if (oz < 4f && x != 0f) piece = "floor_tile_big_grate";             // stokehold grating either side of the boiler
             else if (oz < 8f) { piece = "floor_tile_large"; mat = darkFloor; }  // boiler: sooty stone
             else if (oz < 16f) { piece = "floor_tile_large"; mat = StylizedLook.Get("KK_StoneFloor"); }   // corridor
             else if (oz < 32f) { piece = "floor_wood_large"; mat = StylizedLook.Get("KK_WoodFloor"); }    // promenade, wireless, bridge
@@ -229,7 +281,9 @@ public static class ShipDeckBuilder
     {
         Room(p, "Boiler", new Vector3(0f, 1.5f, 4f), new Vector3(12f, 3f, 8f));
         Room(p, "Corridor", new Vector3(0f, 1.5f, 12f), new Vector3(12f, 3f, 8f));
-        Room(p, "Promenade", new Vector3(0f, 1.5f, ShipLayout.InsertAt + ShipLayout.Extra * 0.5f), new Vector3(12f, 3f, ShipLayout.Extra));
+        Room(p, "Saloon", new Vector3(0f, 1.5f, ShipLayout.InsertAt + 6f), new Vector3(12f, 3f, 12f));
+        Room(p, "Galley", new Vector3(0f, 1.5f, ShipLayout.InsertAt + 18f), new Vector3(12f, 3f, 12f));
+        Room(p, "Quarters", new Vector3(0f, 1.5f, ShipLayout.InsertAt + 32f), new Vector3(12f, 3f, 16f));
         Room(p, "Wireless", ShipLayout.P(new Vector3(0f, 1.5f, 20f)), new Vector3(12f, 3f, 8f));
         Room(p, "Bridge", ShipLayout.P(new Vector3(0f, 1.5f, 28f)), new Vector3(12f, 3f, 8f));
         Room(p, "Bow", ShipLayout.P(new Vector3(0f, 1.5f, 34f)), new Vector3(12f, 3f, 4f));
