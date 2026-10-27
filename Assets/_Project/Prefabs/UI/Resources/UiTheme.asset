@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: be5666b95ed9c1c4da42b6e40770f605, type: 3}
+  m_Name: UiTheme
+  m_EditorClassIdentifier: Assembly-CSharp::UiTheme
+  title: {fileID: 12800000, guid: 0ae42d978670fa4478d79ccf0ac6bbea, type: 3}
+  body: {fileID: 12800000, guid: e8ea61b455a45f34a854bbae5fb23fc2, type: 3}
+  italic: {fileID: 12800000, guid: 4eee841c15a74a54c879e463c0095337, type: 3}
+  typewriter: {fileID: 12800000, guid: 8752290d6bb3a7c4daad8388525e8f22, type: 3}
+  diamond: {fileID: 21300000, guid: ff58d184973eb5347802455abb2ef4f8, type: 3}
+  keycap: {fileID: 21300000, guid: db09f1896e50a2946b76dd6f713100a5, type: 3}

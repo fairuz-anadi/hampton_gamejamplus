@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e73f7b2bf1ce35249bc6cff9c3b7237d, type: 3}
+  m_Name: CrewVisualSet
+  m_EditorClassIdentifier: Assembly-CSharp::CrewVisualSet
+  crew:
+  - {fileID: 2058894295403714809, guid: 1a0f181c65b31c840ac2b69feed37a7e, type: 3}
+  - {fileID: 139706165643002628, guid: 350ae4d405c779f45b2357b0215e7446, type: 3}
+  - {fileID: 2310618639274985941, guid: 893524e1de635614cb44b1725894e91c, type: 3}
+  - {fileID: 7807398813745951339, guid: b560bfa43415fe3418188cf0c95a322f, type: 3}
+  controller: {fileID: 9100000, guid: d20736704ba081249ab29ea6a07bb6d3, type: 2}
+  seatRing: {fileID: 21300000, guid: 7516218b02fbd0d4aa16f599fa6cbad3, type: 3}

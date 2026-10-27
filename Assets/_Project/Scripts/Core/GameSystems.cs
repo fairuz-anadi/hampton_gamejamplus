@@ -25,7 +25,8 @@ public static class GameSystems
         if (IsGameplayScene(scene.name)) Ensure(scene.name);
         else if (scene.name == "Results" && Object.FindAnyObjectByType<ResultsScreen>() == null)
             new GameObject("[Results]").AddComponent<ResultsScreen>();
-        else if (scene.name == "MainMenu" && Object.FindAnyObjectByType<MainMenuScreen>() == null)
+        // MainMenu.unity now carries Samprity's 3D opening (OpeningDirector); the IMGUI menu is the fallback without it.
+        else if (scene.name == "MainMenu" && Object.FindAnyObjectByType<MainMenuScreen>() == null && Object.FindAnyObjectByType<OpeningDirector>() == null)
             new GameObject("[MainMenu]").AddComponent<MainMenuScreen>();
     }
 
