@@ -42,8 +42,10 @@ public abstract class Station : MonoBehaviour, IStation
         }
     }
 
-    void OnEnable() => StationRegistry.Register(this);
-    void OnDisable() => StationRegistry.Unregister(this);
+    // Protected virtual so a station that needs its own OnEnable/OnDisable (Wireless) overrides these and calls
+    // base. A plain "void OnEnable()" in a subclass would replace them silently and the station would never register.
+    protected virtual void OnEnable() => StationRegistry.Register(this);
+    protected virtual void OnDisable() => StationRegistry.Unregister(this);
 
     public virtual void PrepareForOrder(ActiveOrder order)
     {

@@ -22,13 +22,18 @@ public class Wireless : Station
 
     public override StationType Type => StationType.Wireless;
 
-    void OnEnable()
+    protected override void OnEnable()
     {
+        base.OnEnable(); // registers the desk with StationRegistry
         if (fileUnreadOrder == null) fileUnreadOrder = Resources.Load<OrderData>("Orders/07_FileIceWarning");
         GameEvents.OrderResolved += OnOrderResolved;
     }
 
-    void OnDisable() => GameEvents.OrderResolved -= OnOrderResolved;
+    protected override void OnDisable()
+    {
+        base.OnDisable();
+        GameEvents.OrderResolved -= OnOrderResolved;
+    }
 
     protected override void Update()
     {
