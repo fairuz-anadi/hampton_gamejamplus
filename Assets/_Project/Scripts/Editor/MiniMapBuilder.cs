@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// Builds the MiniMap prefab (Prefabs/UI/MiniMap/Resources/MiniMap.prefab): a bottom-right deck map that self-spawns
+/// Builds the MiniMap prefab (Prefabs/UI/MiniMap/Resources/MiniMap.prefab): a top-left deck map that self-spawns
 /// onto Samprity's HUD canvas at runtime (see MiniMap.cs). Doesn't touch HUD.prefab, HudBuilder.cs or any of her
 /// files. Every sprite it uses (hull outline, circle, ring, triangle, rounded rect) is generated procedurally below
 /// and saved as its own asset under Art/UI/MiniMap/Generated — nothing is read from Samprity's Art/UI/Sprites pool.
@@ -77,9 +77,10 @@ public static class MiniMapBuilder
 
         var root = new GameObject("MiniMap", typeof(RectTransform));
         var rootRect = (RectTransform)root.transform;
-        rootRect.anchorMin = rootRect.anchorMax = new Vector2(1f, 0f);
-        rootRect.pivot = new Vector2(1f, 0f);
-        rootRect.anchoredPosition = new Vector2(-24f, 226f);
+        // Top left, where the meter medallions used to be (Riham, 28 Oct).
+        rootRect.anchorMin = rootRect.anchorMax = new Vector2(0f, 1f);
+        rootRect.pivot = new Vector2(0f, 1f);
+        rootRect.anchoredPosition = new Vector2(28f, -26f);
         rootRect.sizeDelta = new Vector2(RootWidth, RootHeight);
         var fadeGroup = root.AddComponent<CanvasGroup>();
         fadeGroup.interactable = false;
