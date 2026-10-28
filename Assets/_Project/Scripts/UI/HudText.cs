@@ -4,9 +4,7 @@ using UnityEngine.InputSystem;
 /// <summary>Words and key labels the HUD shows. One place, so wording stays consistent. Owner: Samprity.</summary>
 public static class HudText
 {
-    static readonly string[] SeatNames = { "Nobody", "Number One", "Number Two", "Number Three", "Number Four" };
-
-    public static string Seat(int seat) => seat >= 0 && seat < SeatNames.Length ? SeatNames[seat] : "Number " + seat;
+    public static string Seat(int seat) => seat > 0 ? CrewRegistry.SeatName(seat) : "Nobody";
 
     public static string StationName(StationType t) => t switch
     {

@@ -18,7 +18,7 @@
 /// Don't over-explain. Let the atmosphere carry it.
 ///
 /// Formatting:
-///   {seat} = "Number Two", {task} = the order's results line, e.g. "Feed boiler two".
+///   {seat} = the crew member's name, e.g. "Ezra", {task} = the order's results line, e.g. "Feed boiler two".
 ///   \n starts a new text box (page). Keep the first page self-contained: when the speaker is busy, later pages give way.
 ///   *hic*, *clink*: stage directions, typed like any other text. Use sparingly.
 /// </summary>

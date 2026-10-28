@@ -89,7 +89,7 @@ public class TutorialHints : MonoBehaviour
         if (!active || offOrderSaid || o.Assignee == null || o.Assignee.IsBot || !o.Data.IsOff) return;
         offOrderSaid = true;
         offOrderId = o.Id;
-        Say(CaptainScript.TutorialOffOrder, o.Assignee.Seat); // queued right after the order itself
+        Say(CaptainScript.TutorialOffOrder, o.Assignee.Seat); // shown right after the order itself, then stays up with it
     }
 
     void Update()
@@ -207,7 +207,7 @@ public class TutorialHints : MonoBehaviour
     static void Say(string line, int seat)
     {
         if (!said.Add(line)) return;
-        CaptainDirector.Instance?.SayTutorial(line.Replace("{seat}", CrewRegistry.SeatName(seat)));
+        CaptainDirector.Instance?.SayTutorial(line.Replace("{seat}", CrewRegistry.SeatName(seat)), seat);
     }
 
     void SetPrompt(int seat, string key)
