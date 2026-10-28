@@ -54,7 +54,7 @@ public class CrewNameTags : MonoBehaviour
             Vector3 world = t.body.position + Vector3.up * heightAbove;
             Vector3 sp = cam.WorldToScreenPoint(world);
             float dist = Vector3.Distance(cam.transform.position, world);
-            float a = sp.z <= 0f ? 0f : 1f - Mathf.InverseLerp(fadeIn, fadeOut, dist);
+            float a = sp.z <= 0f || t.body == CrewWhispers.Speaking ? 0f : 1f - Mathf.InverseLerp(fadeIn, fadeOut, dist); // the bubble already names them
             t.group.alpha = Mathf.MoveTowards(t.group.alpha, a, Time.unscaledDeltaTime * 6f);
             if (sp.z <= 0f) continue;
             RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, sp, null, out var local);

@@ -18,7 +18,7 @@ public class TutorialHints : MonoBehaviour
     public static TutorialHints Instance { get; private set; }
 
     /// <summary>Simple IMGUI key prompt over the player's head until the real one exists.</summary>
-    public static bool DrawFallbackPrompts = true;
+    public static bool DrawFallbackPrompts = false; // off (Anadi, 28 Oct): no "R report  X refuse" over the player; the order card and station prompts carry the keys
 
     /// <summary>A human's key prompt changed: their seat and the key ("" when it clears).</summary>
     public static event System.Action<int, string> PromptChanged;
@@ -244,7 +244,7 @@ public class TutorialHints : MonoBehaviour
     static void ResetStatics()
     {
         PromptChanged = null;
-        DrawFallbackPrompts = true;
+        DrawFallbackPrompts = false; // stays off after a domain reset too
         doneThisSession = false;
         said.Clear();
     }
