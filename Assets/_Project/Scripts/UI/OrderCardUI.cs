@@ -9,6 +9,9 @@ using UnityEngine.UI;
 /// Compact look (Anadi, 28 Oct): the card reshapes itself at Awake into a slim, see-through strip: the station's
 /// icon inside the timer ring, the task in a few words, the seconds and two keys. A brass edge for normal orders,
 /// red with a "?!" badge for the Captain's suspicious ones. His full line is still on the radio strip.
+/// Notification look (Riham, 28 Oct, the default): a big solid card with only what to do, where, and the keys; after
+/// a few seconds it folds into the circular timer with the station's icon and a "TAB details" hint under it. Tab (or
+/// View on a controller) opens it out of the circle again (OrderCards handles the key).
 /// </summary>
 public class OrderCardUI : MonoBehaviour
 {
@@ -36,6 +39,16 @@ public class OrderCardUI : MonoBehaviour
 
     [Tooltip("The slim card: icon, task, timer and keys only.")]
     public bool compact = false; // Anadi kept the previous card (28 Oct); true gives the slim one
+    [Tooltip("The big card that folds into its timer circle after a few seconds; Tab opens it again.")]
+    public bool notification = true;
+    [Tooltip("Seconds a new order stays open before folding into its circle.")]
+    public float openSeconds = 3f;
+    [Tooltip("Seconds a card opened with Tab stays open before folding again.")]
+    public float reopenSeconds = 6f;
+
+    /// <summary>Height this card takes in the stack right now (OrderCards spaces them by it).</summary>
+    public float StackHeight => notification ? Mathf.Lerp(ClosedSize + TabHintHeight, OpenHeight, open) : ((RectTransform)transform).sizeDelta.y;
+    public bool IsOpen => openTarget;
 
     float appear;
     float holdResult;
@@ -67,10 +80,301 @@ public class OrderCardUI : MonoBehaviour
             r.anchorMin = Vector2.zero; r.anchorMax = Vector2.one; r.offsetMin = r.offsetMax = Vector2.zero;
             flashImage.color = new Color(0.86f, 0.68f, 0.34f, 0f);
         }
-        if (compact) Compact();
+        if (!laidOut)
+        {
+            laidOut = true;
+            if (notification) Notification();
+            else if (compact) Compact();
+        }
+    }
+
+    // ---------- Notification look ----------
+
+    const float OpenWidth = 640f, OpenHeight = 168f, ClosedSize = 124f, TabHintHeight = 40f, RingCentre = 62f;
+    RectTransform bgRect, rimRect, ringRect, tabHint, dropRect;
+    CanvasGroup contentGroup, tabGroup;
+    float open = 1f;
+    bool openTarget = true;
+    float closeAt;
+
+    /// <summary>Opens the card out of its circle (or folds it back), for Tab.</summary>
+    public void SetOpen(bool on)
+    {
+        openTarget = on;
+        closeAt = on ? Time.unscaledTime + reopenSeconds : 0f;
+    }
+
+    /// <summary>Rebuilds the card as a solid panel that grows out of its timer circle, anchored at the top right.</summary>
+    void Notification()
+    {
+        var rt = (RectTransform)transform;
+        rt.sizeDelta = new Vector2(OpenWidth, OpenHeight);
+        foreach (var t in new Component[] { header, captainLine }) if (t != null) t.gameObject.SetActive(false);
+        var pill = body.Find("Pill")?.GetComponent<Image>();
+        var fontBold = timerText != null ? timerText.font : header.font;
+
+        // A brass rim behind a solid dark panel; the panel clips the words, so they're revealed as it grows.
+        var rim = new GameObject("Rim", typeof(RectTransform), typeof(Image)).GetComponent<Image>();
+        rim.transform.SetParent(body, false);
+        rim.transform.SetAsFirstSibling();
+        rim.sprite = Crisp();
+        rim.type = Image.Type.Sliced;
+        rim.color = Orange;
+        rim.raycastTarget = false;
+        rimRect = rim.rectTransform;
+        TopRight(rimRect);
+        // A soft shadow under the sheet, so it lifts off the deck.
+        var drop = new GameObject("Drop", typeof(RectTransform), typeof(Image)).GetComponent<Image>();
+        drop.transform.SetParent(body, false);
+        drop.transform.SetAsFirstSibling();
+        drop.sprite = pill != null ? pill.sprite : rim.sprite; // the HUD's soft pill makes a good shadow
+        drop.type = Image.Type.Sliced;
+        drop.color = new Color(0f, 0f, 0f, 0.35f);
+        drop.raycastTarget = false;
+        dropRect = drop.rectTransform;
+        TopRight(dropRect);
+        if (pill != null)
+        {
+            pill.sprite = Crisp();
+            pill.type = Image.Type.Sliced;
+            pill.color = Paper;
+            bgRect = pill.rectTransform;
+            TopRight(bgRect);
+            pill.gameObject.AddComponent<RectMask2D>().softness = new Vector2Int(8, 0);
+            if (flashImage != null)
+            {
+                flashImage.transform.SetParent(bgRect, false);
+                var fr = flashImage.rectTransform;
+                fr.anchorMin = Vector2.zero; fr.anchorMax = Vector2.one; fr.offsetMin = fr.offsetMax = Vector2.zero;
+            }
+        }
+
+        // Everything but the ring lives in a content layer pinned to the panel's right edge, inside the mask.
+        var content = new GameObject("Content", typeof(RectTransform), typeof(CanvasGroup)).GetComponent<RectTransform>();
+        content.SetParent(bgRect != null ? bgRect : body, false);
+        content.anchorMin = content.anchorMax = content.pivot = new Vector2(1f, 1f);
+        content.anchoredPosition = Vector2.zero;
+        content.sizeDelta = new Vector2(OpenWidth, OpenHeight);
+        contentGroup = content.GetComponent<CanvasGroup>();
+
+        // What to do: big and bold.
+        task = new GameObject("Task", typeof(RectTransform), typeof(Text)).GetComponent<Text>();
+        task.transform.SetParent(content, false);
+        task.font = fontBold;
+        task.fontSize = 34;
+        task.color = Ink;
+        task.alignment = TextAnchor.MiddleLeft;
+        task.raycastTarget = false;
+        task.horizontalOverflow = HorizontalWrapMode.Wrap;
+        task.verticalOverflow = VerticalWrapMode.Truncate;
+        task.resizeTextForBestFit = true;
+        task.resizeTextMinSize = 22;
+        task.resizeTextMaxSize = 34;
+        task.lineSpacing = 0.9f;
+        Place(task.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(32f, -12f), new Vector2(OpenWidth - 32f - 140f, 76f));
+
+        // Where, and the seconds, along the bottom left; keys bottom right, clear of the ring.
+        if (where != null)
+        {
+            where.transform.SetParent(content, false);
+            where.fontSize = 22;
+            where.color = Rust;
+            where.alignment = TextAnchor.LowerLeft;
+            Place(where.rectTransform, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(32f, 50f), new Vector2(360f, 30f));
+        }
+        if (timerText != null)
+        {
+            timerText.transform.SetParent(content, false);
+            timerText.fontSize = 24;
+            timerCalm = Ink;
+            timerUrgent = InkRed;
+            timerText.alignment = TextAnchor.LowerRight;
+            Place(timerText.rectTransform, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-132f, 50f), new Vector2(70f, 30f));
+        }
+        if (hints != null)
+        {
+            foreach (var g in hints.GetComponentsInChildren<Graphic>(true)) g.color = InkSoft;
+            hints.transform.SetParent(content, false);
+            // The keys are laid out from the hints box's right edge, so it sits left-aligned with room to spare.
+            Place((RectTransform)hints.transform, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(24f, 12f), ((RectTransform)hints.transform).sizeDelta);
+        }
+        if (botNote != null)
+        {
+            botNote.color = InkSoft;
+            botNote.transform.SetParent(content, false);
+            botNote.alignment = TextAnchor.LowerLeft;
+            Place(botNote.rectTransform, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(32f, 14f), new Vector2(300f, 26f));
+        }
+        if (stamp != null)
+        {
+            if (stamp.TryGetComponent(out Outline so)) so.effectColor = new Color(1f, 0.98f, 0.92f, 0.9f);
+            stamp.transform.SetParent(content, false);
+            Place(stamp.rectTransform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-140f, 0f), new Vector2(440f, 54f));
+        }
+
+        // The timer ring with the station's icon: it stays put, and the panel opens out of it.
+        var marker = body.Find("Marker") as RectTransform;
+        if (marker != null)
+        {
+            ringRect = marker;
+            marker.SetAsLastSibling();
+            Place(marker, new Vector2(1f, 1f), new Vector2(0.5f, 0.5f), new Vector2(-RingCentre, -RingCentre), new Vector2(96f, 96f));
+            var gem = marker.Find("Diamond");
+            if (gem != null) gem.gameObject.SetActive(false);
+            var back = marker.Find("RingBack")?.GetComponent<Image>();
+            if (back != null) back.color = new Color(Ink.r, Ink.g, Ink.b, 0.14f);
+            var face = new GameObject("Face", typeof(RectTransform), typeof(Image)).GetComponent<Image>();
+            face.transform.SetParent(marker, false);
+            face.transform.SetAsFirstSibling();
+            face.sprite = rim.sprite;
+            face.type = Image.Type.Sliced;
+            face.pixelsPerUnitMultiplier = rim.sprite != null && rim.sprite.border.x > 0f ? rim.sprite.border.x / 46f : 1f;
+            face.color = new Color(1f, 0.98f, 0.93f);
+            face.raycastTarget = false;
+            face.rectTransform.sizeDelta = new Vector2(92f, 92f);
+            icon = new GameObject("Icon", typeof(RectTransform), typeof(RawImage)).GetComponent<RawImage>();
+            icon.transform.SetParent(marker, false);
+            icon.raycastTarget = false;
+            icon.rectTransform.sizeDelta = new Vector2(46f, 46f);
+        }
+
+        // Thin accent down the panel's left edge: brass, or red for the Captain's suspicious orders.
+        accent = new GameObject("Accent", typeof(RectTransform), typeof(Image)).GetComponent<Image>();
+        accent.transform.SetParent(content, false);
+        accent.raycastTarget = false;
+        var ar = accent.rectTransform;
+        ar.anchorMin = new Vector2(0f, 0f); ar.anchorMax = new Vector2(0f, 1f);
+        ar.pivot = new Vector2(0f, 0.5f);
+        ar.offsetMin = new Vector2(12f, 26f); ar.offsetMax = new Vector2(17f, -26f);
+
+        offBadge = new GameObject("OffBadge", typeof(RectTransform), typeof(Image)).gameObject;
+        offBadge.transform.SetParent(content, false);
+        var bi = offBadge.GetComponent<Image>();
+        bi.color = Red;
+        bi.raycastTarget = false;
+        Place(bi.rectTransform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-132f, -14f), new Vector2(34f, 26f));
+        var bt = NewText("Text", offBadge.transform, fontBold, 19, Cream, "?!", TextAnchor.MiddleCenter);
+        Stretch(bt.rectTransform);
+        offBadge.SetActive(false);
+
+        // Under the circle when it's folded: [TAB] details.
+        tabHint = new GameObject("TabHint", typeof(RectTransform), typeof(CanvasGroup)).GetComponent<RectTransform>();
+        tabHint.SetParent(body, false);
+        Place(tabHint, new Vector2(1f, 1f), new Vector2(0.5f, 1f), new Vector2(-RingCentre, -ClosedSize - 4f), new Vector2(150f, 32f));
+        tabGroup = tabHint.GetComponent<CanvasGroup>();
+        var cap = new GameObject("Key", typeof(RectTransform), typeof(Image)).GetComponent<Image>();
+        cap.transform.SetParent(tabHint, false);
+        cap.sprite = Crisp();
+        cap.type = Image.Type.Sliced;
+        cap.color = Paper;
+        cap.raycastTarget = false;
+        Place(cap.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0f, 0f), new Vector2(62f, 32f));
+        cap.gameObject.AddComponent<Outline>().effectColor = Orange;
+        tabKeyText = NewText("Letter", cap.transform, fontBold, 19, Ink, "TAB", TextAnchor.MiddleCenter);
+        Stretch(tabKeyText.rectTransform);
+        var label = NewText("Label", tabHint, fontBold, 22, Cream, "details", TextAnchor.MiddleLeft);
+        Place(label.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(70f, 0f), new Vector2(90f, 30f));
+        label.gameObject.AddComponent<Shadow>().effectColor = new Color(0f, 0f, 0f, 0.7f);
+        ApplyOpen();
+    }
+
+    Text tabKeyText;
+
+    /// <summary>Sizes the panel between its circle and fully open; fades the words with it.</summary>
+    void ApplyOpen()
+    {
+        float e = open * open * (3f - 2f * open);
+        float w = Mathf.Lerp(ClosedSize, OpenWidth, e), h = Mathf.Lerp(ClosedSize, OpenHeight, e);
+        if (bgRect != null)
+        {
+            bgRect.sizeDelta = new Vector2(w, h);
+            // Folded, the corners grow to half its size, so it's a true circle; open, the usual soft pill.
+            var img = bgRect.GetComponent<Image>();
+            if (img.sprite != null && img.sprite.border.x > 0f) img.pixelsPerUnitMultiplier = Mathf.Lerp(img.sprite.border.x / (ClosedSize * 0.5f), img.sprite.border.x / 22f, e);
+        }
+        if (dropRect != null)
+        {
+            dropRect.sizeDelta = new Vector2(w + 10f, h + 10f);
+            dropRect.anchoredPosition = new Vector2(2f, -4f);
+            var img = dropRect.GetComponent<Image>();
+            if (img.sprite != null && img.sprite.border.x > 0f) img.pixelsPerUnitMultiplier = Mathf.Lerp(img.sprite.border.x / (ClosedSize * 0.5f + 5f), 1f, e);
+        }
+        if (rimRect != null)
+        {
+            rimRect.sizeDelta = new Vector2(w + 6f, h + 6f);
+            var img = rimRect.GetComponent<Image>();
+            if (img.sprite != null && img.sprite.border.x > 0f) img.pixelsPerUnitMultiplier = Mathf.Lerp(img.sprite.border.x / (ClosedSize * 0.5f + 3f), img.sprite.border.x / 25f, e);
+        }
+        if (rimRect != null) rimRect.anchoredPosition = new Vector2(3f, 3f);
+        if (contentGroup != null)
+        {
+            contentGroup.alpha = Mathf.Clamp01((e - 0.45f) / 0.55f);
+            bool show = contentGroup.alpha > 0.001f;
+            if (contentGroup.gameObject.activeSelf != show) contentGroup.gameObject.SetActive(show);
+        }
+        if (ringRect != null) ringRect.anchoredPosition = new Vector2(-RingCentre, -Mathf.Lerp(RingCentre, OpenHeight * 0.5f, e));
+        if (tabGroup != null) tabGroup.alpha = ForPlayer && !leaving ? Mathf.Clamp01(1f - e * 1.8f) : 0f;
+        if (tabKeyText != null) tabKeyText.text = UnityEngine.InputSystem.Gamepad.current != null ? "TAB/VIEW" : "TAB";
+        if (tabKeyText != null) ((RectTransform)tabKeyText.transform.parent).sizeDelta = new Vector2(tabKeyText.text.Length > 3 ? 112f : 62f, 32f);
+        if (tabHint != null) tabHint.Find("Label").GetComponent<RectTransform>().anchoredPosition = new Vector2(tabKeyText != null && tabKeyText.text.Length > 3 ? 122f : 72f, 0f);
+    }
+
+    static Sprite crisp;
+
+    /// <summary>A hard-edged rounded rectangle for 9-slicing (the HUD's pill is deliberately blurred, which smudges paper).</summary>
+    static Sprite Crisp()
+    {
+        if (crisp != null) return crisp;
+        const int size = 128, radius = 48;
+        var tex = new Texture2D(size, size, TextureFormat.RGBA32, false) { filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp };
+        for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++)
+            {
+                float cx = Mathf.Clamp(x + 0.5f, radius, size - radius), cy = Mathf.Clamp(y + 0.5f, radius, size - radius);
+                float d = Vector2.Distance(new Vector2(x + 0.5f, y + 0.5f), new Vector2(cx, cy));
+                tex.SetPixel(x, y, new Color(1f, 1f, 1f, Mathf.Clamp01(radius - d + 0.5f)));
+            }
+        tex.Apply();
+        crisp = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100f, 0, SpriteMeshType.FullRect, new Vector4(radius, radius, radius, radius));
+        return crisp;
+    }
+
+    static void TopRight(RectTransform r)
+    {
+        r.anchorMin = r.anchorMax = r.pivot = new Vector2(1f, 1f);
+        r.anchoredPosition = Vector2.zero;
+    }
+
+    static void Place(RectTransform r, Vector2 anchor, Vector2 pivot, Vector2 pos, Vector2 size)
+    {
+        r.anchorMin = r.anchorMax = anchor;
+        r.pivot = pivot;
+        r.anchoredPosition = pos;
+        r.sizeDelta = size;
+    }
+
+    static void Stretch(RectTransform r)
+    {
+        r.anchorMin = Vector2.zero; r.anchorMax = Vector2.one;
+        r.offsetMin = r.offsetMax = Vector2.zero;
+    }
+
+    static Text NewText(string name, Transform parent, Font font, int size, Color color, string text, TextAnchor align)
+    {
+        var t = new GameObject(name, typeof(RectTransform), typeof(Text)).GetComponent<Text>();
+        t.transform.SetParent(parent, false);
+        t.font = font; t.fontSize = size; t.color = color; t.text = text;
+        t.alignment = align;
+        t.raycastTarget = false;
+        t.horizontalOverflow = HorizontalWrapMode.Overflow;
+        return t;
     }
 
     static readonly Color Brass = new Color(0.86f, 0.68f, 0.34f), Red = new Color(0.84f, 0.3f, 0.24f), Cream = new Color(0.97f, 0.93f, 0.84f);
+    // The notification card is a sheet of ship's paper: cream with warm ink, an orange rim and accents.
+    static readonly Color Paper = new Color(0.97f, 0.93f, 0.83f), Ink = new Color(0.16f, 0.11f, 0.08f),
+        InkSoft = new Color(0.35f, 0.27f, 0.2f), Orange = new Color(0.88f, 0.5f, 0.18f), Rust = new Color(0.62f, 0.3f, 0.12f),
+        InkRed = new Color(0.74f, 0.18f, 0.13f), InkGreen = new Color(0.2f, 0.45f, 0.24f);
 
     /// <summary>Reshapes the built card into the slim strip.</summary>
     void Compact()
@@ -218,6 +522,10 @@ public class OrderCardUI : MonoBehaviour
         leaving = false;
         holdResult = 0f;
         ForPlayer = human;
+        // A new order arrives open, then folds into its circle after openSeconds.
+        open = 0.35f;
+        openTarget = true;
+        closeAt = Time.unscaledTime + openSeconds;
         appear = 0f;
         flash = human ? 1f : 0f;
         // Doubled spaces: the bold face's space is too narrow to read at this size.
@@ -229,9 +537,9 @@ public class OrderCardUI : MonoBehaviour
             string line = string.IsNullOrEmpty(d.resultsLine) ? HudText.Where(d) : d.resultsLine;
             task.text = line.Length > 0 ? char.ToUpperInvariant(line[0]) + line.Substring(1) : line;
             bool off = d.kind != OrderKind.Normal;
-            accent.color = off ? Red : Brass;
+            accent.color = notification ? (off ? InkRed : Color.clear) : off ? Red : Brass; // paper: only the suspicious ones get a stripe
             offBadge.SetActive(off);
-            if (icon != null) { icon.texture = IconFor(d.station); icon.color = Cream; }
+            if (icon != null) { icon.texture = IconFor(d.station); icon.color = notification ? Ink : Cream; }
         }
         where.text = HudText.Where(d);
         hints.SetActive(human);
@@ -261,23 +569,42 @@ public class OrderCardUI : MonoBehaviour
     public void Resolve(Choice c)
     {
         stamp.text = HudText.ResultStamp(c);
-        stamp.color = c == Choice.Refuse || c == Choice.Expired ? timerUrgent : new Color(0.75f, 0.95f, 0.75f);
+        stamp.color = c == Choice.Refuse || c == Choice.Expired ? timerUrgent : notification ? InkGreen : new Color(0.75f, 0.95f, 0.75f);
         stamp.enabled = true;
+        if (notification) { openTarget = true; closeAt = 0f; } // open up to show how it ended
         Order = null;
         leaving = true;
         holdResult = 1.3f;
+    }
+
+    bool laidOut;
+
+    /// <summary>Editor preview (no Awake in edit mode): lay the card out once, as Awake would.</summary>
+    public void PrepareForPreview()
+    {
+        if (laidOut) return;
+        laidOut = true;
+        if (notification) Notification();
+        else if (compact) Compact();
     }
 
     /// <summary>Editor preview: show the card fully in, no animation.</summary>
     public void SnapIn()
     {
         appear = 1f;
+        if (notification) { open = openTarget ? 1f : 0f; ApplyOpen(); }
         Apply();
     }
 
     void Update()
     {
         float dt = Time.unscaledDeltaTime;
+        if (notification)
+        {
+            if (Order != null && openTarget && closeAt > 0f && Time.unscaledTime >= closeAt) openTarget = false;
+            open = Mathf.MoveTowards(open, openTarget ? 1f : 0f, dt * 3.2f);
+            ApplyOpen();
+        }
         if (Order != null)
         {
             appear = Mathf.MoveTowards(appear, 1f, dt * 2.6f);
@@ -297,7 +624,7 @@ public class OrderCardUI : MonoBehaviour
 
     void Apply()
     {
-        float dim = ForPlayer || leaving ? 1f : crewAlpha;
+        float dim = ForPlayer || leaving || notification ? 1f : crewAlpha;
         if (group != null) group.alpha = Mathf.Clamp01(appear * 1.6f) * dim;
         if (body != null)
         {
