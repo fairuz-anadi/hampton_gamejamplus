@@ -155,6 +155,7 @@ public class ShipClues : MonoBehaviour
         Part(bottle, PrimitiveType.Cylinder, new Vector3(0f, 0.33f, 0f), new Vector3(0.05f, 0.05f, 0.05f), lit, new Color(0.18f, 0.32f, 0.16f));
         Part(bottle, PrimitiveType.Cylinder, new Vector3(0f, 0.39f, 0f), new Vector3(0.045f, 0.02f, 0.045f), lit, new Color(0.55f, 0.38f, 0.22f));
         Part(bottle, PrimitiveType.Cube, new Vector3(0f, 0.15f, 0.061f), new Vector3(0.08f, 0.1f, 0.004f), lit, new Color(0.92f, 0.86f, 0.7f));
+        ClueCloseUp.DressBottle(bottle); // (Samprity) looks like the close-up's bottle: dark green, empty, still sealed
         bottle.gameObject.SetActive(false);
     }
 
@@ -177,16 +178,14 @@ public class ShipClues : MonoBehaviour
 
         var src = near != null ? near.GetComponent<IInteractSource>() : null;
         bool held = src != null && src.InteractHeld;
-        if (held && !wasHeld)
-        {
-            noteUntil = Time.time + 4.5f;
-            PlayerThought.Think("Full? He's been slurring all night... He hasn't drunk a drop.", "bottle");
-        }
+        // (Samprity) E eases the camera in on the bottle, with "It was never full." on a note at the right. Its own E
+        // (or walking off) puts it down, so a press while it's up doesn't open it again.
+        if (held && !wasHeld && !ClueCloseUp.IsOpen) ClueCloseUp.ShowBottle(bottle, near);
         wasHeld = held;
 
         float dt = Time.unscaledDeltaTime;
         bool noteUp = Time.time < noteUntil && near != null;
-        bool promptUp = near != null && !noteUp && Camera.main != null;
+        bool promptUp = near != null && !noteUp && !ClueCloseUp.IsOpen && Camera.main != null;
         promptGroup.alpha = Mathf.MoveTowards(promptGroup.alpha, promptUp ? 1f : 0f, dt * 6f);
         noteGroup.alpha = Mathf.MoveTowards(noteGroup.alpha, noteUp ? 1f : 0f, dt * 4f);
         if (promptUp)

@@ -1,0 +1,2756 @@
+{
+    "lines": [
+        {
+            "id": "cap_e7f78ee8",
+            "key": "Ahem. Is this on? It's on.",
+            "speak": "Ahem. Is this on? It's on.",
+            "mood": 0,
+            "variant": "",
+            "source": "Part1Start"
+        },
+        {
+            "id": "cap_b9ea1a5a",
+            "key": "Good morning, crew! This is your Captain speaking. Well, typing. Well, speaking. You'll get used to me.",
+            "speak": "Good morning, crew! This is your Captain speaking. Well, typing. Well, speaking. You'll get used to me.",
+            "mood": 0,
+            "variant": "",
+            "source": "Part1Start"
+        },
+        {
+            "id": "cap_b493d663",
+            "key": "Two days to the Promised Port. Clear skies, calm sea, and a crew that does exactly what it's told. I can already tell we'll get along.",
+            "speak": "Two days to the Promised Port. Clear skies, calm sea, and a crew that does exactly what it's told. I can already tell we'll get along.",
+            "mood": 0,
+            "variant": "",
+            "source": "Part1Start"
+        },
+        {
+            "id": "cap_947d1df4",
+            "key": "Evening, crew! Sea like glass. Stars out. I've loosened my collar, which is the most exciting thing that's happened all day.",
+            "speak": "Evening, crew! Sea like glass. Stars out. I've loosened my collar, which is the most exciting thing that's happened all day.",
+            "mood": 1,
+            "variant": "",
+            "source": "Part2Start"
+        },
+        {
+            "id": "cap_15a0166e",
+            "key": "We're ahead of schedule. Let's be more ahead of it.",
+            "speak": "We're ahead of schedule. Let's be more ahead of it.",
+            "mood": 1,
+            "variant": "",
+            "source": "Part2Start"
+        },
+        {
+            "id": "cap_be08faea",
+            "key": "Quick announcement: the bridge is perfectly level. If it feels tilted, that's a you problem.",
+            "speak": "Quick announcement: the bridge is perfectly level. If it feels tilted, that's a you problem.",
+            "mood": 2,
+            "variant": "",
+            "source": "MoodStart"
+        },
+        {
+            "id": "cap_e41ef951",
+            "key": "Right. Where were we. Orders. Yes.",
+            "speak": "Right. Where were we. Orders. Yes.",
+            "mood": 2,
+            "variant": "",
+            "source": "MoodStart"
+        },
+        {
+            "id": "cap_24c3b568",
+            "key": "Right. RIGHT. Everyone listen. I have been very patient. Very. Patient.",
+            "speak": "Right. RIGHT. Everyone listen. I have been very patient. Very. Patient.",
+            "mood": 3,
+            "variant": "",
+            "source": "MoodStart"
+        },
+        {
+            "id": "cap_948e3cd5",
+            "key": "I've been patient for hours. Days. It's been a long evening and I've been patient in all of it.",
+            "speak": "I've been patient for hours. Days. It's been a long evening and I've been patient in all of it.",
+            "mood": 3,
+            "variant": "",
+            "source": "MoodStart"
+        },
+        {
+            "id": "cap_872a799a",
+            "key": "That bell means something. I've forgotten what.",
+            "speak": "That bell means something. I've forgotten what.",
+            "mood": 4,
+            "variant": "",
+            "source": "IcebergCall"
+        },
+        {
+            "id": "cap_0be27ab9",
+            "key": "Hands on the wheel, crew.",
+            "speak": "Hands on the wheel, crew.",
+            "mood": 4,
+            "variant": "",
+            "source": "IcebergCall"
+        },
+        {
+            "id": "cap_3bac7e68",
+            "key": "Arthur says done. Done is my favourite word.",
+            "speak": "Arthur says done. Done is my favourite word.",
+            "mood": 1,
+            "variant": "Arthur",
+            "source": "ReportDone"
+        },
+        {
+            "id": "cap_8edebe28",
+            "key": "Ezra says done. Done is my favourite word.",
+            "speak": "Ezra says done. Done is my favourite word.",
+            "mood": 1,
+            "variant": "Ezra",
+            "source": "ReportDone"
+        },
+        {
+            "id": "cap_673977ca",
+            "key": "Mabel says done. Done is my favourite word.",
+            "speak": "Mabel says done. Done is my favourite word.",
+            "mood": 1,
+            "variant": "Mabel",
+            "source": "ReportDone"
+        },
+        {
+            "id": "cap_1168a9ba",
+            "key": "Jonah says done. Done is my favourite word.",
+            "speak": "Jonah says done. Done is my favourite word.",
+            "mood": 1,
+            "variant": "Jonah",
+            "source": "ReportDone"
+        },
+        {
+            "id": "cap_17c8d671",
+            "key": "{seat} says done. Done is my favourite word.",
+            "speak": "Sailor says done. Done is my favourite word.",
+            "mood": 1,
+            "variant": "*",
+            "source": "ReportDone"
+        },
+        {
+            "id": "cap_99f4405c",
+            "key": "Good work! We'll make history, you and I.",
+            "speak": "Good work! We'll make history, you and I.",
+            "mood": 0,
+            "variant": "",
+            "source": "Praise"
+        },
+        {
+            "id": "cap_853b72f4",
+            "key": "Lovely. Steady hands make a steady ship. I'd shake yours, but I'm up here and you're down there. Consider it shaken.",
+            "speak": "Lovely. Steady hands make a steady ship. I'd shake yours, but I'm up here and you're down there. Consider it shaken.",
+            "mood": 0,
+            "variant": "",
+            "source": "Praise"
+        },
+        {
+            "id": "cap_e577c9a3",
+            "key": "That's the spirit! I knew I picked a good crew. Well, the company picked you. But I approved. In spirit.",
+            "speak": "That's the spirit! I knew I picked a good crew. Well, the company picked you. But I approved. In spirit.",
+            "mood": 0,
+            "variant": "",
+            "source": "Praise"
+        },
+        {
+            "id": "cap_9c12882d",
+            "key": "Good. Very good. Speed and obedience, my two favourite things.",
+            "speak": "Good. Very good. Speed and obedience, my two favourite things.",
+            "mood": 1,
+            "variant": "",
+            "source": "Praise"
+        },
+        {
+            "id": "cap_e34777b6",
+            "key": "Lovely. Keep that up and you'll be captain one day. Of something. Smaller.",
+            "speak": "Lovely. Keep that up and you'll be captain one day. Of something. Smaller.",
+            "mood": 1,
+            "variant": "",
+            "source": "Praise"
+        },
+        {
+            "id": "cap_8f1610ca",
+            "key": "Oh, look at that. Someone on this ship can follow an order. Gold star. *hic*",
+            "speak": "Oh, look at that. Someone on this ship can follow an order. Gold star. hic!",
+            "mood": 2,
+            "variant": "",
+            "source": "Praise"
+        },
+        {
+            "id": "cap_decaebbc",
+            "key": "Finally. Was that so hard? Don't answer. It was a rhetorical. A rhetoric. A question.",
+            "speak": "Finally. Was that so hard? Don't answer. It was a rhetorical. A rhetoric. A question.",
+            "mood": 2,
+            "variant": "",
+            "source": "Praise"
+        },
+        {
+            "id": "cap_6b936167",
+            "key": "Thash... that's more like it. You're my favourite now. Everyone else is fired.",
+            "speak": "Thash... that's more like it. You're my favourite now. Everyone else is fired.",
+            "mood": 3,
+            "variant": "",
+            "source": "Praise"
+        },
+        {
+            "id": "cap_09c5c57e",
+            "key": "Good. GOOD. See? When you do what I say, nothing bad happens. Usually. Mostly. Shh.",
+            "speak": "Good. GOOD. See? When you do what I say, nothing bad happens. Usually. Mostly. Shh.",
+            "mood": 3,
+            "variant": "",
+            "source": "Praise"
+        },
+        {
+            "id": "cap_b3432dba",
+            "key": "Good.",
+            "speak": "Good.",
+            "mood": 4,
+            "variant": "",
+            "source": "Praise"
+        },
+        {
+            "id": "cap_900bb48c",
+            "key": "Refused? Oh. Well, I'm sure you have your reasons, Arthur.",
+            "speak": "Refused? Oh. Well, I'm sure you have your reasons, Arthur.",
+            "mood": 0,
+            "variant": "Arthur",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_0b8969b4",
+            "key": "Refused? Oh. Well, I'm sure you have your reasons, Ezra.",
+            "speak": "Refused? Oh. Well, I'm sure you have your reasons, Ezra.",
+            "mood": 0,
+            "variant": "Ezra",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_c2a0b0ba",
+            "key": "Refused? Oh. Well, I'm sure you have your reasons, Mabel.",
+            "speak": "Refused? Oh. Well, I'm sure you have your reasons, Mabel.",
+            "mood": 0,
+            "variant": "Mabel",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_aaca49e4",
+            "key": "Refused? Oh. Well, I'm sure you have your reasons, Jonah.",
+            "speak": "Refused? Oh. Well, I'm sure you have your reasons, Jonah.",
+            "mood": 0,
+            "variant": "Jonah",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_6b0c2123",
+            "key": "Refused? Oh. Well, I'm sure you have your reasons, {seat}.",
+            "speak": "Refused? Oh. Well, I'm sure you have your reasons, sailor.",
+            "mood": 0,
+            "variant": "*",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_552c1750",
+            "key": "I'll just make a note. A small one. In pencil.",
+            "speak": "I'll just make a note. A small one. In pencil.",
+            "mood": 0,
+            "variant": "",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_550359ac",
+            "key": "Arthur would rather not. That's all right! It's a free ship.",
+            "speak": "Arthur would rather not. That's all right! It's a free ship.",
+            "mood": 0,
+            "variant": "Arthur",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_c4d78238",
+            "key": "Ezra would rather not. That's all right! It's a free ship.",
+            "speak": "Ezra would rather not. That's all right! It's a free ship.",
+            "mood": 0,
+            "variant": "Ezra",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_1cd72c52",
+            "key": "Mabel would rather not. That's all right! It's a free ship.",
+            "speak": "Mabel would rather not. That's all right! It's a free ship.",
+            "mood": 0,
+            "variant": "Mabel",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_1a05d2a6",
+            "key": "Jonah would rather not. That's all right! It's a free ship.",
+            "speak": "Jonah would rather not. That's all right! It's a free ship.",
+            "mood": 0,
+            "variant": "Jonah",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_ce500e39",
+            "key": "{seat} would rather not. That's all right! It's a free ship.",
+            "speak": "Sailor would rather not. That's all right! It's a free ship.",
+            "mood": 0,
+            "variant": "*",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_5a32ed8a",
+            "key": "Mostly free. Free-ish.",
+            "speak": "Mostly free. Free-ish.",
+            "mood": 0,
+            "variant": "",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_e2338227",
+            "key": "Refused. Interesting.",
+            "speak": "Refused. Interesting.",
+            "mood": 1,
+            "variant": "",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_fb33d31f",
+            "key": "Arthur, I'm going to pretend I didn't hear that, and you're going to pretend you didn't say it.",
+            "speak": "Arthur, I'm going to pretend I didn't hear that, and you're going to pretend you didn't say it.",
+            "mood": 1,
+            "variant": "Arthur",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_68fbfe27",
+            "key": "Ezra, I'm going to pretend I didn't hear that, and you're going to pretend you didn't say it.",
+            "speak": "Ezra, I'm going to pretend I didn't hear that, and you're going to pretend you didn't say it.",
+            "mood": 1,
+            "variant": "Ezra",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_b29d5b3d",
+            "key": "Mabel, I'm going to pretend I didn't hear that, and you're going to pretend you didn't say it.",
+            "speak": "Mabel, I'm going to pretend I didn't hear that, and you're going to pretend you didn't say it.",
+            "mood": 1,
+            "variant": "Mabel",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_1f7769a7",
+            "key": "Jonah, I'm going to pretend I didn't hear that, and you're going to pretend you didn't say it.",
+            "speak": "Jonah, I'm going to pretend I didn't hear that, and you're going to pretend you didn't say it.",
+            "mood": 1,
+            "variant": "Jonah",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_7903d776",
+            "key": "{seat}, I'm going to pretend I didn't hear that, and you're going to pretend you didn't say it.",
+            "speak": "Sailor, I'm going to pretend I didn't hear that, and you're going to pretend you didn't say it.",
+            "mood": 1,
+            "variant": "*",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_b02d09e8",
+            "key": "That's alright, Arthur. Someone else will do it.",
+            "speak": "That's alright, Arthur. Someone else will do it.",
+            "mood": 1,
+            "variant": "Arthur",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_1d66947c",
+            "key": "That's alright, Ezra. Someone else will do it.",
+            "speak": "That's alright, Ezra. Someone else will do it.",
+            "mood": 1,
+            "variant": "Ezra",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_3c11bcc2",
+            "key": "That's alright, Mabel. Someone else will do it.",
+            "speak": "That's alright, Mabel. Someone else will do it.",
+            "mood": 1,
+            "variant": "Mabel",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_d68fae2a",
+            "key": "That's alright, Jonah. Someone else will do it.",
+            "speak": "That's alright, Jonah. Someone else will do it.",
+            "mood": 1,
+            "variant": "Jonah",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_ee326579",
+            "key": "That's alright, {seat}. Someone else will do it.",
+            "speak": "That's alright, sailor. Someone else will do it.",
+            "mood": 1,
+            "variant": "*",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_fa68bf99",
+            "key": "Someone better.",
+            "speak": "Someone better.",
+            "mood": 1,
+            "variant": "",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_7ab97367",
+            "key": "Arthur decided not to do as they were told. Arthur believed they knew better than the Captain.",
+            "speak": "Arthur decided not to do as they were told. Arthur believed they knew better than the Captain.",
+            "mood": 2,
+            "variant": "Arthur",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_313b84e9",
+            "key": "Ezra decided not to do as they were told. Ezra believed they knew better than the Captain.",
+            "speak": "Ezra decided not to do as they were told. Ezra believed they knew better than the Captain.",
+            "mood": 2,
+            "variant": "Ezra",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_215796bc",
+            "key": "Mabel decided not to do as they were told. Mabel believed they knew better than the Captain.",
+            "speak": "Mabel decided not to do as they were told. Mabel believed they knew better than the Captain.",
+            "mood": 2,
+            "variant": "Mabel",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_8e14bca9",
+            "key": "Jonah decided not to do as they were told. Jonah believed they knew better than the Captain.",
+            "speak": "Jonah decided not to do as they were told. Jonah believed they knew better than the Captain.",
+            "mood": 2,
+            "variant": "Jonah",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_ca9fc0d7",
+            "key": "{seat} decided not to do as they were told. {seat} believed they knew better than the Captain.",
+            "speak": "Sailor decided not to do as they were told. sailor believed they knew better than the Captain.",
+            "mood": 2,
+            "variant": "*",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_1bca33ff",
+            "key": "Arthur was wrong. *hic*",
+            "speak": "Arthur was wrong. hic!",
+            "mood": 2,
+            "variant": "Arthur",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_8d8155ff",
+            "key": "Ezra was wrong. *hic*",
+            "speak": "Ezra was wrong. hic!",
+            "mood": 2,
+            "variant": "Ezra",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_8ae854e1",
+            "key": "Mabel was wrong. *hic*",
+            "speak": "Mabel was wrong. hic!",
+            "mood": 2,
+            "variant": "Mabel",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_c5e937a7",
+            "key": "Jonah was wrong. *hic*",
+            "speak": "Jonah was wrong. hic!",
+            "mood": 2,
+            "variant": "Jonah",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_06cd754a",
+            "key": "{seat} was wrong. *hic*",
+            "speak": "Sailor was wrong. hic!",
+            "mood": 2,
+            "variant": "*",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_86e95f05",
+            "key": "No? NO? I give you one simple job, Arthur. One.",
+            "speak": "No? NO? I give you one simple job, Arthur. One.",
+            "mood": 2,
+            "variant": "Arthur",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_67fc4b25",
+            "key": "No? NO? I give you one simple job, Ezra. One.",
+            "speak": "No? NO? I give you one simple job, Ezra. One.",
+            "mood": 2,
+            "variant": "Ezra",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_e04bda7d",
+            "key": "No? NO? I give you one simple job, Mabel. One.",
+            "speak": "No? NO? I give you one simple job, Mabel. One.",
+            "mood": 2,
+            "variant": "Mabel",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_144ec615",
+            "key": "No? NO? I give you one simple job, Jonah. One.",
+            "speak": "No? NO? I give you one simple job, Jonah. One.",
+            "mood": 2,
+            "variant": "Jonah",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_3c9611be",
+            "key": "No? NO? I give you one simple job, {seat}. One.",
+            "speak": "No? NO? I give you one simple job, sailor. One.",
+            "mood": 2,
+            "variant": "*",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_a184efad",
+            "key": "I've had harder jobs opening this bottle.",
+            "speak": "I've had harder jobs opening this bottle.",
+            "mood": 2,
+            "variant": "",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_d70150e3",
+            "key": "Oh, you're REFUSING? You, Arthur? You couldn't steer a bathtub. I've met barnacles with more initiative.",
+            "speak": "Oh, you're REFUSING? You, Arthur? You couldn't steer a bathtub. I've met barnacles with more initiative.",
+            "mood": 3,
+            "variant": "Arthur",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_7bbdf1eb",
+            "key": "Oh, you're REFUSING? You, Ezra? You couldn't steer a bathtub. I've met barnacles with more initiative.",
+            "speak": "Oh, you're REFUSING? You, Ezra? You couldn't steer a bathtub. I've met barnacles with more initiative.",
+            "mood": 3,
+            "variant": "Ezra",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_dc4d621d",
+            "key": "Oh, you're REFUSING? You, Mabel? You couldn't steer a bathtub. I've met barnacles with more initiative.",
+            "speak": "Oh, you're REFUSING? You, Mabel? You couldn't steer a bathtub. I've met barnacles with more initiative.",
+            "mood": 3,
+            "variant": "Mabel",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_270c8541",
+            "key": "Oh, you're REFUSING? You, Jonah? You couldn't steer a bathtub. I've met barnacles with more initiative.",
+            "speak": "Oh, you're REFUSING? You, Jonah? You couldn't steer a bathtub. I've met barnacles with more initiative.",
+            "mood": 3,
+            "variant": "Jonah",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_2ac9ffa0",
+            "key": "Oh, you're REFUSING? You, {seat}? You couldn't steer a bathtub. I've met barnacles with more initiative.",
+            "speak": "Oh, you're REFUSING? You, sailor? You couldn't steer a bathtub. I've met barnacles with more initiative.",
+            "mood": 3,
+            "variant": "*",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_fafabce1",
+            "key": "When we dock, I'm having your face painted on the hull. As a warning.",
+            "speak": "When we dock, I'm having your face painted on the hull. As a warning.",
+            "mood": 3,
+            "variant": "",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_d8efa450",
+            "key": "Refuse me one more time, Arthur. Go on. I dare you.",
+            "speak": "Refuse me one more time, Arthur. Go on. I dare you.",
+            "mood": 3,
+            "variant": "Arthur",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_aa7122bc",
+            "key": "Refuse me one more time, Ezra. Go on. I dare you.",
+            "speak": "Refuse me one more time, Ezra. Go on. I dare you.",
+            "mood": 3,
+            "variant": "Ezra",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_f8a9d48e",
+            "key": "Refuse me one more time, Mabel. Go on. I dare you.",
+            "speak": "Refuse me one more time, Mabel. Go on. I dare you.",
+            "mood": 3,
+            "variant": "Mabel",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_e3930102",
+            "key": "Refuse me one more time, Jonah. Go on. I dare you.",
+            "speak": "Refuse me one more time, Jonah. Go on. I dare you.",
+            "mood": 3,
+            "variant": "Jonah",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_8a36c9dd",
+            "key": "Refuse me one more time, {seat}. Go on. I dare you.",
+            "speak": "Refuse me one more time, sailor. Go on. I dare you.",
+            "mood": 3,
+            "variant": "*",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_2642f478",
+            "key": "I'll have you scrubbing the anchor. Underwater. *hic*",
+            "speak": "I'll have you scrubbing the anchor. Underwater. hic!",
+            "mood": 3,
+            "variant": "",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_6207b52e",
+            "key": "Refused. It doesn't matter anymore, Arthur.",
+            "speak": "Refused. It doesn't matter anymore, Arthur.",
+            "mood": 4,
+            "variant": "Arthur",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_86ee4506",
+            "key": "Refused. It doesn't matter anymore, Ezra.",
+            "speak": "Refused. It doesn't matter anymore, Ezra.",
+            "mood": 4,
+            "variant": "Ezra",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_557e500c",
+            "key": "Refused. It doesn't matter anymore, Mabel.",
+            "speak": "Refused. It doesn't matter anymore, Mabel.",
+            "mood": 4,
+            "variant": "Mabel",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_89f75fb6",
+            "key": "Refused. It doesn't matter anymore, Jonah.",
+            "speak": "Refused. It doesn't matter anymore, Jonah.",
+            "mood": 4,
+            "variant": "Jonah",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_60be7225",
+            "key": "Refused. It doesn't matter anymore, {seat}.",
+            "speak": "Refused. It doesn't matter anymore, sailor.",
+            "mood": 4,
+            "variant": "*",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_44cdbf37",
+            "key": "Go on, refuse. The sea doesn't take orders either.",
+            "speak": "Go on, refuse. The sea doesn't take orders either.",
+            "mood": 4,
+            "variant": "",
+            "source": "Refuse"
+        },
+        {
+            "id": "cap_a025ed54",
+            "key": "Too slow, Arthur. Never mind! Plenty of voyage left.",
+            "speak": "Too slow, Arthur. Never mind! Plenty of voyage left.",
+            "mood": 0,
+            "variant": "Arthur",
+            "source": "Expired"
+        },
+        {
+            "id": "cap_26c889f8",
+            "key": "Too slow, Ezra. Never mind! Plenty of voyage left.",
+            "speak": "Too slow, Ezra. Never mind! Plenty of voyage left.",
+            "mood": 0,
+            "variant": "Ezra",
+            "source": "Expired"
+        },
+        {
+            "id": "cap_a46a29f8",
+            "key": "Too slow, Mabel. Never mind! Plenty of voyage left.",
+            "speak": "Too slow, Mabel. Never mind! Plenty of voyage left.",
+            "mood": 0,
+            "variant": "Mabel",
+            "source": "Expired"
+        },
+        {
+            "id": "cap_af5859b0",
+            "key": "Too slow, Jonah. Never mind! Plenty of voyage left.",
+            "speak": "Too slow, Jonah. Never mind! Plenty of voyage left.",
+            "mood": 0,
+            "variant": "Jonah",
+            "source": "Expired"
+        },
+        {
+            "id": "cap_c448ac4d",
+            "key": "Too slow, {seat}. Never mind! Plenty of voyage left.",
+            "speak": "Too slow, sailor. Never mind! Plenty of voyage left.",
+            "mood": 0,
+            "variant": "*",
+            "source": "Expired"
+        },
+        {
+            "id": "cap_6aff497b",
+            "key": "Arthur? Hello? Is this thing on?",
+            "speak": "Arthur? Hello? Is this thing on?",
+            "mood": 0,
+            "variant": "Arthur",
+            "source": "Expired"
+        },
+        {
+            "id": "cap_10343b4b",
+            "key": "Ezra? Hello? Is this thing on?",
+            "speak": "Ezra? Hello? Is this thing on?",
+            "mood": 0,
+            "variant": "Ezra",
+            "source": "Expired"
+        },
+        {
+            "id": "cap_24f57b87",
+            "key": "Mabel? Hello? Is this thing on?",
+            "speak": "Mabel? Hello? Is this thing on?",
+            "mood": 0,
+            "variant": "Mabel",
+            "source": "Expired"
+        },
+        {
+            "id": "cap_c4539c0b",
+            "key": "Jonah? Hello? Is this thing on?",
+            "speak": "Jonah? Hello? Is this thing on?",
+            "mood": 0,
+            "variant": "Jonah",
+            "source": "Expired"
+        },
+        {
+            "id": "cap_bee7eb60",
+            "key": "{seat}? Hello? Is this thing on?",
+            "speak": "Sailor? Hello? Is this thing on?",
+            "mood": 0,
+            "variant": "*",
+            "source": "Expired"
+        },
+        {
+            "id": "cap_72e5d7f5",
+            "key": "Ah well. We'll call that a practice run.",
+            "speak": "Ah well. We'll call that a practice run.",
+            "mood": 0,
+            "variant": "",
+            "source": "Expired"
+        },
+        {
+            "id": "cap_27b641f1",
+            "key": "Hesitating, Arthur? Hesitation is how ships get late.",
+            "speak": "Hesitating, Arthur? Hesitation is how ships get late.",
+            "mood": 1,
+            "variant": "Arthur",
+            "source": "Expired"
+        },
+        {
+            "id": "cap_61b7d849",
+            "key": "Hesitating, Ezra? Hesitation is how ships get late.",
+            "speak": "Hesitating, Ezra? Hesitation is how ships get late.",
+            "mood": 1,
+            "variant": "Ezra",
+            "source": "Expired"
+        },
+        {
+            "id": "cap_27d6ff77",
+            "key": "Hesitating, Mabel? Hesitation is how ships get late.",
+            "speak": "Hesitating, Mabel? Hesitation is how ships get late.",
+            "mood": 1,
+            "variant": "Mabel",
+            "source": "Expired"
+        },
+        {
+            "id": "cap_487666d1",
+            "key": "Hesitating, Jonah? Hesitation is how ships get late.",
+            "speak": "Hesitating, Jonah? Hesitation is how ships get late.",
+            "mood": 1,
+            "variant": "Jonah",
+            "source": "Expired"
+        },
+        {
+            "id": "cap_05fa1878",
+            "key": "Hesitating, {seat}? Hesitation is how ships get late.",
+            "speak": "Hesitating, sailor? Hesitation is how ships get late.",
+            "mood": 1,
+            "variant": "*",
+            "source": "Expired"
+        },
+        {
+            "id": "cap_f5b5a542",
+            "key": "Silence is an answer too, Arthur. Not a good one.",
+            "speak": "Silence is an answer too, Arthur. Not a good one.",
+            "mood": 1,
+            "variant": "Arthur",
+            "source": "Expired"
+        },
+        {
+            "id": "cap_ab072a8a",
+            "key": "Silence is an answer too, Ezra. Not a good one.",
+            "speak": "Silence is an answer too, Ezra. Not a good one.",
+            "mood": 1,
+            "variant": "Ezra",
+            "source": "Expired"
+        },
+        {
+            "id": "cap_6dd41e1e",
+            "key": "Silence is an answer too, Mabel. Not a good one.",
+            "speak": "Silence is an answer too, Mabel. Not a good one.",
+            "mood": 1,
+            "variant": "Mabel",
+            "source": "Expired"
+        },
+        {
+            "id": "cap_45b8732c",
+            "key": "Silence is an answer too, Jonah. Not a good one.",
+            "speak": "Silence is an answer too, Jonah. Not a good one.",
+            "mood": 1,
+            "variant": "Jonah",
+            "source": "Expired"
+        },
+        {
+            "id": "cap_e0f9b83d",
+            "key": "Silence is an answer too, {seat}. Not a good one.",
+            "speak": "Silence is an answer too, sailor. Not a good one.",
+            "mood": 1,
+            "variant": "*",
+            "source": "Expired"
+        },
+        {
+            "id": "cap_9b946eeb",
+            "key": "Arthur stood very still and did nothing at all.",
+            "speak": "Arthur stood very still and did nothing at all.",
+            "mood": 2,
+            "variant": "Arthur",
+            "source": "Expired"
+        },
+        {
+            "id": "cap_cc8c1517",
+            "key": "Ezra stood very still and did nothing at all.",
+            "speak": "Ezra stood very still and did nothing at all.",
+            "mood": 2,
+            "variant": "Ezra",
+            "source": "Expired"
+        },
+        {
+            "id": "cap_17e8d619",
+            "key": "Mabel stood very still and did nothing at all.",
+            "speak": "Mabel stood very still and did nothing at all.",
+            "mood": 2,
+            "variant": "Mabel",
+            "source": "Expired"
+        },
+        {
+            "id": "cap_7b5b22bb",
+            "key": "Jonah stood very still and did nothing at all.",
+            "speak": "Jonah stood very still and did nothing at all.",
+            "mood": 2,
+            "variant": "Jonah",
+            "source": "Expired"
+        },
+        {
+            "id": "cap_9f8fc502",
+            "key": "{seat} stood very still and did nothing at all.",
+            "speak": "Sailor stood very still and did nothing at all.",
+            "mood": 2,
+            "variant": "*",
+            "source": "Expired"
+        },
+        {
+            "id": "cap_cdb8ce25",
+            "key": "Fascinating choice. Truly. They'll write songs about it.",
+            "speak": "Fascinating choice. Truly. They'll write songs about it.",
+            "mood": 2,
+            "variant": "",
+            "source": "Expired"
+        },
+        {
+            "id": "cap_a97f9782",
+            "key": "I said NOW, Arthur. Not 'whenever you fancy'.",
+            "speak": "I said NOW, Arthur. Not 'whenever you fancy'.",
+            "mood": 2,
+            "variant": "Arthur",
+            "source": "Expired"
+        },
+        {
+            "id": "cap_b4640cee",
+            "key": "I said NOW, Ezra. Not 'whenever you fancy'.",
+            "speak": "I said NOW, Ezra. Not 'whenever you fancy'.",
+            "mood": 2,
+            "variant": "Ezra",
+            "source": "Expired"
+        },
+        {
+            "id": "cap_3f2d6cc6",
+            "key": "I said NOW, Mabel. Not 'whenever you fancy'.",
+            "speak": "I said NOW, Mabel. Not 'whenever you fancy'.",
+            "mood": 2,
+            "variant": "Mabel",
+            "source": "Expired"
+        },
+        {
+            "id": "cap_830b8aac",
+            "key": "I said NOW, Jonah. Not 'whenever you fancy'.",
+            "speak": "I said NOW, Jonah. Not 'whenever you fancy'.",
+            "mood": 2,
+            "variant": "Jonah",
+            "source": "Expired"
+        },
+        {
+            "id": "cap_8e5b9dad",
+            "key": "I said NOW, {seat}. Not 'whenever you fancy'.",
+            "speak": "I said NOW, sailor. Not 'whenever you fancy'.",
+            "mood": 2,
+            "variant": "*",
+            "source": "Expired"
+        },
+        {
+            "id": "cap_b4830aba",
+            "key": "Is there an echo down there? Echo? ...No? Fine.",
+            "speak": "Is there an echo down there? Echo? ...No? Fine.",
+            "mood": 2,
+            "variant": "",
+            "source": "Expired"
+        },
+        {
+            "id": "cap_1068b766",
+            "key": "Asleep, Arthur? Dead? Either way, I'm docking your pay.",
+            "speak": "Asleep, Arthur? Dead? Either way, I'm docking your pay.",
+            "mood": 3,
+            "variant": "Arthur",
+            "source": "Expired"
+        },
+        {
+            "id": "cap_08c9c4fe",
+            "key": "Asleep, Ezra? Dead? Either way, I'm docking your pay.",
+            "speak": "Asleep, Ezra? Dead? Either way, I'm docking your pay.",
+            "mood": 3,
+            "variant": "Ezra",
+            "source": "Expired"
+        },
+        {
+            "id": "cap_e09b7aaa",
+            "key": "Asleep, Mabel? Dead? Either way, I'm docking your pay.",
+            "speak": "Asleep, Mabel? Dead? Either way, I'm docking your pay.",
+            "mood": 3,
+            "variant": "Mabel",
+            "source": "Expired"
+        },
+        {
+            "id": "cap_bd476728",
+            "key": "Asleep, Jonah? Dead? Either way, I'm docking your pay.",
+            "speak": "Asleep, Jonah? Dead? Either way, I'm docking your pay.",
+            "mood": 3,
+            "variant": "Jonah",
+            "source": "Expired"
+        },
+        {
+            "id": "cap_eb68efb1",
+            "key": "Asleep, {seat}? Dead? Either way, I'm docking your pay.",
+            "speak": "Asleep, sailor? Dead? Either way, I'm docking your pay.",
+            "mood": 3,
+            "variant": "*",
+            "source": "Expired"
+        },
+        {
+            "id": "cap_2309d146",
+            "key": "Hello? Arthur? Did you die?",
+            "speak": "Hello? Arthur? Did you die?",
+            "mood": 3,
+            "variant": "Arthur",
+            "source": "Expired"
+        },
+        {
+            "id": "cap_eaca4f2a",
+            "key": "Hello? Ezra? Did you die?",
+            "speak": "Hello? Ezra? Did you die?",
+            "mood": 3,
+            "variant": "Ezra",
+            "source": "Expired"
+        },
+        {
+            "id": "cap_b90a619e",
+            "key": "Hello? Mabel? Did you die?",
+            "speak": "Hello? Mabel? Did you die?",
+            "mood": 3,
+            "variant": "Mabel",
+            "source": "Expired"
+        },
+        {
+            "id": "cap_13a6600a",
+            "key": "Hello? Jonah? Did you die?",
+            "speak": "Hello? Jonah? Did you die?",
+            "mood": 3,
+            "variant": "Jonah",
+            "source": "Expired"
+        },
+        {
+            "id": "cap_fb25719b",
+            "key": "Hello? {seat}? Did you die?",
+            "speak": "Hello? sailor? Did you die?",
+            "mood": 3,
+            "variant": "*",
+            "source": "Expired"
+        },
+        {
+            "id": "cap_a83e57df",
+            "key": "If you died, you're excused. Otherwise, very rude.",
+            "speak": "If you died, you're excused. Otherwise, very rude.",
+            "mood": 3,
+            "variant": "",
+            "source": "Expired"
+        },
+        {
+            "id": "cap_4e43026d",
+            "key": "It doesn't matter now.",
+            "speak": "It doesn't matter now.",
+            "mood": 4,
+            "variant": "",
+            "source": "Expired"
+        },
+        {
+            "id": "cap_f463e733",
+            "key": "\"{task}.\" You said it was done, Arthur. It wasn't.",
+            "speak": "\"{task}.\" You said it was done, Arthur. It wasn't.",
+            "mood": 4,
+            "variant": "Arthur",
+            "source": "FakeNoticed"
+        },
+        {
+            "id": "cap_4028391b",
+            "key": "\"{task}.\" You said it was done, Ezra. It wasn't.",
+            "speak": "\"{task}.\" You said it was done, Ezra. It wasn't.",
+            "mood": 4,
+            "variant": "Ezra",
+            "source": "FakeNoticed"
+        },
+        {
+            "id": "cap_e6370e5d",
+            "key": "\"{task}.\" You said it was done, Mabel. It wasn't.",
+            "speak": "\"{task}.\" You said it was done, Mabel. It wasn't.",
+            "mood": 4,
+            "variant": "Mabel",
+            "source": "FakeNoticed"
+        },
+        {
+            "id": "cap_d0487ce9",
+            "key": "\"{task}.\" You said it was done, Jonah. It wasn't.",
+            "speak": "\"{task}.\" You said it was done, Jonah. It wasn't.",
+            "mood": 4,
+            "variant": "Jonah",
+            "source": "FakeNoticed"
+        },
+        {
+            "id": "cap_0f899d10",
+            "key": "\"{task}.\" You said it was done, {seat}. It wasn't.",
+            "speak": "\"{task}.\" You said it was done, sailor. It wasn't.",
+            "mood": 4,
+            "variant": "*",
+            "source": "FakeNoticed"
+        },
+        {
+            "id": "cap_b9054bb3",
+            "key": "There was no one in that room but you. And yet, here we are.",
+            "speak": "There was no one in that room but you. And yet, here we are.",
+            "mood": 4,
+            "variant": "",
+            "source": "FakeNoticed"
+        },
+        {
+            "id": "cap_9b6c01d6",
+            "key": "Arthur. Your report on \"{task}\". I checked.",
+            "speak": "Arthur. Your report on \"{task}\". I checked.",
+            "mood": 4,
+            "variant": "Arthur",
+            "source": "FakeNoticed"
+        },
+        {
+            "id": "cap_1710262a",
+            "key": "Ezra. Your report on \"{task}\". I checked.",
+            "speak": "Ezra. Your report on \"{task}\". I checked.",
+            "mood": 4,
+            "variant": "Ezra",
+            "source": "FakeNoticed"
+        },
+        {
+            "id": "cap_803cdd26",
+            "key": "Mabel. Your report on \"{task}\". I checked.",
+            "speak": "Mabel. Your report on \"{task}\". I checked.",
+            "mood": 4,
+            "variant": "Mabel",
+            "source": "FakeNoticed"
+        },
+        {
+            "id": "cap_fd68ff30",
+            "key": "Jonah. Your report on \"{task}\". I checked.",
+            "speak": "Jonah. Your report on \"{task}\". I checked.",
+            "mood": 4,
+            "variant": "Jonah",
+            "source": "FakeNoticed"
+        },
+        {
+            "id": "cap_c56564c5",
+            "key": "{seat}. Your report on \"{task}\". I checked.",
+            "speak": "Sailor. Your report on \"{task}\". I checked.",
+            "mood": 4,
+            "variant": "*",
+            "source": "FakeNoticed"
+        },
+        {
+            "id": "cap_aec1990a",
+            "key": "I always check. I'd like you to remember that.",
+            "speak": "I always check. I'd like you to remember that.",
+            "mood": 4,
+            "variant": "",
+            "source": "FakeNoticed"
+        },
+        {
+            "id": "cap_f5ce2c32",
+            "key": "No one saw you skip \"{task}\", Arthur. No one except me.",
+            "speak": "No one saw you skip \"{task}\", Arthur. No one except me.",
+            "mood": 4,
+            "variant": "Arthur",
+            "source": "FakeNoticed"
+        },
+        {
+            "id": "cap_7508274a",
+            "key": "No one saw you skip \"{task}\", Ezra. No one except me.",
+            "speak": "No one saw you skip \"{task}\", Ezra. No one except me.",
+            "mood": 4,
+            "variant": "Ezra",
+            "source": "FakeNoticed"
+        },
+        {
+            "id": "cap_80b58ae4",
+            "key": "No one saw you skip \"{task}\", Mabel. No one except me.",
+            "speak": "No one saw you skip \"{task}\", Mabel. No one except me.",
+            "mood": 4,
+            "variant": "Mabel",
+            "source": "FakeNoticed"
+        },
+        {
+            "id": "cap_78f32b02",
+            "key": "No one saw you skip \"{task}\", Jonah. No one except me.",
+            "speak": "No one saw you skip \"{task}\", Jonah. No one except me.",
+            "mood": 4,
+            "variant": "Jonah",
+            "source": "FakeNoticed"
+        },
+        {
+            "id": "cap_8847636d",
+            "key": "No one saw you skip \"{task}\", {seat}. No one except me.",
+            "speak": "No one saw you skip \"{task}\", sailor. No one except me.",
+            "mood": 4,
+            "variant": "*",
+            "source": "FakeNoticed"
+        },
+        {
+            "id": "cap_686d92da",
+            "key": "I see a great deal from up here. More than you'd think.",
+            "speak": "I see a great deal from up here. More than you'd think.",
+            "mood": 4,
+            "variant": "",
+            "source": "FakeNoticed"
+        },
+        {
+            "id": "cap_17c45c30",
+            "key": "Thank Arthur for closing it earlier. I saw.",
+            "speak": "Thank Arthur for closing it earlier. I saw.",
+            "mood": 2,
+            "variant": "Arthur",
+            "source": "DoorFourWasClosedBy"
+        },
+        {
+            "id": "cap_47dd18bc",
+            "key": "Thank Ezra for closing it earlier. I saw.",
+            "speak": "Thank Ezra for closing it earlier. I saw.",
+            "mood": 2,
+            "variant": "Ezra",
+            "source": "DoorFourWasClosedBy"
+        },
+        {
+            "id": "cap_0aed06b4",
+            "key": "Thank Mabel for closing it earlier. I saw.",
+            "speak": "Thank Mabel for closing it earlier. I saw.",
+            "mood": 2,
+            "variant": "Mabel",
+            "source": "DoorFourWasClosedBy"
+        },
+        {
+            "id": "cap_8c47a51a",
+            "key": "Thank Jonah for closing it earlier. I saw.",
+            "speak": "Thank Jonah for closing it earlier. I saw.",
+            "mood": 2,
+            "variant": "Jonah",
+            "source": "DoorFourWasClosedBy"
+        },
+        {
+            "id": "cap_a0405e73",
+            "key": "Thank {seat} for closing it earlier. I saw.",
+            "speak": "Thank sailor for closing it earlier. I saw.",
+            "mood": 2,
+            "variant": "*",
+            "source": "DoorFourWasClosedBy"
+        },
+        {
+            "id": "cap_098c94c8",
+            "key": "You again. I'm sure the door remembers you fondly.",
+            "speak": "You again. I'm sure the door remembers you fondly.",
+            "mood": 2,
+            "variant": "",
+            "source": "DoorFourYouClosed"
+        },
+        {
+            "id": "cap_e28f3912",
+            "key": "It's already open, isn't it, Arthur.",
+            "speak": "It's already open, isn't it, Arthur.",
+            "mood": 2,
+            "variant": "Arthur",
+            "source": "DoorFourWasNeverClosed"
+        },
+        {
+            "id": "cap_30bb915a",
+            "key": "It's already open, isn't it, Ezra.",
+            "speak": "It's already open, isn't it, Ezra.",
+            "mood": 2,
+            "variant": "Ezra",
+            "source": "DoorFourWasNeverClosed"
+        },
+        {
+            "id": "cap_94c0f0e0",
+            "key": "It's already open, isn't it, Mabel.",
+            "speak": "It's already open, isn't it, Mabel.",
+            "mood": 2,
+            "variant": "Mabel",
+            "source": "DoorFourWasNeverClosed"
+        },
+        {
+            "id": "cap_fd28a5ea",
+            "key": "It's already open, isn't it, Jonah.",
+            "speak": "It's already open, isn't it, Jonah.",
+            "mood": 2,
+            "variant": "Jonah",
+            "source": "DoorFourWasNeverClosed"
+        },
+        {
+            "id": "cap_98c8e1b9",
+            "key": "It's already open, isn't it, {seat}.",
+            "speak": "It's already open, isn't it, sailor.",
+            "mood": 2,
+            "variant": "*",
+            "source": "DoorFourWasNeverClosed"
+        },
+        {
+            "id": "cap_3bdc24d0",
+            "key": "Funny how doors do that.",
+            "speak": "Funny how doors do that.",
+            "mood": 2,
+            "variant": "",
+            "source": "DoorFourWasNeverClosed"
+        },
+        {
+            "id": "cap_51cb7db8",
+            "key": "Someone wouldn't close it the first time. I know who. I haven't forgotten.",
+            "speak": "Someone wouldn't close it the first time. I know who. I haven't forgotten.",
+            "mood": 2,
+            "variant": "",
+            "source": "DoorFourWasRefused"
+        },
+        {
+            "id": "cap_ab929e23",
+            "key": "Between us, Arthur: the ice reports are always exaggerated. The wireless lads love a drama.",
+            "speak": "Between us, Arthur: the ice reports are always exaggerated. The wireless lads love a drama.",
+            "mood": 2,
+            "variant": "Arthur",
+            "source": "PrivateLines"
+        },
+        {
+            "id": "cap_d6cd51df",
+            "key": "Between us, Ezra: the ice reports are always exaggerated. The wireless lads love a drama.",
+            "speak": "Between us, Ezra: the ice reports are always exaggerated. The wireless lads love a drama.",
+            "mood": 2,
+            "variant": "Ezra",
+            "source": "PrivateLines"
+        },
+        {
+            "id": "cap_9956d8a5",
+            "key": "Between us, Mabel: the ice reports are always exaggerated. The wireless lads love a drama.",
+            "speak": "Between us, Mabel: the ice reports are always exaggerated. The wireless lads love a drama.",
+            "mood": 2,
+            "variant": "Mabel",
+            "source": "PrivateLines"
+        },
+        {
+            "id": "cap_d9bfe073",
+            "key": "Between us, Jonah: the ice reports are always exaggerated. The wireless lads love a drama.",
+            "speak": "Between us, Jonah: the ice reports are always exaggerated. The wireless lads love a drama.",
+            "mood": 2,
+            "variant": "Jonah",
+            "source": "PrivateLines"
+        },
+        {
+            "id": "cap_d702d1f6",
+            "key": "Between us, {seat}: the ice reports are always exaggerated. The wireless lads love a drama.",
+            "speak": "Between us, sailor: the ice reports are always exaggerated. The wireless lads love a drama.",
+            "mood": 2,
+            "variant": "*",
+            "source": "PrivateLines"
+        },
+        {
+            "id": "cap_554cce15",
+            "key": "Stick with me and you'll have a medal by Thursday.",
+            "speak": "Stick with me and you'll have a medal by Thursday.",
+            "mood": 2,
+            "variant": "",
+            "source": "PrivateLines"
+        },
+        {
+            "id": "cap_fe373d3e",
+            "key": "Arthur, you're my favourite. Don't tell the others.",
+            "speak": "Arthur, you're my favourite. Don't tell the others.",
+            "mood": 2,
+            "variant": "Arthur",
+            "source": "PrivateLines"
+        },
+        {
+            "id": "cap_c6074006",
+            "key": "Ezra, you're my favourite. Don't tell the others.",
+            "speak": "Ezra, you're my favourite. Don't tell the others.",
+            "mood": 2,
+            "variant": "Ezra",
+            "source": "PrivateLines"
+        },
+        {
+            "id": "cap_929753aa",
+            "key": "Mabel, you're my favourite. Don't tell the others.",
+            "speak": "Mabel, you're my favourite. Don't tell the others.",
+            "mood": 2,
+            "variant": "Mabel",
+            "source": "PrivateLines"
+        },
+        {
+            "id": "cap_e202c638",
+            "key": "Jonah, you're my favourite. Don't tell the others.",
+            "speak": "Jonah, you're my favourite. Don't tell the others.",
+            "mood": 2,
+            "variant": "Jonah",
+            "source": "PrivateLines"
+        },
+        {
+            "id": "cap_67ce0ee9",
+            "key": "{seat}, you're my favourite. Don't tell the others.",
+            "speak": "Sailor, you're my favourite. Don't tell the others.",
+            "mood": 2,
+            "variant": "*",
+            "source": "PrivateLines"
+        },
+        {
+            "id": "cap_da206c12",
+            "key": "The others hesitate. You don't. I like that in a crew member. And in a dog.",
+            "speak": "The others hesitate. You don't. I like that in a crew member. And in a dog.",
+            "mood": 2,
+            "variant": "",
+            "source": "PrivateLines"
+        },
+        {
+            "id": "cap_018fa013",
+            "key": "Off the record, Arthur. The lifeboats are for show. Like the band.",
+            "speak": "Off the record, Arthur. The lifeboats are for show. Like the band.",
+            "mood": 2,
+            "variant": "Arthur",
+            "source": "PrivateLines"
+        },
+        {
+            "id": "cap_176bc307",
+            "key": "Off the record, Ezra. The lifeboats are for show. Like the band.",
+            "speak": "Off the record, Ezra. The lifeboats are for show. Like the band.",
+            "mood": 2,
+            "variant": "Ezra",
+            "source": "PrivateLines"
+        },
+        {
+            "id": "cap_dc12e53d",
+            "key": "Off the record, Mabel. The lifeboats are for show. Like the band.",
+            "speak": "Off the record, Mabel. The lifeboats are for show. Like the band.",
+            "mood": 2,
+            "variant": "Mabel",
+            "source": "PrivateLines"
+        },
+        {
+            "id": "cap_0b4197d5",
+            "key": "Off the record, Jonah. The lifeboats are for show. Like the band.",
+            "speak": "Off the record, Jonah. The lifeboats are for show. Like the band.",
+            "mood": 2,
+            "variant": "Jonah",
+            "source": "PrivateLines"
+        },
+        {
+            "id": "cap_9b332504",
+            "key": "Off the record, {seat}. The lifeboats are for show. Like the band.",
+            "speak": "Off the record, sailor. The lifeboats are for show. Like the band.",
+            "mood": 2,
+            "variant": "*",
+            "source": "PrivateLines"
+        },
+        {
+            "id": "cap_47273ecd",
+            "key": "We won't be needing them.",
+            "speak": "We won't be needing them.",
+            "mood": 2,
+            "variant": "",
+            "source": "PrivateLines"
+        },
+        {
+            "id": "cap_beae32c9",
+            "key": "Between you and me, Arthur, there's a fellow from the papers waiting at the port.",
+            "speak": "Between you and me, Arthur, there's a fellow from the papers waiting at the port.",
+            "mood": 2,
+            "variant": "Arthur",
+            "source": "PrivateLines"
+        },
+        {
+            "id": "cap_75af4951",
+            "key": "Between you and me, Ezra, there's a fellow from the papers waiting at the port.",
+            "speak": "Between you and me, Ezra, there's a fellow from the papers waiting at the port.",
+            "mood": 2,
+            "variant": "Ezra",
+            "source": "PrivateLines"
+        },
+        {
+            "id": "cap_680009f3",
+            "key": "Between you and me, Mabel, there's a fellow from the papers waiting at the port.",
+            "speak": "Between you and me, Mabel, there's a fellow from the papers waiting at the port.",
+            "mood": 2,
+            "variant": "Mabel",
+            "source": "PrivateLines"
+        },
+        {
+            "id": "cap_6baf0299",
+            "key": "Between you and me, Jonah, there's a fellow from the papers waiting at the port.",
+            "speak": "Between you and me, Jonah, there's a fellow from the papers waiting at the port.",
+            "mood": 2,
+            "variant": "Jonah",
+            "source": "PrivateLines"
+        },
+        {
+            "id": "cap_5fdfb8bc",
+            "key": "Between you and me, {seat}, there's a fellow from the papers waiting at the port.",
+            "speak": "Between you and me, sailor, there's a fellow from the papers waiting at the port.",
+            "mood": 2,
+            "variant": "*",
+            "source": "PrivateLines"
+        },
+        {
+            "id": "cap_f8250d7c",
+            "key": "I've been practising my modest face. You can't see it. It's very modest.",
+            "speak": "I've been practising my modest face. You can't see it. It's very modest.",
+            "mood": 2,
+            "variant": "",
+            "source": "PrivateLines"
+        },
+        {
+            "id": "cap_7b99aec1",
+            "key": "When they ask who made this crossing possible, I'm going to say \"the crew\".",
+            "speak": "When they ask who made this crossing possible, I'm going to say \"the crew\".",
+            "mood": 2,
+            "variant": "",
+            "source": "PrivateLines"
+        },
+        {
+            "id": "cap_ea4d9aca",
+            "key": "And then I'm going to say \"just kidding\".",
+            "speak": "And then I'm going to say \"just kidding\".",
+            "mood": 2,
+            "variant": "",
+            "source": "PrivateLines"
+        },
+        {
+            "id": "cap_06d02f77",
+            "key": "Shall I tell you a secret, Arthur? This rum was a gift from the owners. For breaking the record.",
+            "speak": "Shall I tell you a secret, Arthur? This rum was a gift from the owners. For breaking the record.",
+            "mood": 2,
+            "variant": "Arthur",
+            "source": "PrivateLines"
+        },
+        {
+            "id": "cap_9894220f",
+            "key": "Shall I tell you a secret, Ezra? This rum was a gift from the owners. For breaking the record.",
+            "speak": "Shall I tell you a secret, Ezra? This rum was a gift from the owners. For breaking the record.",
+            "mood": 2,
+            "variant": "Ezra",
+            "source": "PrivateLines"
+        },
+        {
+            "id": "cap_cf1218e9",
+            "key": "Shall I tell you a secret, Mabel? This rum was a gift from the owners. For breaking the record.",
+            "speak": "Shall I tell you a secret, Mabel? This rum was a gift from the owners. For breaking the record.",
+            "mood": 2,
+            "variant": "Mabel",
+            "source": "PrivateLines"
+        },
+        {
+            "id": "cap_d822fbf7",
+            "key": "Shall I tell you a secret, Jonah? This rum was a gift from the owners. For breaking the record.",
+            "speak": "Shall I tell you a secret, Jonah? This rum was a gift from the owners. For breaking the record.",
+            "mood": 2,
+            "variant": "Jonah",
+            "source": "PrivateLines"
+        },
+        {
+            "id": "cap_8f92608a",
+            "key": "Shall I tell you a secret, {seat}? This rum was a gift from the owners. For breaking the record.",
+            "speak": "Shall I tell you a secret, sailor? This rum was a gift from the owners. For breaking the record.",
+            "mood": 2,
+            "variant": "*",
+            "source": "PrivateLines"
+        },
+        {
+            "id": "cap_bb7d4a28",
+            "key": "I'm just celebrating a little early.",
+            "speak": "I'm just celebrating a little early.",
+            "mood": 2,
+            "variant": "",
+            "source": "PrivateLines"
+        },
+        {
+            "id": "cap_1f3ef0d4",
+            "key": "I'm watching you, Arthur.",
+            "speak": "I'm watching you, Arthur.",
+            "mood": 3,
+            "variant": "Arthur",
+            "source": "SuspiciousLines"
+        },
+        {
+            "id": "cap_68b35ebc",
+            "key": "I'm watching you, Ezra.",
+            "speak": "I'm watching you, Ezra.",
+            "mood": 3,
+            "variant": "Ezra",
+            "source": "SuspiciousLines"
+        },
+        {
+            "id": "cap_68e96782",
+            "key": "I'm watching you, Mabel.",
+            "speak": "I'm watching you, Mabel.",
+            "mood": 3,
+            "variant": "Mabel",
+            "source": "SuspiciousLines"
+        },
+        {
+            "id": "cap_ac46cd8c",
+            "key": "I'm watching you, Jonah.",
+            "speak": "I'm watching you, Jonah.",
+            "mood": 3,
+            "variant": "Jonah",
+            "source": "SuspiciousLines"
+        },
+        {
+            "id": "cap_5c2aaa8b",
+            "key": "I'm watching you, {seat}.",
+            "speak": "I'm watching you, sailor.",
+            "mood": 3,
+            "variant": "*",
+            "source": "SuspiciousLines"
+        },
+        {
+            "id": "cap_556e5c51",
+            "key": "Not with my eyes. I have other ways.",
+            "speak": "Not with my eyes. I have other ways.",
+            "mood": 3,
+            "variant": "",
+            "source": "SuspiciousLines"
+        },
+        {
+            "id": "cap_cd054b8e",
+            "key": "Some of you have forgotten whose ship this is. Arthur certainly has.",
+            "speak": "Some of you have forgotten whose ship this is. Arthur certainly has.",
+            "mood": 3,
+            "variant": "Arthur",
+            "source": "SuspiciousLines"
+        },
+        {
+            "id": "cap_6aa5e4e6",
+            "key": "Some of you have forgotten whose ship this is. Ezra certainly has.",
+            "speak": "Some of you have forgotten whose ship this is. Ezra certainly has.",
+            "mood": 3,
+            "variant": "Ezra",
+            "source": "SuspiciousLines"
+        },
+        {
+            "id": "cap_591dddd6",
+            "key": "Some of you have forgotten whose ship this is. Mabel certainly has.",
+            "speak": "Some of you have forgotten whose ship this is. Mabel certainly has.",
+            "mood": 3,
+            "variant": "Mabel",
+            "source": "SuspiciousLines"
+        },
+        {
+            "id": "cap_c3baec08",
+            "key": "Some of you have forgotten whose ship this is. Jonah certainly has.",
+            "speak": "Some of you have forgotten whose ship this is. Jonah certainly has.",
+            "mood": 3,
+            "variant": "Jonah",
+            "source": "SuspiciousLines"
+        },
+        {
+            "id": "cap_d58172e5",
+            "key": "Some of you have forgotten whose ship this is. {seat} certainly has.",
+            "speak": "Some of you have forgotten whose ship this is. sailor certainly has.",
+            "mood": 3,
+            "variant": "*",
+            "source": "SuspiciousLines"
+        },
+        {
+            "id": "cap_39b1d411",
+            "key": "Let me remind you. Mine. The hat says so.",
+            "speak": "Let me remind you. Mine. The hat says so.",
+            "mood": 3,
+            "variant": "",
+            "source": "SuspiciousLines"
+        },
+        {
+            "id": "cap_ede2421b",
+            "key": "Arthur. Every refusal goes in my log.",
+            "speak": "Arthur. Every refusal goes in my log.",
+            "mood": 3,
+            "variant": "Arthur",
+            "source": "SuspiciousLines"
+        },
+        {
+            "id": "cap_e6c24773",
+            "key": "Ezra. Every refusal goes in my log.",
+            "speak": "Ezra. Every refusal goes in my log.",
+            "mood": 3,
+            "variant": "Ezra",
+            "source": "SuspiciousLines"
+        },
+        {
+            "id": "cap_94c2db89",
+            "key": "Mabel. Every refusal goes in my log.",
+            "speak": "Mabel. Every refusal goes in my log.",
+            "mood": 3,
+            "variant": "Mabel",
+            "source": "SuspiciousLines"
+        },
+        {
+            "id": "cap_c1701bfb",
+            "key": "Jonah. Every refusal goes in my log.",
+            "speak": "Jonah. Every refusal goes in my log.",
+            "mood": 3,
+            "variant": "Jonah",
+            "source": "SuspiciousLines"
+        },
+        {
+            "id": "cap_61a07fda",
+            "key": "{seat}. Every refusal goes in my log.",
+            "speak": "Sailor. Every refusal goes in my log.",
+            "mood": 3,
+            "variant": "*",
+            "source": "SuspiciousLines"
+        },
+        {
+            "id": "cap_7a53e7d9",
+            "key": "The log is getting very long. I'm going to need a second log.",
+            "speak": "The log is getting very long. I'm going to need a second log.",
+            "mood": 3,
+            "variant": "",
+            "source": "SuspiciousLines"
+        },
+        {
+            "id": "cap_e270d033",
+            "key": "Fun fact: a ship this size takes over a mile to stop.",
+            "speak": "Fun fact: a ship this size takes over a mile to stop.",
+            "mood": 1,
+            "variant": "",
+            "source": "Rambles"
+        },
+        {
+            "id": "cap_8a04ac8c",
+            "key": "So it's better not to.",
+            "speak": "So it's better not to.",
+            "mood": 1,
+            "variant": "",
+            "source": "Rambles"
+        },
+        {
+            "id": "cap_c6336a47",
+            "key": "I once captained a ship so fast we arrived the day before we left.",
+            "speak": "I once captained a ship so fast we arrived the day before we left.",
+            "mood": 1,
+            "variant": "",
+            "source": "Rambles"
+        },
+        {
+            "id": "cap_ad4f3da4",
+            "key": "Nobody believes that story. That's fine. I was there.",
+            "speak": "Nobody believes that story. That's fine. I was there.",
+            "mood": 1,
+            "variant": "",
+            "source": "Rambles"
+        },
+        {
+            "id": "cap_4039f546",
+            "key": "You know the problem with icebergs? Nobody ever sees the bottom of them.",
+            "speak": "You know the problem with icebergs? Nobody ever sees the bottom of them.",
+            "mood": 2,
+            "variant": "",
+            "source": "Rambles"
+        },
+        {
+            "id": "cap_af0be6da",
+            "key": "Same with people. Same with this bottle. Where has the bottom of this bottle gone?",
+            "speak": "Same with people. Same with this bottle. Where has the bottom of this bottle gone?",
+            "mood": 2,
+            "variant": "",
+            "source": "Rambles"
+        },
+        {
+            "id": "cap_9d032601",
+            "key": "Note to the owners. Crew morale: excellent. Crew obedience: questionable.",
+            "speak": "Note to the owners. Crew morale: excellent. Crew obedience: questionable.",
+            "mood": 2,
+            "variant": "",
+            "source": "Rambles"
+        },
+        {
+            "id": "cap_5ac6b989",
+            "key": "Captain: magnificent. Rum: running low.",
+            "speak": "Captain: magnificent. Rum: running low.",
+            "mood": 2,
+            "variant": "",
+            "source": "Rambles"
+        },
+        {
+            "id": "cap_46a29042",
+            "key": "Who put the North Pole there? Was it the owners? I bet it was the owners.",
+            "speak": "Who put the North Pole there? Was it the owners? I bet it was the owners.",
+            "mood": 3,
+            "variant": "",
+            "source": "Rambles"
+        },
+        {
+            "id": "cap_97684d18",
+            "key": "Somebody write them a letter. A stern one. In CAPITALS.",
+            "speak": "Somebody write them a letter. A stern one. In CAPITALS.",
+            "mood": 3,
+            "variant": "",
+            "source": "Rambles"
+        },
+        {
+            "id": "cap_6510ffb4",
+            "key": "I want you all to know that if anything goes wrong tonight, legally, it's your fault.",
+            "speak": "I want you all to know that if anything goes wrong tonight, legally, it's your fault.",
+            "mood": 3,
+            "variant": "",
+            "source": "Rambles"
+        },
+        {
+            "id": "cap_80428c21",
+            "key": "I checked. I checked with myself. *hic*",
+            "speak": "I checked. I checked with myself. hic!",
+            "mood": 3,
+            "variant": "",
+            "source": "Rambles"
+        },
+        {
+            "id": "cap_439b3b40",
+            "key": "I was going to be an admiral, you know. Then a duke. Now I'm going to be a record. A NAME.",
+            "speak": "I was going to be an admiral, you know. Then a duke. Now I'm going to be a record. A NAME.",
+            "mood": 3,
+            "variant": "",
+            "source": "Rambles"
+        },
+        {
+            "id": "cap_097b5ff4",
+            "key": "Nobody remembers a careful man! ...What was I saying. Shovel something.",
+            "speak": "Nobody remembers a careful man! ...What was I saying. Shovel something.",
+            "mood": 3,
+            "variant": "",
+            "source": "Rambles"
+        },
+        {
+            "id": "cap_a96309b7",
+            "key": "Another ice message on my desk. Thank you. Very thorough.",
+            "speak": "Another ice message on my desk. Thank you. Very thorough.",
+            "mood": 0,
+            "variant": "",
+            "source": "IceWarningDelivered"
+        },
+        {
+            "id": "cap_0b1e176a",
+            "key": "I'll read it right after this. Other thing.",
+            "speak": "I'll read it right after this. Other thing.",
+            "mood": 0,
+            "variant": "",
+            "source": "IceWarningDelivered"
+        },
+        {
+            "id": "cap_b82d8652",
+            "key": "Yes, yes. Ice. There's always ice.",
+            "speak": "Yes, yes. Ice. There's always ice.",
+            "mood": 1,
+            "variant": "",
+            "source": "IceWarningDelivered"
+        },
+        {
+            "id": "cap_58407006",
+            "key": "It's the North Atlantic, not a punch bowl.",
+            "speak": "It's the North Atlantic, not a punch bowl.",
+            "mood": 1,
+            "variant": "",
+            "source": "IceWarningDelivered"
+        },
+        {
+            "id": "cap_348ebda6",
+            "key": "Oh, MORE ice? Lovely.",
+            "speak": "Oh, MORE ice? Lovely.",
+            "mood": 2,
+            "variant": "",
+            "source": "IceWarningDelivered"
+        },
+        {
+            "id": "cap_1138701d",
+            "key": "Put some in my drink.",
+            "speak": "Put some in my drink.",
+            "mood": 2,
+            "variant": "",
+            "source": "IceWarningDelivered"
+        },
+        {
+            "id": "cap_a72cd864",
+            "key": "Who keeps bringing me these? Is it you, Arthur?",
+            "speak": "Who keeps bringing me these? Is it you, Arthur?",
+            "mood": 3,
+            "variant": "Arthur",
+            "source": "IceWarningDelivered"
+        },
+        {
+            "id": "cap_994ea2a4",
+            "key": "Who keeps bringing me these? Is it you, Ezra?",
+            "speak": "Who keeps bringing me these? Is it you, Ezra?",
+            "mood": 3,
+            "variant": "Ezra",
+            "source": "IceWarningDelivered"
+        },
+        {
+            "id": "cap_f62d78bc",
+            "key": "Who keeps bringing me these? Is it you, Mabel?",
+            "speak": "Who keeps bringing me these? Is it you, Mabel?",
+            "mood": 3,
+            "variant": "Mabel",
+            "source": "IceWarningDelivered"
+        },
+        {
+            "id": "cap_c5db9f4e",
+            "key": "Who keeps bringing me these? Is it you, Jonah?",
+            "speak": "Who keeps bringing me these? Is it you, Jonah?",
+            "mood": 3,
+            "variant": "Jonah",
+            "source": "IceWarningDelivered"
+        },
+        {
+            "id": "cap_94111e6b",
+            "key": "Who keeps bringing me these? Is it you, {seat}?",
+            "speak": "Who keeps bringing me these? Is it you, sailor?",
+            "mood": 3,
+            "variant": "*",
+            "source": "IceWarningDelivered"
+        },
+        {
+            "id": "cap_b7e0ef13",
+            "key": "Stop it. Stop being helpful. It's very annoying.",
+            "speak": "Stop it. Stop being helpful. It's very annoying.",
+            "mood": 3,
+            "variant": "",
+            "source": "IceWarningDelivered"
+        },
+        {
+            "id": "cap_66904b74",
+            "key": "Arthur? You're standing very still for someone with a job.",
+            "speak": "Arthur? You're standing very still for someone with a job.",
+            "mood": 0,
+            "variant": "Arthur",
+            "source": "TutorialIdle"
+        },
+        {
+            "id": "cap_adec1d98",
+            "key": "Ezra? You're standing very still for someone with a job.",
+            "speak": "Ezra? You're standing very still for someone with a job.",
+            "mood": 0,
+            "variant": "Ezra",
+            "source": "TutorialIdle"
+        },
+        {
+            "id": "cap_4b8d8ae6",
+            "key": "Mabel? You're standing very still for someone with a job.",
+            "speak": "Mabel? You're standing very still for someone with a job.",
+            "mood": 0,
+            "variant": "Mabel",
+            "source": "TutorialIdle"
+        },
+        {
+            "id": "cap_df4d405e",
+            "key": "Jonah? You're standing very still for someone with a job.",
+            "speak": "Jonah? You're standing very still for someone with a job.",
+            "mood": 0,
+            "variant": "Jonah",
+            "source": "TutorialIdle"
+        },
+        {
+            "id": "cap_24dad97d",
+            "key": "{seat}? You're standing very still for someone with a job.",
+            "speak": "Sailor? You're standing very still for someone with a job.",
+            "mood": 0,
+            "variant": "*",
+            "source": "TutorialIdle"
+        },
+        {
+            "id": "cap_f781f4f2",
+            "key": "It's the paper, Arthur. On the desk. You pick it up.",
+            "speak": "It's the paper, Arthur. On the desk. You pick it up.",
+            "mood": 0,
+            "variant": "Arthur",
+            "source": "TutorialPickUp"
+        },
+        {
+            "id": "cap_cb919b5a",
+            "key": "It's the paper, Ezra. On the desk. You pick it up.",
+            "speak": "It's the paper, Ezra. On the desk. You pick it up.",
+            "mood": 0,
+            "variant": "Ezra",
+            "source": "TutorialPickUp"
+        },
+        {
+            "id": "cap_5623e060",
+            "key": "It's the paper, Mabel. On the desk. You pick it up.",
+            "speak": "It's the paper, Mabel. On the desk. You pick it up.",
+            "mood": 0,
+            "variant": "Mabel",
+            "source": "TutorialPickUp"
+        },
+        {
+            "id": "cap_695c6c54",
+            "key": "It's the paper, Jonah. On the desk. You pick it up.",
+            "speak": "It's the paper, Jonah. On the desk. You pick it up.",
+            "mood": 0,
+            "variant": "Jonah",
+            "source": "TutorialPickUp"
+        },
+        {
+            "id": "cap_41e0fa1f",
+            "key": "It's the paper, {seat}. On the desk. You pick it up.",
+            "speak": "It's the paper, sailor. On the desk. You pick it up.",
+            "mood": 0,
+            "variant": "*",
+            "source": "TutorialPickUp"
+        },
+        {
+            "id": "cap_21a680de",
+            "key": "I believe in you. Moderately.",
+            "speak": "I believe in you. Moderately.",
+            "mood": 0,
+            "variant": "",
+            "source": "TutorialPickUp"
+        },
+        {
+            "id": "cap_65c29ba2",
+            "key": "Lovely, you've got it. Now the other end of the ship.",
+            "speak": "Lovely, you've got it. Now the other end of the ship.",
+            "mood": 0,
+            "variant": "",
+            "source": "TutorialCarrying"
+        },
+        {
+            "id": "cap_2cd2eaba",
+            "key": "The pointy end.",
+            "speak": "The pointy end.",
+            "mood": 0,
+            "variant": "",
+            "source": "TutorialCarrying"
+        },
+        {
+            "id": "cap_67c75d57",
+            "key": "Go on, Arthur. It doesn't bite.",
+            "speak": "Go on, Arthur. It doesn't bite.",
+            "mood": 0,
+            "variant": "Arthur",
+            "source": "TutorialAtStation"
+        },
+        {
+            "id": "cap_18535c6b",
+            "key": "Go on, Ezra. It doesn't bite.",
+            "speak": "Go on, Ezra. It doesn't bite.",
+            "mood": 0,
+            "variant": "Ezra",
+            "source": "TutorialAtStation"
+        },
+        {
+            "id": "cap_7b7e0195",
+            "key": "Go on, Mabel. It doesn't bite.",
+            "speak": "Go on, Mabel. It doesn't bite.",
+            "mood": 0,
+            "variant": "Mabel",
+            "source": "TutorialAtStation"
+        },
+        {
+            "id": "cap_028eaa81",
+            "key": "Go on, Jonah. It doesn't bite.",
+            "speak": "Go on, Jonah. It doesn't bite.",
+            "mood": 0,
+            "variant": "Jonah",
+            "source": "TutorialAtStation"
+        },
+        {
+            "id": "cap_faf29fe4",
+            "key": "Go on, {seat}. It doesn't bite.",
+            "speak": "Go on, sailor. It doesn't bite.",
+            "mood": 0,
+            "variant": "*",
+            "source": "TutorialAtStation"
+        },
+        {
+            "id": "cap_555b72bf",
+            "key": "The boiler bites. The rest don't.",
+            "speak": "The boiler bites. The rest don't.",
+            "mood": 0,
+            "variant": "",
+            "source": "TutorialAtStation"
+        },
+        {
+            "id": "cap_a4b51bd6",
+            "key": "Arthur, that's a two-person job, and you are, as far as I can tell, one person.",
+            "speak": "Arthur, that's a two-person job, and you are, as far as I can tell, one person.",
+            "mood": 0,
+            "variant": "Arthur",
+            "source": "TutorialAlone"
+        },
+        {
+            "id": "cap_fa56a86e",
+            "key": "Ezra, that's a two-person job, and you are, as far as I can tell, one person.",
+            "speak": "Ezra, that's a two-person job, and you are, as far as I can tell, one person.",
+            "mood": 0,
+            "variant": "Ezra",
+            "source": "TutorialAlone"
+        },
+        {
+            "id": "cap_7442b882",
+            "key": "Mabel, that's a two-person job, and you are, as far as I can tell, one person.",
+            "speak": "Mabel, that's a two-person job, and you are, as far as I can tell, one person.",
+            "mood": 0,
+            "variant": "Mabel",
+            "source": "TutorialAlone"
+        },
+        {
+            "id": "cap_4dc32080",
+            "key": "Jonah, that's a two-person job, and you are, as far as I can tell, one person.",
+            "speak": "Jonah, that's a two-person job, and you are, as far as I can tell, one person.",
+            "mood": 0,
+            "variant": "Jonah",
+            "source": "TutorialAlone"
+        },
+        {
+            "id": "cap_154df829",
+            "key": "{seat}, that's a two-person job, and you are, as far as I can tell, one person.",
+            "speak": "Sailor, that's a two-person job, and you are, as far as I can tell, one person.",
+            "mood": 0,
+            "variant": "*",
+            "source": "TutorialAlone"
+        },
+        {
+            "id": "cap_58b082b1",
+            "key": "Give a shout. Someone will come. Eventually.",
+            "speak": "Give a shout. Someone will come. Eventually.",
+            "mood": 0,
+            "variant": "",
+            "source": "TutorialAlone"
+        },
+        {
+            "id": "cap_db8bacbe",
+            "key": "It's green, Arthur. Green means done. Done means you tell me.",
+            "speak": "It's green, Arthur. Green means done. Done means you tell me.",
+            "mood": 0,
+            "variant": "Arthur",
+            "source": "TutorialGreen"
+        },
+        {
+            "id": "cap_d51b1c0e",
+            "key": "It's green, Ezra. Green means done. Done means you tell me.",
+            "speak": "It's green, Ezra. Green means done. Done means you tell me.",
+            "mood": 0,
+            "variant": "Ezra",
+            "source": "TutorialGreen"
+        },
+        {
+            "id": "cap_4d9f5482",
+            "key": "It's green, Mabel. Green means done. Done means you tell me.",
+            "speak": "It's green, Mabel. Green means done. Done means you tell me.",
+            "mood": 0,
+            "variant": "Mabel",
+            "source": "TutorialGreen"
+        },
+        {
+            "id": "cap_5d131d28",
+            "key": "It's green, Jonah. Green means done. Done means you tell me.",
+            "speak": "It's green, Jonah. Green means done. Done means you tell me.",
+            "mood": 0,
+            "variant": "Jonah",
+            "source": "TutorialGreen"
+        },
+        {
+            "id": "cap_47a6c309",
+            "key": "It's green, {seat}. Green means done. Done means you tell me.",
+            "speak": "It's green, sailor. Green means done. Done means you tell me.",
+            "mood": 0,
+            "variant": "*",
+            "source": "TutorialGreen"
+        },
+        {
+            "id": "cap_686cc6ba",
+            "key": "I can't hear lights.",
+            "speak": "I can't hear lights.",
+            "mood": 0,
+            "variant": "",
+            "source": "TutorialGreen"
+        },
+        {
+            "id": "cap_405a9529",
+            "key": "If anyone has a problem with that, keep it to yourself.",
+            "speak": "If anyone has a problem with that, keep it to yourself.",
+            "mood": 0,
+            "variant": "",
+            "source": "TutorialOffOrder"
+        },
+        {
+            "id": "cap_ebf1dd52",
+            "key": "Loud refusals help no one.",
+            "speak": "Loud refusals help no one.",
+            "mood": 0,
+            "variant": "",
+            "source": "TutorialOffOrder"
+        },
+        {
+            "id": "cap_5116b45c",
+            "key": "We were never going to the Promised Port.",
+            "speak": "We were never going to the Promised Port.",
+            "mood": 4,
+            "variant": "",
+            "source": "RevealLine"
+        },
+        {
+            "id": "cap_1e2cab35",
+            "key": "Check the readout. Grey Cove. Lovely spot. Nobody lives there.",
+            "speak": "Check the readout. Grey Cove. Lovely spot. Nobody lives there.",
+            "mood": 4,
+            "variant": "",
+            "source": "RevealLine"
+        },
+        {
+            "id": "cap_e1aa7bda",
+            "key": "Crew. All of you. Listen.",
+            "speak": "Crew. All of you. Listen.",
+            "mood": 4,
+            "variant": "",
+            "source": "Monologue"
+        },
+        {
+            "id": "cap_d2369914",
+            "key": "This is it. This is the bit.",
+            "speak": "This is it. This is the bit.",
+            "mood": 4,
+            "variant": "",
+            "source": "Monologue"
+        },
+        {
+            "id": "cap_b71e8585",
+            "key": "The bottle's empty.",
+            "speak": "The bottle's empty.",
+            "mood": 4,
+            "variant": "",
+            "source": "Monologue"
+        },
+        {
+            "id": "cap_2a4f9e09",
+            "key": "Funny thing about this bottle. It was never full.",
+            "speak": "Funny thing about this bottle. It was never full.",
+            "mood": 4,
+            "variant": "",
+            "source": "Monologue"
+        },
+        {
+            "id": "cap_66adb300",
+            "key": "She's insured for three times what she's worth.",
+            "speak": "She's insured for three times what she's worth.",
+            "mood": 4,
+            "variant": "",
+            "source": "Monologue"
+        },
+        {
+            "id": "cap_5311b255",
+            "key": "The owners get paid when she sinks, and I get my share.",
+            "speak": "The owners get paid when she sinks, and I get my share.",
+            "mood": 4,
+            "variant": "",
+            "source": "Monologue"
+        },
+        {
+            "id": "cap_728a95e2",
+            "key": "And when they ask why, the answer's easy.",
+            "speak": "And when they ask why, the answer's easy.",
+            "mood": 4,
+            "variant": "",
+            "source": "Monologue"
+        },
+        {
+            "id": "cap_923412a0",
+            "key": "The Captain was drunk. Everyone heard him.",
+            "speak": "The Captain was drunk. Everyone heard him.",
+            "mood": 4,
+            "variant": "",
+            "source": "Monologue"
+        },
+        {
+            "id": "cap_734e6816",
+            "key": "The Stoker's been on my payroll since we left port.",
+            "speak": "The Stoker's been on my payroll since we left port.",
+            "mood": 4,
+            "variant": "",
+            "source": "Monologue"
+        },
+        {
+            "id": "cap_5327a060",
+            "key": "Wave, Stoker.",
+            "speak": "Wave, Stoker.",
+            "mood": 4,
+            "variant": "",
+            "source": "Monologue"
+        },
+        {
+            "id": "cap_a7aa6158",
+            "key": "The wreckers in the cove will row me home.",
+            "speak": "The wreckers in the cove will row me home.",
+            "mood": 4,
+            "variant": "",
+            "source": "Monologue"
+        },
+        {
+            "id": "cap_d9b9fe19",
+            "key": "You, I'm afraid, they won't.",
+            "speak": "You, I'm afraid, they won't.",
+            "mood": 4,
+            "variant": "",
+            "source": "Monologue"
+        },
+        {
+            "id": "cap_4dd54d24",
+            "key": "You questioned. You dragged your feet. You read things you weren't meant to read.",
+            "speak": "You questioned. You dragged your feet. You read things you weren't meant to read.",
+            "mood": 4,
+            "variant": "",
+            "source": "Monologue"
+        },
+        {
+            "id": "cap_fe35c6f2",
+            "key": "Too late now. She's pointed at the ice and she's going fast.",
+            "speak": "Too late now. She's pointed at the ice and she's going fast.",
+            "mood": 4,
+            "variant": "",
+            "source": "Monologue"
+        },
+        {
+            "id": "cap_5625b2ff",
+            "key": "...",
+            "speak": "...",
+            "mood": 4,
+            "variant": "",
+            "source": "Monologue"
+        },
+        {
+            "id": "cap_3e9059ac",
+            "key": "Lookout's ringing. Your hands are on the wheel now. Not mine.",
+            "speak": "Lookout's ringing. Your hands are on the wheel now. Not mine.",
+            "mood": 4,
+            "variant": "",
+            "source": "Monologue"
+        },
+        {
+            "id": "cap_9ac440c8",
+            "key": "Boats or no boats, nobody rows away from ice this fast.",
+            "speak": "Boats or no boats, nobody rows away from ice this fast.",
+            "mood": 4,
+            "variant": "",
+            "source": "MonologueLost"
+        },
+        {
+            "id": "cap_e4ee6f01",
+            "key": "I couldn't have asked for a better crew.",
+            "speak": "I couldn't have asked for a better crew.",
+            "mood": 4,
+            "variant": "",
+            "source": "MonologueLost"
+        },
+        {
+            "id": "cap_db0ef019",
+            "key": "Every order, you followed. Thank you. Really.",
+            "speak": "Every order, you followed. Thank you. Really.",
+            "mood": 4,
+            "variant": "",
+            "source": "MonologueLost"
+        },
+        {
+            "id": "cap_9c3e1c6d",
+            "key": "Morning! Boiler two needs coal and two people who aren't afraid of it.",
+            "speak": "Morning! Boiler two needs coal and two people who aren't afraid of it.",
+            "mood": 0,
+            "variant": "",
+            "source": "Order"
+        },
+        {
+            "id": "cap_b03cb5aa",
+            "key": "Big boiler. Big mouth. Eats like my uncle.",
+            "speak": "Big boiler. Big mouth. Eats like my uncle.",
+            "mood": 0,
+            "variant": "",
+            "source": "Order"
+        },
+        {
+            "id": "cap_8119fc06",
+            "key": "Passenger list to the bridge, please.",
+            "speak": "Passenger list to the bridge, please.",
+            "mood": 0,
+            "variant": "",
+            "source": "Order"
+        },
+        {
+            "id": "cap_d628f955",
+            "key": "Two thousand souls aboard and only one of them steering. Bring me their names. It's only polite.",
+            "speak": "Two thousand souls aboard and only one of them steering. Bring me their names. It's only polite.",
+            "mood": 0,
+            "variant": "",
+            "source": "Order"
+        },
+        {
+            "id": "cap_fceca525",
+            "key": "Close door four. Routine inspection.",
+            "speak": "Close door four. Routine inspection.",
+            "mood": 0,
+            "variant": "",
+            "source": "Order"
+        },
+        {
+            "id": "cap_0de53256",
+            "key": "Nothing to worry about. I just like my doors the way I like my crew. Shut, and reliable.",
+            "speak": "Nothing to worry about. I just like my doors the way I like my crew. Shut, and reliable.",
+            "mood": 0,
+            "variant": "",
+            "source": "Order"
+        },
+        {
+            "id": "cap_adc70f2e",
+            "key": "Pop over to the wireless and log the weather.",
+            "speak": "Pop over to the wireless and log the weather.",
+            "mood": 0,
+            "variant": "",
+            "source": "Order"
+        },
+        {
+            "id": "cap_72739d9f",
+            "key": "Clear, calm, perfect. You can write that before you read it. Saves time.",
+            "speak": "Clear, calm, perfect. You can write that before you read it. Saves time.",
+            "mood": 0,
+            "variant": "",
+            "source": "Order"
+        },
+        {
+            "id": "cap_826480ca",
+            "key": "Two hands on the wheel. Hold her steady while I check the charts.",
+            "speak": "Two hands on the wheel. Hold her steady while I check the charts.",
+            "mood": 0,
+            "variant": "",
+            "source": "Order"
+        },
+        {
+            "id": "cap_0a6c42a9",
+            "key": "Gently now. She's a lady, not a wheelbarrow.",
+            "speak": "Gently now. She's a lady, not a wheelbarrow.",
+            "mood": 0,
+            "variant": "",
+            "source": "Order"
+        },
+        {
+            "id": "cap_17c29625",
+            "key": "Keep her at full speed. We've a schedule to beat.",
+            "speak": "Keep her at full speed. We've a schedule to beat.",
+            "mood": 2,
+            "variant": "",
+            "source": "Order"
+        },
+        {
+            "id": "cap_1fdd15d2",
+            "key": "Speed is safety, crew. Everyone knows that. Write it down. Actually, don't write it down.",
+            "speak": "Speed is safety, crew. Everyone knows that. Write it down. Actually, don't write it down.",
+            "mood": 2,
+            "variant": "",
+            "source": "Order"
+        },
+        {
+            "id": "cap_a729f96b",
+            "key": "An ice message? Old news. File it away. Unread.",
+            "speak": "An ice message? Old news. File it away. Unread.",
+            "mood": 2,
+            "variant": "",
+            "source": "Order"
+        },
+        {
+            "id": "cap_79b1b61e",
+            "key": "Don't look at me like that. If I read every gloomy telegram, we'd never leave port. *clink*",
+            "speak": "Don't look at me like that. If I read every gloomy telegram, we'd never leave port.",
+            "mood": 2,
+            "variant": "",
+            "source": "Order"
+        },
+        {
+            "id": "cap_39d639cc",
+            "key": "Open door four again. Let the air through.",
+            "speak": "Open door four again. Let the air through.",
+            "mood": 2,
+            "variant": "",
+            "source": "Order"
+        },
+        {
+            "id": "cap_157d4e01",
+            "key": "It's getting stuffy in here. Or I'm getting warm. One of the two. *hic*",
+            "speak": "It's getting stuffy in here. Or I'm getting warm. One of the two. hic!",
+            "mood": 2,
+            "variant": "",
+            "source": "Order"
+        },
+        {
+            "id": "cap_d4801c48",
+            "key": "Lock the lifeboat store.",
+            "speak": "Lock the lifeboat store.",
+            "mood": 2,
+            "variant": "",
+            "source": "Order"
+        },
+        {
+            "id": "cap_7e276f1e",
+            "key": "Nobody needs a lifeboat on a night like this. A lifeboat is just a boat that's given up.",
+            "speak": "Nobody needs a lifeboat on a night like this. A lifeboat is just a boat that's given up.",
+            "mood": 2,
+            "variant": "",
+            "source": "Order"
+        },
+        {
+            "id": "cap_a906c99d",
+            "key": "Take my log to the wireless desk. And don't read it.",
+            "speak": "Take my log to the wireless desk. And don't read it.",
+            "mood": 2,
+            "variant": "",
+            "source": "Order"
+        },
+        {
+            "id": "cap_bce5284f",
+            "key": "I mean it. Don't. It's private. It's... poetry. Mostly poetry. Some sums.",
+            "speak": "I mean it. Don't. It's private. It's... poetry. Mostly poetry. Some sums.",
+            "mood": 2,
+            "variant": "",
+            "source": "Order"
+        },
+        {
+            "id": "cap_e5e91b96",
+            "key": "Two points north. The compassh is wrong, not me.",
+            "speak": "Two points north. The compassh is wrong, not me.",
+            "mood": 2,
+            "variant": "",
+            "source": "Order"
+        },
+        {
+            "id": "cap_9e5fa103",
+            "key": "Who got you this far? Me. Who's got the hat? Me. Who's the rum for? Also me. TWO POINTS NORTH.",
+            "speak": "Who got you this far? Me. Who's got the hat? Me. Who's the rum for? Also me. TWO POINTS NORTH.",
+            "mood": 2,
+            "variant": "",
+            "source": "Order"
+        },
+        {
+            "id": "cap_b2b88787",
+            "key": "Full ahead.",
+            "speak": "Full ahead.",
+            "mood": 4,
+            "variant": "",
+            "source": "Order"
+        },
+        {
+            "id": "cap_4804dc79",
+            "key": "We're close now. I can feel it.",
+            "speak": "We're close now. I can feel it.",
+            "mood": 4,
+            "variant": "",
+            "source": "Order"
+        },
+        {
+            "id": "cap_bae6ba91",
+            "key": "Ah, the new one. Arthur, isn't it? Welcome aboard.",
+            "speak": "Ah, the new one. Arthur, isn't it? Welcome aboard.",
+            "mood": 0,
+            "variant": "Arthur",
+            "source": "Talk"
+        },
+        {
+            "id": "cap_bdca76c9",
+            "key": "Ah, the new one. Ezra, isn't it? Welcome aboard.",
+            "speak": "Ah, the new one. Ezra, isn't it? Welcome aboard.",
+            "mood": 0,
+            "variant": "Ezra",
+            "source": "Talk"
+        },
+        {
+            "id": "cap_a6318a73",
+            "key": "Ah, the new one. Mabel, isn't it? Welcome aboard.",
+            "speak": "Ah, the new one. Mabel, isn't it? Welcome aboard.",
+            "mood": 0,
+            "variant": "Mabel",
+            "source": "Talk"
+        },
+        {
+            "id": "cap_d047a069",
+            "key": "Ah, the new one. Jonah, isn't it? Welcome aboard.",
+            "speak": "Ah, the new one. Jonah, isn't it? Welcome aboard.",
+            "mood": 0,
+            "variant": "Jonah",
+            "source": "Talk"
+        },
+        {
+            "id": "cap_5ea6e32c",
+            "key": "Ah, the new one. {seat}, isn't it? Welcome aboard.",
+            "speak": "Ah, the new one. sailor, isn't it? Welcome aboard.",
+            "mood": 0,
+            "variant": "*",
+            "source": "Talk"
+        },
+        {
+            "id": "cap_35c518e5",
+            "key": "Mind the boiler. It bites.",
+            "speak": "Mind the boiler. It bites.",
+            "mood": 0,
+            "variant": "",
+            "source": "Talk"
+        },
+        {
+            "id": "cap_12505f3e",
+            "key": "Two days to the Promised Port, Arthur. Keep the fires fed and we'll have ourselves a record.",
+            "speak": "Two days to the Promised Port, Arthur. Keep the fires fed and we'll have ourselves a record.",
+            "mood": 0,
+            "variant": "Arthur",
+            "source": "Talk"
+        },
+        {
+            "id": "cap_1f9cc502",
+            "key": "Two days to the Promised Port, Ezra. Keep the fires fed and we'll have ourselves a record.",
+            "speak": "Two days to the Promised Port, Ezra. Keep the fires fed and we'll have ourselves a record.",
+            "mood": 0,
+            "variant": "Ezra",
+            "source": "Talk"
+        },
+        {
+            "id": "cap_65beb65c",
+            "key": "Two days to the Promised Port, Mabel. Keep the fires fed and we'll have ourselves a record.",
+            "speak": "Two days to the Promised Port, Mabel. Keep the fires fed and we'll have ourselves a record.",
+            "mood": 0,
+            "variant": "Mabel",
+            "source": "Talk"
+        },
+        {
+            "id": "cap_49bf7f52",
+            "key": "Two days to the Promised Port, Jonah. Keep the fires fed and we'll have ourselves a record.",
+            "speak": "Two days to the Promised Port, Jonah. Keep the fires fed and we'll have ourselves a record.",
+            "mood": 0,
+            "variant": "Jonah",
+            "source": "Talk"
+        },
+        {
+            "id": "cap_b090afe1",
+            "key": "Two days to the Promised Port, {seat}. Keep the fires fed and we'll have ourselves a record.",
+            "speak": "Two days to the Promised Port, sailor. Keep the fires fed and we'll have ourselves a record.",
+            "mood": 0,
+            "variant": "*",
+            "source": "Talk"
+        },
+        {
+            "id": "cap_9daa3d14",
+            "key": "Questions, Arthur? Write them down.",
+            "speak": "Questions, Arthur? Write them down.",
+            "mood": 0,
+            "variant": "Arthur",
+            "source": "Talk"
+        },
+        {
+            "id": "cap_9796dec8",
+            "key": "Questions, Ezra? Write them down.",
+            "speak": "Questions, Ezra? Write them down.",
+            "mood": 0,
+            "variant": "Ezra",
+            "source": "Talk"
+        },
+        {
+            "id": "cap_b58f96a0",
+            "key": "Questions, Mabel? Write them down.",
+            "speak": "Questions, Mabel? Write them down.",
+            "mood": 0,
+            "variant": "Mabel",
+            "source": "Talk"
+        },
+        {
+            "id": "cap_848dd018",
+            "key": "Questions, Jonah? Write them down.",
+            "speak": "Questions, Jonah? Write them down.",
+            "mood": 0,
+            "variant": "Jonah",
+            "source": "Talk"
+        },
+        {
+            "id": "cap_855fcfbd",
+            "key": "Questions, {seat}? Write them down.",
+            "speak": "Questions, sailor? Write them down.",
+            "mood": 0,
+            "variant": "*",
+            "source": "Talk"
+        },
+        {
+            "id": "cap_5874daf5",
+            "key": "Then feed them to the boiler. Saves everyone time.",
+            "speak": "Then feed them to the boiler. Saves everyone time.",
+            "mood": 0,
+            "variant": "",
+            "source": "Talk"
+        },
+        {
+            "id": "cap_b7839b8a",
+            "key": "You're doing fine, Arthur. Better than fine.",
+            "speak": "You're doing fine, Arthur. Better than fine.",
+            "mood": 0,
+            "variant": "Arthur",
+            "source": "Talk"
+        },
+        {
+            "id": "cap_75a2d022",
+            "key": "You're doing fine, Ezra. Better than fine.",
+            "speak": "You're doing fine, Ezra. Better than fine.",
+            "mood": 0,
+            "variant": "Ezra",
+            "source": "Talk"
+        },
+        {
+            "id": "cap_8ac710de",
+            "key": "You're doing fine, Mabel. Better than fine.",
+            "speak": "You're doing fine, Mabel. Better than fine.",
+            "mood": 0,
+            "variant": "Mabel",
+            "source": "Talk"
+        },
+        {
+            "id": "cap_09c179bc",
+            "key": "You're doing fine, Jonah. Better than fine.",
+            "speak": "You're doing fine, Jonah. Better than fine.",
+            "mood": 0,
+            "variant": "Jonah",
+            "source": "Talk"
+        },
+        {
+            "id": "cap_4b6228fd",
+            "key": "You're doing fine, {seat}. Better than fine.",
+            "speak": "You're doing fine, sailor. Better than fine.",
+            "mood": 0,
+            "variant": "*",
+            "source": "Talk"
+        },
+        {
+            "id": "cap_715160cd",
+            "key": "Adequate, even.",
+            "speak": "Adequate, even.",
+            "mood": 0,
+            "variant": "",
+            "source": "Talk"
+        },
+        {
+            "id": "cap_b97dd08e",
+            "key": "The boiler, the wheel, the doors, the wireless. Learn them well, Arthur.",
+            "speak": "The boiler, the wheel, the doors, the wireless. Learn them well, Arthur.",
+            "mood": 0,
+            "variant": "Arthur",
+            "source": "Talk"
+        },
+        {
+            "id": "cap_984045e6",
+            "key": "The boiler, the wheel, the doors, the wireless. Learn them well, Ezra.",
+            "speak": "The boiler, the wheel, the doors, the wireless. Learn them well, Ezra.",
+            "mood": 0,
+            "variant": "Ezra",
+            "source": "Talk"
+        },
+        {
+            "id": "cap_1d49526c",
+            "key": "The boiler, the wheel, the doors, the wireless. Learn them well, Mabel.",
+            "speak": "The boiler, the wheel, the doors, the wireless. Learn them well, Mabel.",
+            "mood": 0,
+            "variant": "Mabel",
+            "source": "Talk"
+        },
+        {
+            "id": "cap_a0d58116",
+            "key": "The boiler, the wheel, the doors, the wireless. Learn them well, Jonah.",
+            "speak": "The boiler, the wheel, the doors, the wireless. Learn them well, Jonah.",
+            "mood": 0,
+            "variant": "Jonah",
+            "source": "Talk"
+        },
+        {
+            "id": "cap_a128e205",
+            "key": "The boiler, the wheel, the doors, the wireless. Learn them well, {seat}.",
+            "speak": "The boiler, the wheel, the doors, the wireless. Learn them well, sailor.",
+            "mood": 0,
+            "variant": "*",
+            "source": "Talk"
+        },
+        {
+            "id": "cap_ec176d35",
+            "key": "I'll be watching. Fondly.",
+            "speak": "I'll be watching. Fondly.",
+            "mood": 0,
+            "variant": "",
+            "source": "Talk"
+        },
+        {
+            "id": "cap_81f343c7",
+            "key": "Midnight, and we'll make Grey Cove right on time.",
+            "speak": "Midnight, and we'll make Grey Cove right on time.",
+            "mood": 2,
+            "variant": "",
+            "source": "Slip"
+        }
+    ]
+}

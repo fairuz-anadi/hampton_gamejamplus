@@ -51,7 +51,9 @@ public class PlayerThought : MonoBehaviour
         if (current == null && queue.Count > 0 && !paused) { current = queue.Dequeue(); started = Time.time; }
 
         float t = current != null ? Time.time - started : 0f;
-        bool show = current != null && !paused;
+        // (Samprity) Not over something being read up close (the telegram, the chart, the bottle).
+        bool covered = ShipClues.ReadingPaper || ChartView.IsOpen || ClueCloseUp.IsOpen;
+        bool show = current != null && !paused && !covered;
         group.alpha = Mathf.MoveTowards(group.alpha, show ? 1f : 0f, Time.unscaledDeltaTime * 5f);
         if (current == null) return;
 
@@ -67,6 +69,7 @@ public class PlayerThought : MonoBehaviour
             text.fontSize = 34;
         }
         if (t > DotsSeconds + showSeconds) current = null;
+        Fit();
 
         // Over the local player's head, kept on screen.
         var cam = Camera.main;
@@ -76,9 +79,12 @@ public class PlayerThought : MonoBehaviour
         Vector3 sp = cam.WorldToScreenPoint(player.transform.position + Vector3.up * 2.3f);
         if (sp.z <= 0f) return;
         RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, sp, null, out var local);
+        // Kept on screen whatever size the cloud has grown to: clear of the HUD in the top corners and the speaker
+        // strip at the bottom.
         var half = canvasRect.rect.size * 0.5f;
-        local.x = Mathf.Clamp(local.x + 20f, -half.x + 260f, half.x - 560f);
-        local.y = Mathf.Clamp(local.y + Mathf.Sin(Time.time * 2.5f) * 5f, -half.y + 260f, half.y - 430f);
+        var size = bubble.sizeDelta;
+        local.x = Mathf.Clamp(local.x + 20f, -half.x + 0.15f * size.x + 190f, half.x - 0.85f * size.x - 190f);
+        local.y = Mathf.Clamp(local.y + Mathf.Sin(Time.time * 2.5f) * 5f, -half.y + 260f, half.y - size.y - 280f);
         bubble.anchoredPosition = local;
         float pop = Mathf.Clamp01(t / 0.2f);
         bubble.localScale = Vector3.one * Mathf.Lerp(0.6f, 1f, pop);
@@ -117,6 +123,31 @@ public class PlayerThought : MonoBehaviour
         text.rectTransform.anchoredPosition = new Vector2(0f, 18f);
         text.rectTransform.sizeDelta = new Vector2(370f, 90f);
     }
+
+    string fitted;
+
+    /// <summary>
+    /// (Samprity) Grows the cloud to fit the thought: wider first, up to 600 px of text, then taller, so a long thought
+    /// never spills out of it. The cloud picture stretches with it; the text sits in its puffy middle.
+    /// </summary>
+    void Fit()
+    {
+        if (text.text == fitted) return;
+        fitted = text.text;
+        const float baseWidth = 370f, baseHeight = 90f, maxWidth = 600f;
+        float width = baseWidth;
+        float height = Preferred(width);
+        if (height > baseHeight) { width = Mathf.Min(maxWidth, baseWidth * Mathf.Sqrt(height / baseHeight)); height = Preferred(width); }
+        height = Mathf.Max(baseHeight, height);
+        // The cloud's body is about two thirds of the picture's height (the trail to the head is the rest).
+        var size = new Vector2(440f * width / baseWidth, Mathf.Max(150f, (height + 36f) / 0.64f));
+        bubble.sizeDelta = size;
+        text.rectTransform.sizeDelta = new Vector2(width, height);
+        text.rectTransform.anchoredPosition = new Vector2(0f, size.y * 0.12f);
+    }
+
+    float Preferred(float width) =>
+        text.cachedTextGeneratorForLayout.GetPreferredHeight(text.text, text.GetGenerationSettings(new Vector2(width, 0f))) / text.pixelsPerUnit;
 
     static Texture2D CloudTexture()
     {

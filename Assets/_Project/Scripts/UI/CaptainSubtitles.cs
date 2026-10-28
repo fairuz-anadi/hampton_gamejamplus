@@ -357,6 +357,7 @@ public class CaptainSubtitles : MonoBehaviour
         OnLineStarted(text);
         line.text = text;
         target = 1f;
+        CaptainNarrator.Say(text); // spoken too, if it was recorded (his "Grey Cove" slip)
     }
 
     /// <summary>Changes the aside's words in place, without resizing (for its flicker).</summary>

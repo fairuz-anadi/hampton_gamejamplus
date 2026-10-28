@@ -1,0 +1,532 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 26b2a1b0c6fa939479ca3adcdae45053, type: 3}
+  m_Name: CaptainVoiceBank
+  m_EditorClassIdentifier: Assembly-CSharp::CaptainVoiceBank
+  voiceName: George (JBFqnCBsd6RMkjVDRZzb), eleven_multilingual_v2
+  entries:
+  - text: Ahem. Is this on? It's on.
+    clip: {fileID: 8300000, guid: c7cff777d97fa884f8b7a36b54672a7c, type: 3}
+    template: 0
+  - text: Good morning, crew! This is your Captain speaking. Well, typing. Well, speaking. You'll get used to me.
+    clip: {fileID: 8300000, guid: f0e718d9784756948ab989d65a73bb8a, type: 3}
+    template: 0
+  - text: Two days to the Promised Port. Clear skies, calm sea, and a crew that does exactly what it's told. I can already tell we'll get along.
+    clip: {fileID: 8300000, guid: 57ef6455c291a99479f285820db52628, type: 3}
+    template: 0
+  - text: Evening, crew! Sea like glass. Stars out. I've loosened my collar, which is the most exciting thing that's happened all day.
+    clip: {fileID: 8300000, guid: 265e3ca54bcc5b642b22727add5dc6e9, type: 3}
+    template: 0
+  - text: We're ahead of schedule. Let's be more ahead of it.
+    clip: {fileID: 8300000, guid: c0831cfc0c3926f44aa24463af20a464, type: 3}
+    template: 0
+  - text: 'Quick announcement: the bridge is perfectly level. If it feels tilted, that''s a you problem.'
+    clip: {fileID: 8300000, guid: 5a6c0f2814895294598c1de53dbcaa0a, type: 3}
+    template: 0
+  - text: Right. Where were we. Orders. Yes.
+    clip: {fileID: 8300000, guid: 28b1d425411d7314c8127061659177c2, type: 3}
+    template: 0
+  - text: Right. RIGHT. Everyone listen. I have been very patient. Very. Patient.
+    clip: {fileID: 8300000, guid: 8932d28e24417724c95779dbc6178b91, type: 3}
+    template: 0
+  - text: I've been patient for hours. Days. It's been a long evening and I've been patient in all of it.
+    clip: {fileID: 8300000, guid: 5edbcd1b43ec8554ba733feeac763c06, type: 3}
+    template: 0
+  - text: That bell means something. I've forgotten what.
+    clip: {fileID: 8300000, guid: 5fdac182321aac24089de24dd5c87966, type: 3}
+    template: 0
+  - text: Hands on the wheel, crew.
+    clip: {fileID: 8300000, guid: b1b750f0baf14024393746ef31c8ef54, type: 3}
+    template: 0
+  - text: '{seat} says done. Done is my favourite word.'
+    clip: {fileID: 8300000, guid: 018c16c3cb88c0d4eaed047aeaacf349, type: 3}
+    template: 1
+  - text: Good work! We'll make history, you and I.
+    clip: {fileID: 8300000, guid: 49048ae863f44354d9bb8c4d78bb8261, type: 3}
+    template: 0
+  - text: Lovely. Steady hands make a steady ship. I'd shake yours, but I'm up here and you're down there. Consider it shaken.
+    clip: {fileID: 8300000, guid: e8bf94c181de12f4cba0bcbb94d60d08, type: 3}
+    template: 0
+  - text: That's the spirit! I knew I picked a good crew. Well, the company picked you. But I approved. In spirit.
+    clip: {fileID: 8300000, guid: ad6f5eaa235b6514098ac39fb5a7ed09, type: 3}
+    template: 0
+  - text: Good. Very good. Speed and obedience, my two favourite things.
+    clip: {fileID: 8300000, guid: 7b45a207b152f384ab6a057e73fb5e7e, type: 3}
+    template: 0
+  - text: Lovely. Keep that up and you'll be captain one day. Of something. Smaller.
+    clip: {fileID: 8300000, guid: ff6585c59d8a655449b5b2cf4aafcfd1, type: 3}
+    template: 0
+  - text: Oh, look at that. Someone on this ship can follow an order. Gold star. *hic*
+    clip: {fileID: 8300000, guid: fc767e26f3b867840a782dd35a8751b7, type: 3}
+    template: 0
+  - text: Finally. Was that so hard? Don't answer. It was a rhetorical. A rhetoric. A question.
+    clip: {fileID: 8300000, guid: 81f087fd28ab6ef40bb75d8463c42d86, type: 3}
+    template: 0
+  - text: Thash... that's more like it. You're my favourite now. Everyone else is fired.
+    clip: {fileID: 8300000, guid: 6bacac6dfbc4c6f41a120bfdc892bf5f, type: 3}
+    template: 0
+  - text: Good. GOOD. See? When you do what I say, nothing bad happens. Usually. Mostly. Shh.
+    clip: {fileID: 8300000, guid: ac8a482f59f2c4447b7d2f87dde6d333, type: 3}
+    template: 0
+  - text: Good.
+    clip: {fileID: 8300000, guid: ac655393d59c1b94e81371da5597e238, type: 3}
+    template: 0
+  - text: Refused? Oh. Well, I'm sure you have your reasons, {seat}.
+    clip: {fileID: 8300000, guid: d557e27daf5bf15428799c12505825be, type: 3}
+    template: 1
+  - text: I'll just make a note. A small one. In pencil.
+    clip: {fileID: 8300000, guid: 38e0c3d1aedad784e93108fcb4f88e81, type: 3}
+    template: 0
+  - text: '{seat} would rather not. That''s all right! It''s a free ship.'
+    clip: {fileID: 8300000, guid: d53f850426b1c214eb05cb267a664f58, type: 3}
+    template: 1
+  - text: Mostly free. Free-ish.
+    clip: {fileID: 8300000, guid: 16f3dc4c7c406284592b88fe030d77db, type: 3}
+    template: 0
+  - text: Refused. Interesting.
+    clip: {fileID: 8300000, guid: a581abec04abf0140b27922fbaaaa0ab, type: 3}
+    template: 0
+  - text: '{seat}, I''m going to pretend I didn''t hear that, and you''re going to pretend you didn''t say it.'
+    clip: {fileID: 8300000, guid: 67285d68ad5b494448bf4d152c30bbdd, type: 3}
+    template: 1
+  - text: That's alright, {seat}. Someone else will do it.
+    clip: {fileID: 8300000, guid: 5039cd348e6cbea49848ca66d7023a29, type: 3}
+    template: 1
+  - text: Someone better.
+    clip: {fileID: 8300000, guid: 8c570c5d48f7e88439732fe58eaa4925, type: 3}
+    template: 0
+  - text: '{seat} decided not to do as they were told. {seat} believed they knew better than the Captain.'
+    clip: {fileID: 8300000, guid: 63318ef7efe084d47a42aff21802e128, type: 3}
+    template: 1
+  - text: '{seat} was wrong. *hic*'
+    clip: {fileID: 8300000, guid: c5d352db0f2929248bac88a16d90eac9, type: 3}
+    template: 1
+  - text: No? NO? I give you one simple job, {seat}. One.
+    clip: {fileID: 8300000, guid: 91310b4f09a8f924b955f20bcf8478ab, type: 3}
+    template: 1
+  - text: I've had harder jobs opening this bottle.
+    clip: {fileID: 8300000, guid: d979c4d03affdb941b89ce80215db5bf, type: 3}
+    template: 0
+  - text: Oh, you're REFUSING? You, {seat}? You couldn't steer a bathtub. I've met barnacles with more initiative.
+    clip: {fileID: 8300000, guid: ced3b73ea9befba48b49785ed0292bdd, type: 3}
+    template: 1
+  - text: When we dock, I'm having your face painted on the hull. As a warning.
+    clip: {fileID: 8300000, guid: ac39ac1216a54e44796ceaa429ef7ef9, type: 3}
+    template: 0
+  - text: Refuse me one more time, {seat}. Go on. I dare you.
+    clip: {fileID: 8300000, guid: 327f1f5738fc29e41acc36de88b8036b, type: 3}
+    template: 1
+  - text: I'll have you scrubbing the anchor. Underwater. *hic*
+    clip: {fileID: 8300000, guid: f0bb870e13599cd4799a2b2965884273, type: 3}
+    template: 0
+  - text: Refused. It doesn't matter anymore, {seat}.
+    clip: {fileID: 8300000, guid: afb5c93549005cd4d8bf13a27d13aa05, type: 3}
+    template: 1
+  - text: Go on, refuse. The sea doesn't take orders either.
+    clip: {fileID: 8300000, guid: bab1b01b2df14a54ab1ef41705d94c4c, type: 3}
+    template: 0
+  - text: Too slow, {seat}. Never mind! Plenty of voyage left.
+    clip: {fileID: 8300000, guid: 1e03d30974031ba49a37e7207e841ea8, type: 3}
+    template: 1
+  - text: '{seat}? Hello? Is this thing on?'
+    clip: {fileID: 8300000, guid: 067be849bb3c83e4fa2bbff86fb3fdf8, type: 3}
+    template: 1
+  - text: Ah well. We'll call that a practice run.
+    clip: {fileID: 8300000, guid: b133cb6eec65bda468bac7afc2503ec4, type: 3}
+    template: 0
+  - text: Hesitating, {seat}? Hesitation is how ships get late.
+    clip: {fileID: 8300000, guid: 09840e91abb8ed844b96a80b3b118a26, type: 3}
+    template: 1
+  - text: Silence is an answer too, {seat}. Not a good one.
+    clip: {fileID: 8300000, guid: c7b0e4ed754a55445a33d57ed4df7f7a, type: 3}
+    template: 1
+  - text: '{seat} stood very still and did nothing at all.'
+    clip: {fileID: 8300000, guid: 87aeea26ccbf2db498b68465fc612156, type: 3}
+    template: 1
+  - text: Fascinating choice. Truly. They'll write songs about it.
+    clip: {fileID: 8300000, guid: c951c9584e6e3fe45a6e3e6e4e6e1923, type: 3}
+    template: 0
+  - text: I said NOW, {seat}. Not 'whenever you fancy'.
+    clip: {fileID: 8300000, guid: e3661b31fcc958e4891dc5d5363d05ba, type: 3}
+    template: 1
+  - text: Is there an echo down there? Echo? ...No? Fine.
+    clip: {fileID: 8300000, guid: b50e91e373eb67a489460605f9635e0f, type: 3}
+    template: 0
+  - text: Asleep, {seat}? Dead? Either way, I'm docking your pay.
+    clip: {fileID: 8300000, guid: a2b96c8f7f1bf7c4b9d09a707bd847f3, type: 3}
+    template: 1
+  - text: Hello? {seat}? Did you die?
+    clip: {fileID: 8300000, guid: f4bbd3dcca0c73f4688da1b68061993f, type: 3}
+    template: 1
+  - text: If you died, you're excused. Otherwise, very rude.
+    clip: {fileID: 8300000, guid: 05e413acc26d8f1479011aed06fd0efa, type: 3}
+    template: 0
+  - text: It doesn't matter now.
+    clip: {fileID: 8300000, guid: c688b0dfc6cca784cb5f35b2835ae18d, type: 3}
+    template: 0
+  - text: '"{task}." You said it was done, {seat}. It wasn''t.'
+    clip: {fileID: 8300000, guid: a9658c5165a83e2439bfc325c2d41b65, type: 3}
+    template: 1
+  - text: There was no one in that room but you. And yet, here we are.
+    clip: {fileID: 8300000, guid: 274885f8fd4c1204797ad2f64cd6bbc8, type: 3}
+    template: 0
+  - text: '{seat}. Your report on "{task}". I checked.'
+    clip: {fileID: 8300000, guid: 4cbc60d19ceee3e40b51297cb594e314, type: 3}
+    template: 1
+  - text: I always check. I'd like you to remember that.
+    clip: {fileID: 8300000, guid: 65b027d1d3c46a842b9f939b51fcd081, type: 3}
+    template: 0
+  - text: No one saw you skip "{task}", {seat}. No one except me.
+    clip: {fileID: 8300000, guid: c62a3c89f12f47f4899dfefa228c84a7, type: 3}
+    template: 1
+  - text: I see a great deal from up here. More than you'd think.
+    clip: {fileID: 8300000, guid: 448ffdebc255bd242abe5ae06685f773, type: 3}
+    template: 0
+  - text: Thank {seat} for closing it earlier. I saw.
+    clip: {fileID: 8300000, guid: ff7a1302b5380764081a821e9780a64f, type: 3}
+    template: 1
+  - text: You again. I'm sure the door remembers you fondly.
+    clip: {fileID: 8300000, guid: d4408279a6926cd4da71051e0085345c, type: 3}
+    template: 0
+  - text: It's already open, isn't it, {seat}.
+    clip: {fileID: 8300000, guid: f58e160a40a564e44953fa5846d74159, type: 3}
+    template: 1
+  - text: Funny how doors do that.
+    clip: {fileID: 8300000, guid: 9eb9c7e7ab9073f4baa64c09309b0e72, type: 3}
+    template: 0
+  - text: Someone wouldn't close it the first time. I know who. I haven't forgotten.
+    clip: {fileID: 8300000, guid: 41d686e1097c27342a58f7717a47022d, type: 3}
+    template: 0
+  - text: 'Between us, {seat}: the ice reports are always exaggerated. The wireless lads love a drama.'
+    clip: {fileID: 8300000, guid: 569f6f676ff61564b9a915e8b2853cc9, type: 3}
+    template: 1
+  - text: Stick with me and you'll have a medal by Thursday.
+    clip: {fileID: 8300000, guid: 1299d237c9f3c6242b8612a5a139a640, type: 3}
+    template: 0
+  - text: '{seat}, you''re my favourite. Don''t tell the others.'
+    clip: {fileID: 8300000, guid: 3b1300ce0a86dbd43a21b0d18863f3bf, type: 3}
+    template: 1
+  - text: The others hesitate. You don't. I like that in a crew member. And in a dog.
+    clip: {fileID: 8300000, guid: f389326bd62eefe44ac93d86f40f0f37, type: 3}
+    template: 0
+  - text: Off the record, {seat}. The lifeboats are for show. Like the band.
+    clip: {fileID: 8300000, guid: 5273a8604a829ee40b0c416f4421a1c1, type: 3}
+    template: 1
+  - text: We won't be needing them.
+    clip: {fileID: 8300000, guid: 82737865ea582d74d9d991c3e40526c5, type: 3}
+    template: 0
+  - text: Between you and me, {seat}, there's a fellow from the papers waiting at the port.
+    clip: {fileID: 8300000, guid: bdaaa23a8649fb24a8c73f718eb82dc2, type: 3}
+    template: 1
+  - text: I've been practising my modest face. You can't see it. It's very modest.
+    clip: {fileID: 8300000, guid: 5d9a168016373924c97496445c4a77e5, type: 3}
+    template: 0
+  - text: When they ask who made this crossing possible, I'm going to say "the crew".
+    clip: {fileID: 8300000, guid: 62ea02631346acf419d8ef3846dd6736, type: 3}
+    template: 0
+  - text: And then I'm going to say "just kidding".
+    clip: {fileID: 8300000, guid: a7e639212f5f8f84c9b36afefa148c29, type: 3}
+    template: 0
+  - text: Shall I tell you a secret, {seat}? This rum was a gift from the owners. For breaking the record.
+    clip: {fileID: 8300000, guid: 5a9bf57edcf5d24488a5fcd253d640de, type: 3}
+    template: 1
+  - text: I'm just celebrating a little early.
+    clip: {fileID: 8300000, guid: 069478b61c9f13440bcac78a2ef75f28, type: 3}
+    template: 0
+  - text: I'm watching you, {seat}.
+    clip: {fileID: 8300000, guid: 87f45f06217b02647aff5a1954152e76, type: 3}
+    template: 1
+  - text: Not with my eyes. I have other ways.
+    clip: {fileID: 8300000, guid: 0f58d8d6325a21c4fb0af2246cb2e149, type: 3}
+    template: 0
+  - text: Some of you have forgotten whose ship this is. {seat} certainly has.
+    clip: {fileID: 8300000, guid: 9af34ad308a616449baaf4d908da2763, type: 3}
+    template: 1
+  - text: Let me remind you. Mine. The hat says so.
+    clip: {fileID: 8300000, guid: a1bf2d398768aa843b94beb396e9308c, type: 3}
+    template: 0
+  - text: '{seat}. Every refusal goes in my log.'
+    clip: {fileID: 8300000, guid: 681ac6f5e25ab2f44bb0aef5f17638ba, type: 3}
+    template: 1
+  - text: The log is getting very long. I'm going to need a second log.
+    clip: {fileID: 8300000, guid: 9438ea24972285c448d149015ffe0288, type: 3}
+    template: 0
+  - text: 'Fun fact: a ship this size takes over a mile to stop.'
+    clip: {fileID: 8300000, guid: 8a342e76e459745458c64f8b1fe3c5bc, type: 3}
+    template: 0
+  - text: So it's better not to.
+    clip: {fileID: 8300000, guid: a693b7f686b20c94191d4e3774803cc5, type: 3}
+    template: 0
+  - text: I once captained a ship so fast we arrived the day before we left.
+    clip: {fileID: 8300000, guid: 2738f686625e9004396f0d9284be8e9a, type: 3}
+    template: 0
+  - text: Nobody believes that story. That's fine. I was there.
+    clip: {fileID: 8300000, guid: baf3b11320e20c34cbaa21e0f2948100, type: 3}
+    template: 0
+  - text: You know the problem with icebergs? Nobody ever sees the bottom of them.
+    clip: {fileID: 8300000, guid: 49b44b7552b677f428a28b599f7484c9, type: 3}
+    template: 0
+  - text: Same with people. Same with this bottle. Where has the bottom of this bottle gone?
+    clip: {fileID: 8300000, guid: 4b644a3286f43c74f9ff40200511a592, type: 3}
+    template: 0
+  - text: 'Note to the owners. Crew morale: excellent. Crew obedience: questionable.'
+    clip: {fileID: 8300000, guid: 2758591eb7de4524bb0f8d50ce35bf0d, type: 3}
+    template: 0
+  - text: 'Captain: magnificent. Rum: running low.'
+    clip: {fileID: 8300000, guid: 44297a31e54f4254a9a7d64f3c546799, type: 3}
+    template: 0
+  - text: Who put the North Pole there? Was it the owners? I bet it was the owners.
+    clip: {fileID: 8300000, guid: bc8b2e2b93390eb4897394efc2447c30, type: 3}
+    template: 0
+  - text: Somebody write them a letter. A stern one. In CAPITALS.
+    clip: {fileID: 8300000, guid: 07e081faf6e80df48ae8a40733be195e, type: 3}
+    template: 0
+  - text: I want you all to know that if anything goes wrong tonight, legally, it's your fault.
+    clip: {fileID: 8300000, guid: 6192f7e402c76574cbf25007cdadc3d0, type: 3}
+    template: 0
+  - text: I checked. I checked with myself. *hic*
+    clip: {fileID: 8300000, guid: 55a166b17aa7ca049aeb98e0d6229951, type: 3}
+    template: 0
+  - text: I was going to be an admiral, you know. Then a duke. Now I'm going to be a record. A NAME.
+    clip: {fileID: 8300000, guid: 8c04e7bb1ad482549ac407a118e1f078, type: 3}
+    template: 0
+  - text: Nobody remembers a careful man! ...What was I saying. Shovel something.
+    clip: {fileID: 8300000, guid: 68fbf60d864dd6c42981dcf4509a46fa, type: 3}
+    template: 0
+  - text: Another ice message on my desk. Thank you. Very thorough.
+    clip: {fileID: 8300000, guid: 3f8b3711b80f0244c8725302b110df24, type: 3}
+    template: 0
+  - text: I'll read it right after this. Other thing.
+    clip: {fileID: 8300000, guid: 988d4495e77daa0448d6aea8d0b85004, type: 3}
+    template: 0
+  - text: Yes, yes. Ice. There's always ice.
+    clip: {fileID: 8300000, guid: 054e2a0430c617448b03bfc77369912b, type: 3}
+    template: 0
+  - text: It's the North Atlantic, not a punch bowl.
+    clip: {fileID: 8300000, guid: 79e81ad8917d85b4590fb5b28421bb48, type: 3}
+    template: 0
+  - text: Oh, MORE ice? Lovely.
+    clip: {fileID: 8300000, guid: 4a14d51408a05034499c7a54aeb1140c, type: 3}
+    template: 0
+  - text: Put some in my drink.
+    clip: {fileID: 8300000, guid: 25e0fd8239189744796ead79ad3c5bd4, type: 3}
+    template: 0
+  - text: Who keeps bringing me these? Is it you, {seat}?
+    clip: {fileID: 8300000, guid: 0b0f8a59fb4f37b4489f70ac6a59c1b8, type: 3}
+    template: 1
+  - text: Stop it. Stop being helpful. It's very annoying.
+    clip: {fileID: 8300000, guid: 691b3910f2e4c6349a9d2adb12029717, type: 3}
+    template: 0
+  - text: '{seat}? You''re standing very still for someone with a job.'
+    clip: {fileID: 8300000, guid: d3c365dc5199c964984cabeae65fc4a7, type: 3}
+    template: 1
+  - text: It's the paper, {seat}. On the desk. You pick it up.
+    clip: {fileID: 8300000, guid: 643a9dffbb6c4944a862e192c6e00b80, type: 3}
+    template: 1
+  - text: I believe in you. Moderately.
+    clip: {fileID: 8300000, guid: 94edab5569dd4514f8f3e2024c90cca3, type: 3}
+    template: 0
+  - text: Lovely, you've got it. Now the other end of the ship.
+    clip: {fileID: 8300000, guid: b3887c5f06e42554aa3a42e0435deac7, type: 3}
+    template: 0
+  - text: The pointy end.
+    clip: {fileID: 8300000, guid: 1806ee96a6e271f469c4753d6b442131, type: 3}
+    template: 0
+  - text: Go on, {seat}. It doesn't bite.
+    clip: {fileID: 8300000, guid: 0fba354f4dacd9b43ac0204ecffa5706, type: 3}
+    template: 1
+  - text: The boiler bites. The rest don't.
+    clip: {fileID: 8300000, guid: 09110544f9b214044967b19c321e1b67, type: 3}
+    template: 0
+  - text: '{seat}, that''s a two-person job, and you are, as far as I can tell, one person.'
+    clip: {fileID: 8300000, guid: a1bbe935baf5dfa4892694c4db52200a, type: 3}
+    template: 1
+  - text: Give a shout. Someone will come. Eventually.
+    clip: {fileID: 8300000, guid: 67d87831a63653f4584aae46eb68bbca, type: 3}
+    template: 0
+  - text: It's green, {seat}. Green means done. Done means you tell me.
+    clip: {fileID: 8300000, guid: 19754b1b5f9ef284f9ea1da74c06a770, type: 3}
+    template: 1
+  - text: I can't hear lights.
+    clip: {fileID: 8300000, guid: 7af3229d189b65143bba32421e256558, type: 3}
+    template: 0
+  - text: If anyone has a problem with that, keep it to yourself.
+    clip: {fileID: 8300000, guid: 906c017627876ea49ae10d1284e90447, type: 3}
+    template: 0
+  - text: Loud refusals help no one.
+    clip: {fileID: 8300000, guid: 3f91ac193da0c2b4eacc18b93ddfe20f, type: 3}
+    template: 0
+  - text: We were never going to the Promised Port.
+    clip: {fileID: 8300000, guid: 9c2c83395f051564c881f119d561802a, type: 3}
+    template: 0
+  - text: Check the readout. Grey Cove. Lovely spot. Nobody lives there.
+    clip: {fileID: 8300000, guid: 3eeae329e66bc5d45826612a64bd3961, type: 3}
+    template: 0
+  - text: Crew. All of you. Listen.
+    clip: {fileID: 8300000, guid: b6dca9e0a41fd7446b4b8eed578ffe63, type: 3}
+    template: 0
+  - text: This is it. This is the bit.
+    clip: {fileID: 8300000, guid: 87903c577f566df4893bdbf4dd968613, type: 3}
+    template: 0
+  - text: The bottle's empty.
+    clip: {fileID: 8300000, guid: f48ecdec454e9c843847eb9a090419a8, type: 3}
+    template: 0
+  - text: Funny thing about this bottle. It was never full.
+    clip: {fileID: 8300000, guid: 5d2985e1d0971ba4380c383883c56e6b, type: 3}
+    template: 0
+  - text: She's insured for three times what she's worth.
+    clip: {fileID: 8300000, guid: 4eb1f7837996da343962ba94e3f3088a, type: 3}
+    template: 0
+  - text: The owners get paid when she sinks, and I get my share.
+    clip: {fileID: 8300000, guid: d2c0c40419ee7464fa4fbaa71be0945d, type: 3}
+    template: 0
+  - text: And when they ask why, the answer's easy.
+    clip: {fileID: 8300000, guid: acc2788213ff80b409256bc2b3570562, type: 3}
+    template: 0
+  - text: The Captain was drunk. Everyone heard him.
+    clip: {fileID: 8300000, guid: 18ecd8758b9601f4391a4ff731d589f3, type: 3}
+    template: 0
+  - text: The Stoker's been on my payroll since we left port.
+    clip: {fileID: 8300000, guid: 9e0b6d07c86ef404cbab937a19f436ca, type: 3}
+    template: 0
+  - text: Wave, Stoker.
+    clip: {fileID: 8300000, guid: c0132865491796a408a1511bc65d1228, type: 3}
+    template: 0
+  - text: The wreckers in the cove will row me home.
+    clip: {fileID: 8300000, guid: 9ac325aaa2efdef49b5d4f4b371d9546, type: 3}
+    template: 0
+  - text: You, I'm afraid, they won't.
+    clip: {fileID: 8300000, guid: 4d335825cb975d8498c1aa66fb8632b7, type: 3}
+    template: 0
+  - text: You questioned. You dragged your feet. You read things you weren't meant to read.
+    clip: {fileID: 8300000, guid: abd3e6a6753de7343948d3837f6d1a16, type: 3}
+    template: 0
+  - text: Too late now. She's pointed at the ice and she's going fast.
+    clip: {fileID: 8300000, guid: 2b7d2e137010dec4199420f1489d80e7, type: 3}
+    template: 0
+  - text: ...
+    clip: {fileID: 8300000, guid: 7d4d3c0c913401f4b825134f5e62dc9c, type: 3}
+    template: 0
+  - text: Lookout's ringing. Your hands are on the wheel now. Not mine.
+    clip: {fileID: 8300000, guid: 5645de8639e7d124ca057c2d8a82aa4b, type: 3}
+    template: 0
+  - text: Boats or no boats, nobody rows away from ice this fast.
+    clip: {fileID: 8300000, guid: acfd432806678254ebc32cb7e7ea1a84, type: 3}
+    template: 0
+  - text: I couldn't have asked for a better crew.
+    clip: {fileID: 8300000, guid: ae2888567dc7e714f8c30cc434b31c31, type: 3}
+    template: 0
+  - text: Every order, you followed. Thank you. Really.
+    clip: {fileID: 8300000, guid: 530005f6d957c4741bd90c3f4c2e720b, type: 3}
+    template: 0
+  - text: Morning! Boiler two needs coal and two people who aren't afraid of it.
+    clip: {fileID: 8300000, guid: 20b95e970e15e5a45afec5caed65eabe, type: 3}
+    template: 0
+  - text: Big boiler. Big mouth. Eats like my uncle.
+    clip: {fileID: 8300000, guid: 92ce893773c78e7458781b5ee5846aea, type: 3}
+    template: 0
+  - text: Passenger list to the bridge, please.
+    clip: {fileID: 8300000, guid: 83cc68133c3485645ab75d7fba3e3568, type: 3}
+    template: 0
+  - text: Two thousand souls aboard and only one of them steering. Bring me their names. It's only polite.
+    clip: {fileID: 8300000, guid: d54f83f99d9cdaf438b423cddeb55f05, type: 3}
+    template: 0
+  - text: Close door four. Routine inspection.
+    clip: {fileID: 8300000, guid: a5b82338260127f45930be437281c203, type: 3}
+    template: 0
+  - text: Nothing to worry about. I just like my doors the way I like my crew. Shut, and reliable.
+    clip: {fileID: 8300000, guid: 26e276a1804adf7438336f91eeb75797, type: 3}
+    template: 0
+  - text: Pop over to the wireless and log the weather.
+    clip: {fileID: 8300000, guid: 597cddc4254b62f4b81cd29f754bf73c, type: 3}
+    template: 0
+  - text: Clear, calm, perfect. You can write that before you read it. Saves time.
+    clip: {fileID: 8300000, guid: 9e22bc5b68439d44aab6c8b1d8d4b612, type: 3}
+    template: 0
+  - text: Two hands on the wheel. Hold her steady while I check the charts.
+    clip: {fileID: 8300000, guid: c67a8af49dd4b5f4ba9e6330cc7ebef8, type: 3}
+    template: 0
+  - text: Gently now. She's a lady, not a wheelbarrow.
+    clip: {fileID: 8300000, guid: 38ce13b8ab9577a428fb5972ec153650, type: 3}
+    template: 0
+  - text: Keep her at full speed. We've a schedule to beat.
+    clip: {fileID: 8300000, guid: 72eb16a5fef687247b1e71e28b7f5053, type: 3}
+    template: 0
+  - text: Speed is safety, crew. Everyone knows that. Write it down. Actually, don't write it down.
+    clip: {fileID: 8300000, guid: b676eff1531822d458405fec6bb44cdc, type: 3}
+    template: 0
+  - text: An ice message? Old news. File it away. Unread.
+    clip: {fileID: 8300000, guid: cc98981138cd15848bbeb8b113b67bc7, type: 3}
+    template: 0
+  - text: Don't look at me like that. If I read every gloomy telegram, we'd never leave port. *clink*
+    clip: {fileID: 8300000, guid: 1b3e79427bfd5a248864c225978b7ce1, type: 3}
+    template: 0
+  - text: Open door four again. Let the air through.
+    clip: {fileID: 8300000, guid: f22d794a5456e96438bd7ff35e7640a8, type: 3}
+    template: 0
+  - text: It's getting stuffy in here. Or I'm getting warm. One of the two. *hic*
+    clip: {fileID: 8300000, guid: 20f073b9cc833484d8c56b1faabb1885, type: 3}
+    template: 0
+  - text: Lock the lifeboat store.
+    clip: {fileID: 8300000, guid: c30c3f30b95b6fd4e96d0348a7bc56df, type: 3}
+    template: 0
+  - text: Nobody needs a lifeboat on a night like this. A lifeboat is just a boat that's given up.
+    clip: {fileID: 8300000, guid: 2e33c8975f0d7024fb575d1e3a8d4917, type: 3}
+    template: 0
+  - text: Take my log to the wireless desk. And don't read it.
+    clip: {fileID: 8300000, guid: 28f0890a7db930c468930f84aaaf1d29, type: 3}
+    template: 0
+  - text: I mean it. Don't. It's private. It's... poetry. Mostly poetry. Some sums.
+    clip: {fileID: 8300000, guid: 26c480849b9115040b14c9083e3bfc43, type: 3}
+    template: 0
+  - text: Two points north. The compassh is wrong, not me.
+    clip: {fileID: 8300000, guid: 7da252a3be25ca343bd03b38bcdf9825, type: 3}
+    template: 0
+  - text: Who got you this far? Me. Who's got the hat? Me. Who's the rum for? Also me. TWO POINTS NORTH.
+    clip: {fileID: 8300000, guid: 1d29799bf63e7744db7a7848514520a2, type: 3}
+    template: 0
+  - text: Full ahead.
+    clip: {fileID: 8300000, guid: c6b0e07548d45fb4b8bb4957e4502ee1, type: 3}
+    template: 0
+  - text: We're close now. I can feel it.
+    clip: {fileID: 8300000, guid: a317ecae8738af9449778299ba9056ca, type: 3}
+    template: 0
+  - text: Ah, the new one. {seat}, isn't it? Welcome aboard.
+    clip: {fileID: 8300000, guid: 1bddcbec365ce6547aa440529bbb179e, type: 3}
+    template: 1
+  - text: Mind the boiler. It bites.
+    clip: {fileID: 8300000, guid: 3de1662f3ff64cb47946e08793660834, type: 3}
+    template: 0
+  - text: Two days to the Promised Port, {seat}. Keep the fires fed and we'll have ourselves a record.
+    clip: {fileID: 8300000, guid: df09020e33ead22499b8cc5c84ac4465, type: 3}
+    template: 1
+  - text: Questions, {seat}? Write them down.
+    clip: {fileID: 8300000, guid: c3a5d372ddaabfa47ab8800b5a225011, type: 3}
+    template: 1
+  - text: Then feed them to the boiler. Saves everyone time.
+    clip: {fileID: 8300000, guid: 0c89dcccf990f1a41843e8d7b7dfb6ff, type: 3}
+    template: 0
+  - text: You're doing fine, {seat}. Better than fine.
+    clip: {fileID: 8300000, guid: 9af95400c84acaa4bbbf6f3f8c2dd6a0, type: 3}
+    template: 1
+  - text: Adequate, even.
+    clip: {fileID: 8300000, guid: 230bb45f82b3d714c9152bb82a4d5542, type: 3}
+    template: 0
+  - text: The boiler, the wheel, the doors, the wireless. Learn them well, {seat}.
+    clip: {fileID: 8300000, guid: 2dc4cf1ccb2a2544b9546c5d0f8b79a0, type: 3}
+    template: 1
+  - text: I'll be watching. Fondly.
+    clip: {fileID: 8300000, guid: ba2d84919e3bc164fab9aa840ef9207d, type: 3}
+    template: 0
+  - text: Midnight, and we'll make Grey Cove right on time.
+    clip: {fileID: 8300000, guid: 9202a1adb5431474c8322a2b92e69403, type: 3}
+    template: 0

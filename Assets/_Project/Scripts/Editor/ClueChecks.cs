@@ -9,11 +9,11 @@ using UnityEngine.InputSystem.LowLevel;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-/// Plays Ship with one keyboard player and checks the bottle close-up. Owner: Samprity.
+/// Plays Ship with one keyboard player and checks the Captain's bottle clue end to end. Owner: Samprity.
 ///   Unity.exe -batchmode -projectPath . -executeMethod ClueChecks.RunBatch      (no -quit: it exits itself)
-/// A stand-in bottle on the bridge cabinet (where Anadi's ShipClues puts the Captain's) is dressed as the clear,
-/// empty, sealed bottle; the player stands by it; the close-up eases the camera in and shows the note on the right;
-/// E puts it down and the camera goes back to the player. Writes Logs/ClueChecks.txt and Logs/Clue_*.png.
+/// Part 2 puts Anadi's bottle (ShipClues) on the bridge cabinet, dressed as the dark green, empty, sealed bottle;
+/// the player walks up and presses E: the camera eases in and the note says it was never full; E again puts it
+/// down and the camera goes back to the player. Writes Logs/ClueChecks.txt and Logs/Clue_*.png.
 /// </summary>
 public static class ClueChecks
 {
@@ -71,10 +71,11 @@ public static class ClueChecks
         if (!EditorApplication.isPlaying) return;
         ReleaseIfDue();
         float inStep = Time.realtimeSinceStartup - stepStart;
+        var gm = GameManager.Instance;
         switch (step)
         {
             case 0: // Join with a keyboard, then (re)load Ship
-                if (GameManager.Instance == null) return;
+                if (gm == null) return;
                 if (!reloaded)
                 {
                     reloaded = true;
@@ -89,73 +90,50 @@ public static class ClueChecks
                 Next();
                 break;
 
-            case 1: // A bottle on the bridge cabinet, dressed as the Captain's; the player beside it
-            {
-                // Wait for the part's title card to clear: it fills the screen while it's up.
+            case 1: // On to Part 2, where the bottle comes out
                 if (inStep < 1.5f || PartCard.IsShowing) { if (inStep > 40f) Fail("the part card never cleared"); return; }
                 IntroCard.Instance?.Dismiss();
-                Transform cabinet = null;
-                foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsSortMode.None))
-                    if (t.name.StartsWith("cabinet_medium") && !t.name.Contains("decorated") && (cabinet == null || t.position.z > cabinet.position.z)) cabinet = t;
-                if (cabinet == null) { Fail("no bridge cabinet"); return; }
-                var b = new Bounds(cabinet.position, Vector3.zero);
-                foreach (var r in cabinet.GetComponentsInChildren<Renderer>()) b.Encapsulate(r.bounds);
-                var stand = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-                Object.Destroy(stand.GetComponent<Collider>());
-                stand.name = "TestBottle";
-                stand.transform.position = new Vector3(b.center.x - 0.15f, b.max.y + 0.15f, b.center.z + 0.2f);
-                stand.transform.localScale = new Vector3(0.12f, 0.15f, 0.12f);
-                var root = new GameObject("CaptainsBottle").transform;
-                root.position = new Vector3(b.center.x - 0.15f, b.max.y, b.center.z + 0.2f);
-                stand.transform.SetParent(root, true);
-                ClueCloseUp.DressBottle(root);
-                bottle = root;
-                Check(root.Find("BottleLook") != null, "The bottle is dressed as the Captain's: a green rum bottle, empty, still sealed");
+                gm.DebugSkipPart();
+                Next();
+                break;
 
+            case 2: // Anadi's bottle on the bridge cabinet, dressed as the Captain's; the player walks up to it
+            {
+                var go = GameObject.Find("CaptainsBottle");
+                if (gm.State != GameState.Part2 || PartCard.IsShowing || go == null) { if (inStep > 90f) Fail("the bottle never came out in Part 2"); return; }
+                bottle = go.transform;
+                Check(bottle.Find("BottleLook") != null, "Part 2: the Captain's bottle is on the bridge, a dark green bottle, empty, still sealed");
                 var player = Object.FindAnyObjectByType<PlayerController>();
-                var spot = UnityEngine.AI.NavMesh.SamplePosition(root.position + Vector3.left * 1.2f, out var hit, 1.5f, UnityEngine.AI.NavMesh.AllAreas) ? hit.position : root.position + Vector3.left * 1.2f;
-                var yaw = Quaternion.LookRotation(new Vector3(root.position.x - spot.x, 0f, root.position.z - spot.z)).eulerAngles.y;
+                var spot = UnityEngine.AI.NavMesh.SamplePosition(bottle.position + Vector3.left * 1.2f, out var hit, 1.5f, UnityEngine.AI.NavMesh.AllAreas) ? hit.position : bottle.position + Vector3.left * 1.2f;
+                var yaw = Quaternion.LookRotation(new Vector3(bottle.position.x - spot.x, 0f, bottle.position.z - spot.z)).eulerAngles.y;
                 player.GetComponent<ThirdPersonMover>().Teleport(spot, yaw);
                 Camera.main.GetComponent<AutoFollowCamera>()?.SnapToTarget();
                 Next();
                 break;
             }
 
-            case 2: // The close-up
-                if (inStep < 1.5f) return;
+            case 3: // E on it, the way a player would
+                if (inStep < 1.2f) return;
                 farDistance = Vector3.Distance(Camera.main.transform.position, bottle.position);
                 Capture("1_before");
-                ClueCloseUp.ShowBottle(bottle, Object.FindAnyObjectByType<PlayerController>());
+                Press();
                 Next();
                 break;
 
-            case 3:
-                if (inStep < 1.6f) return;
+            case 4:
+                if (inStep < 1.8f) return;
                 float near = Vector3.Distance(Camera.main.transform.position, bottle.position);
                 Check(ClueCloseUp.IsOpen, "E on the bottle opens the close-up");
-                Check(near < 1.2f && near < farDistance * 0.6f, $"The camera eases in on the bottle ({farDistance:0.0} m to {near:0.00} m)");
+                Check(near < 1.4f && near < farDistance * 0.6f, $"The camera eases in on the bottle ({farDistance:0.0} m to {near:0.00} m)");
                 Capture("2_closeup");
                 Press();
                 Next();
                 break;
 
-            case 4: // E again puts it down; the camera goes back to the player
-                if (inStep < 1.6f)
-                {
-                    // What the game sees while E is down, frame by frame (for when this fails).
-                    var pc = Object.FindAnyObjectByType<PlayerController>();
-                    var cu = Object.FindAnyObjectByType<ClueCloseUp>();
-                    var f = typeof(ClueCloseUp).GetField("closing", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                    var w = typeof(ClueCloseUp).GetField("wasHeld", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                    if (Time.frameCount != lastLogged)
-                    {
-                        lastLogged = Time.frameCount;
-                        Debug.Log($"[ClueChecks] frame {Time.frameCount} t {Time.time:0.00} held {pc?.InteractHeld} closing {f?.GetValue(cu)} wasHeld {w?.GetValue(cu)} timeScale {Time.timeScale}");
-                    }
-                    return;
-                }
+            case 5: // E again puts it down; the camera goes back to the player
+                if (inStep < 1.8f) return;
                 float back = Vector3.Distance(Camera.main.transform.position, bottle.position);
-                Check(!ClueCloseUp.IsOpen, "E again puts the bottle down");
+                Check(!ClueCloseUp.IsOpen, "E again puts the bottle down (and doesn't pick it straight back up)");
                 Check(back > 1.5f, $"The camera goes back to the player ({back:0.0} m from the bottle)");
                 Capture("3_after");
                 Check(errors.Count == 0, errors.Count == 0 ? "No errors or exceptions" : $"{errors.Count} errors: " + string.Join(" | ", errors.Distinct().Take(5)));
@@ -164,7 +142,7 @@ public static class ClueChecks
         }
     }
 
-    static int releaseAfterFrame = -1, lastLogged = -1;
+    static int releaseAfterFrame = -1;
 
     /// <summary>E down now and held for three game frames, like a real press (headless frames can be slow).</summary>
     static void Press()
