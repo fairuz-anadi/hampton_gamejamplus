@@ -48,6 +48,7 @@ public static class MiniMapBuilder
     struct CrewPart { public RectTransform root; public Image dot; public RectTransform arrow; public Image ring; }
     struct IcePart { public RectTransform root; public Image core; public Image glow; }
     struct RoomPart { public RectTransform root; public RectTransform label; }
+    struct PingPart { public RectTransform root; public Image ring; }
 
     [MenuItem("Rabib/Build MiniMap")]
     public static void Build()
@@ -136,14 +137,25 @@ public static class MiniMapBuilder
         for (int i = 0; i < iceParts.Length; i++)
             iceParts[i] = BuildIceIcon(fill.transform, "IceWarning_" + (i + 1), circle, ring);
 
+        var pingParts = new PingPart[6];
+        for (int i = 0; i < pingParts.Length; i++)
+            pingParts[i] = BuildPing(fill.transform, "Ping_" + (i + 1), ring);
+
+        // Outside Hull (not Fill), so it sweeps on its own instead of spinning with the camera's yaw; still a
+        // child of HullArea, so it's still clipped by the mask.
+        var sweep = Img(hullArea, "Sweep", triangle, new Color(Cream.r, Cream.g, Cream.b, 0.14f),
+            new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(10f, hullHeight * 0.95f), Image.Type.Simple);
+        sweep.rectTransform.pivot = new Vector2(0.5f, 0f);
+        sweep.rectTransform.anchoredPosition = Vector2.zero;
+
         var mini = root.AddComponent<MiniMap>();
-        WireMiniMap(mini, fadeGroup, fill.rectTransform, hull, highlightRing, bridgeRoot, roomParts, stationGlyphRoots, crewParts, iceParts);
+        WireMiniMap(mini, fadeGroup, fill.rectTransform, hull, highlightRing, bridgeRoot, roomParts, stationGlyphRoots, crewParts, iceParts, pingParts, sweep.rectTransform);
 
         return root;
     }
 
     static void WireMiniMap(MiniMap mini, CanvasGroup fadeGroup, RectTransform mapArea, RectTransform rotatingRoot, Image highlightRing, RectTransform bridgeRoot,
-        RoomPart[] roomParts, RectTransform[] stationGlyphRoots, CrewPart[] crewParts, IcePart[] iceParts)
+        RoomPart[] roomParts, RectTransform[] stationGlyphRoots, CrewPart[] crewParts, IcePart[] iceParts, PingPart[] pingParts, RectTransform sweepLine)
     {
         var so = new SerializedObject(mini);
         so.FindProperty("fadeGroup").objectReferenceValue = fadeGroup;
@@ -151,6 +163,7 @@ public static class MiniMapBuilder
         so.FindProperty("rotatingRoot").objectReferenceValue = rotatingRoot;
         so.FindProperty("highlightRing").objectReferenceValue = highlightRing;
         so.FindProperty("bridgeMarker").objectReferenceValue = bridgeRoot;
+        so.FindProperty("sweepLine").objectReferenceValue = sweepLine;
 
         var roomProp = so.FindProperty("roomZones");
         roomProp.arraySize = roomParts.Length;
@@ -186,6 +199,15 @@ public static class MiniMapBuilder
             el.FindPropertyRelative("root").objectReferenceValue = iceParts[i].root;
             el.FindPropertyRelative("core").objectReferenceValue = iceParts[i].core;
             el.FindPropertyRelative("glow").objectReferenceValue = iceParts[i].glow;
+        }
+
+        var pingProp = so.FindProperty("pings");
+        pingProp.arraySize = pingParts.Length;
+        for (int i = 0; i < pingParts.Length; i++)
+        {
+            var el = pingProp.GetArrayElementAtIndex(i);
+            el.FindPropertyRelative("root").objectReferenceValue = pingParts[i].root;
+            el.FindPropertyRelative("ring").objectReferenceValue = pingParts[i].ring;
         }
 
         so.ApplyModifiedPropertiesWithoutUndo();
@@ -287,6 +309,15 @@ public static class MiniMapBuilder
         outline.effectDistance = new Vector2(1f, -1f);
         root.gameObject.SetActive(false);
         return new IcePart { root = root, core = core, glow = glow };
+    }
+
+    /// <summary>A ripple: just a ring that MiniMap.cs scales up and fades out at a world position.</summary>
+    static PingPart BuildPing(Transform parent, string name, Sprite ring)
+    {
+        var root = Box(parent, name, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(18f, 18f), new Vector2(0.5f, 0.5f));
+        var ringImg = Img(root, "Ring", ring, Gold, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, Image.Type.Simple);
+        root.gameObject.SetActive(false);
+        return new PingPart { root = root, ring = ringImg };
     }
 
     // ---------- Small layout helpers (own copies — HudBuilder's Box/Img/Txt are private to her class) ----------
