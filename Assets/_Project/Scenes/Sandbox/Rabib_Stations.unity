@@ -897,6 +897,11 @@ MonoBehaviour:
   impactAhead: 2
   icebergSize: {x: 5, y: 5, z: 4}
   icebergColor: {r: 0.93, g: 0.97, b: 1, a: 1}
+  zoomAmount: 0.55
+  zoomSeconds: 3
+  impactBeat: 2.5
+  maxShake: 0.6
+  floodColor: {r: 0.08, g: 0.22, b: 0.35, a: 0.55}
 --- !u!4 &712032743
 Transform:
   m_ObjectHideFlags: 0

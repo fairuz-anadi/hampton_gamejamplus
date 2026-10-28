@@ -673,7 +673,7 @@ public static class ShipDeckBuilder
             }
             var top = Group(bay, "TopDeck");
             BuildTopDeckBay(top, z0, z1, i, shingle);
-            Fade(top, z0, z1, 8.6f, false);
+            Fade(top, z0, z1, 1.5f, false);
         }
     }
 
