@@ -120,7 +120,18 @@ public class CaptainNarrator : MonoBehaviour
         return null;
     }
 
-    void Update() => MuteTyping(Speaking);
+    void Update()
+    {
+        MuteTyping(Speaking);
+        // A card or the pause menu stops time: his voice waits with his text box, and picks up where it stopped.
+        bool paused = Time.timeScale == 0f;
+        if (paused == heldForPause) return;
+        heldForPause = paused;
+        foreach (var s in new[] { speaker, inPerson })
+            if (s != null) { if (paused) s.Pause(); else s.UnPause(); }
+    }
+
+    bool heldForPause;
 
     /// <summary>The per-letter typing voice lives on CaptainDirector's object; hush it while the recording talks.</summary>
     static void MuteTyping(bool mute)
