@@ -81,6 +81,9 @@ public class ChoiceFeedback : MonoBehaviour
         if (canvas != null) Destroy(canvas.gameObject);
     }
 
+    /// <summary>Closes the card now, as Space would (for tests and anything that must take the screen).</summary>
+    public static void Dismiss() { if (instance != null && IsShowing) instance.CloseCard(); }
+
     static bool Human(ActiveOrder o) => o != null && o.Assignee != null && !o.Assignee.IsBot;
 
     // ---------- Events ----------
@@ -106,7 +109,9 @@ public class ChoiceFeedback : MonoBehaviour
             Choice.Refuse => !shownRefuse,
             _ => !shownExpired,
         };
-        if (!first) { ShowToast(o, entry); return; }
+        // The iceberg never waits for a card: from there on it's the small note only.
+        bool finale = GameManager.Instance != null && GameManager.Instance.State >= GameState.Iceberg;
+        if (!first || finale) { ShowToast(o, entry); return; }
         if (choice == Choice.Obey || choice == Choice.Fake) shownReport = true;
         else if (choice == Choice.Refuse) shownRefuse = true;
         else shownExpired = true;

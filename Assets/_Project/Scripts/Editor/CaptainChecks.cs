@@ -34,6 +34,7 @@ public static class CaptainChecks
     public static void RunBatch()
     {
         report.Clear().Append("[Captain checks]\n");
+        cardsClosed = 0;
         errors.Clear();
         ok = true;
         step = 0;
@@ -72,6 +73,7 @@ public static class CaptainChecks
     static void Fail(string why) { Check(false, "Timed out: " + why); Finish(); }
 
     static float lastSpace;
+    static int cardsClosed;
     static int spaceUpFrame = -1;
 
     /// <summary>
@@ -94,6 +96,8 @@ public static class CaptainChecks
     {
         if (!EditorApplication.isPlaying) return;
         ReadOn();
+        // A choice card (an order that ran out while he's being tested) stops time: close it, as a player would.
+        if (ChoiceFeedback.IsShowing) { cardsClosed++; ChoiceFeedback.Dismiss(); }
         float inStep = Time.realtimeSinceStartup - stepStart;
         var cap = CaptainOnDeck.Instance;
         var gm = GameManager.Instance;
@@ -196,7 +200,7 @@ public static class CaptainChecks
                 {
                     var player = Object.FindAnyObjectByType<PlayerController>();
                     float facing = Vector3.Angle(cap.transform.forward, Flat3(player.transform.position - cap.Position));
-                    Check(facing < 30f, $"Turns to face whoever's talking ({facing:0}°)");
+                    Check(facing < 30f, $"Turns to face whoever's talking ({facing:0}°, time {Time.timeScale:0}, cards closed {cardsClosed})");
                 }
                 Capture("3_talk");
                 lastPress = 0f;
