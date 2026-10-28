@@ -48,6 +48,8 @@ public class OpeningMenu : MonoBehaviour
     Coroutine fadeRoutine, subtitleRoutine;
 
     public bool SettingsOpen { get; private set; }
+    /// <summary>The main buttons are drawn (for OpeningChecks: they must never show under an open panel).</summary>
+    public bool MainButtonsVisible => mainButtons != null && mainButtons.alpha > 0.01f;
     public bool CreditsOpen => creditsPanel != null && creditsPanel.activeSelf;
 
     // ---------- Building ----------
@@ -423,19 +425,22 @@ public class OpeningMenu : MonoBehaviour
             titleGroup.alpha = 0f;
             var tp = ((RectTransform)titleGroup.transform).anchoredPosition;
             var bp = ((RectTransform)mainButtons.transform).anchoredPosition;
+            // A panel opened during the fade (Settings, Credits, Controls, names...) hides the buttons by making them
+            // non-interactable; from then on the fade leaves them hidden, so they never draw over that panel.
             for (float t = 0f; t < 2.2f; t += Time.unscaledDeltaTime)
             {
                 float a = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(t / 1.4f));
                 float b = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((t - 0.8f) / 1.2f));
                 titleGroup.alpha = a;
-                mainButtons.alpha = b;
+                mainButtons.alpha = mainButtons.interactable ? b : 0f;
                 ((RectTransform)titleGroup.transform).anchoredPosition = tp + new Vector2(0f, -16f * (1f - a));
                 ((RectTransform)mainButtons.transform).anchoredPosition = bp + new Vector2(0f, -16f * (1f - b));
                 yield return null;
             }
             ((RectTransform)titleGroup.transform).anchoredPosition = tp;
             ((RectTransform)mainButtons.transform).anchoredPosition = bp;
-            titleGroup.alpha = mainButtons.alpha = 1f;
+            titleGroup.alpha = 1f;
+            mainButtons.alpha = mainButtons.interactable ? 1f : 0f;
         }
         else
         {
