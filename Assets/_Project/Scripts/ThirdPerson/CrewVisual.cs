@@ -102,7 +102,7 @@ public class CrewVisual : MonoBehaviour
         if (driveSpeed) animator.SetFloat(SpeedHash, speed < 0.08f ? 0f : speed, 0.08f, dt);
 
         // Holding Interact (or a bot working a station) while standing still: put your back into it.
-        bool work = ((player != null && player.InteractHeld) || (bot != null && bot.IsWorking)) && speed < 0.3f;
+        bool work = ((player != null && player.InteractHeld) || (bot != null && (bot.IsWorking || BotChores.IsDoingChore(bot)))) && speed < 0.3f;
         if (work == working) return;
         working = work;
         if (animator.HasState(0, work ? WorkHash : LocomotionHash))

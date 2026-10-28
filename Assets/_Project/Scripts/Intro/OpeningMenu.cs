@@ -104,7 +104,13 @@ public class OpeningMenu : MonoBehaviour
         subtitleIcon.preserveAspect = true;
         Place(subtitleIcon.rectTransform, new Vector2(0.5f, 1f), new Vector2(-150f, -18f), new Vector2(30f, 30f));
         subtitleSpeaker = Label(t, "Speaker", bodyFont, 24, Brass, "THE CAPTAIN", TextAnchor.MiddleCenter, new Vector2(0.5f, 1f), new Vector2(10f, -18f), new Vector2(560f, 34f));
-        subtitleLine = Label(t, "Line", italicFont, 40, Cream, "", TextAnchor.UpperCenter, new Vector2(0.5f, 1f), new Vector2(0f, -54f), new Vector2(1500f, 120f));
+        // The Captain's opening lines in the typewriter face (Special Elite, from UiTheme), like a ship's log (Anadi).
+        var theme = UiTheme.Load();
+        var lineFont = theme != null && theme.typewriter != null ? theme.typewriter : italicFont;
+        subtitleLine = Label(t, "Line", lineFont, 36, Cream, "", TextAnchor.UpperCenter, new Vector2(0.5f, 1f), new Vector2(0f, -54f), new Vector2(1500f, 120f));
+        // Hang the line from its top edge, just under "THE CAPTAIN", so the two never overlap.
+        subtitleLine.rectTransform.pivot = new Vector2(0.5f, 1f);
+        subtitleLine.rectTransform.anchoredPosition = new Vector2(0f, -42f);
         AddShadow(subtitleLine.gameObject, 0.85f);
         AddShadow(subtitleSpeaker.gameObject, 0.7f);
         subtitleGroup.alpha = 0f;
@@ -146,14 +152,13 @@ public class OpeningMenu : MonoBehaviour
             logo.raycastTarget = false;
             float h = logoW * titleLogo.rect.height / titleLogo.rect.width;
             Place(logo.rectTransform, new Vector2(0f, 1f), new Vector2(logoW * 0.5f, -h * 0.5f), new Vector2(logoW, h));
-            var tagline = Label(tt, "Tagline", italicFont, 32, DimCream, "Every voyage begins with trust.", TextAnchor.MiddleLeft, new Vector2(0f, 1f), new Vector2(logoW * 0.5f + 30f, -h - 30f), new Vector2(logoW, 46f));
-            AddShadow(tagline.gameObject, 0.7f);
+            var tagline = Tagline(tt, new Vector2(logoW * 0.5f + 30f, -h - 34f), logoW);
         }
         else
         {
             var title = Label(tt, "Title", titleFont, 104, Cream, "THE PROMISED PORT", TextAnchor.MiddleLeft, new Vector2(0f, 1f), new Vector2(550f, -112f), new Vector2(1100f, 130f));
             AddShadow(title.gameObject, 0.6f);
-            Label(tt, "Tagline", italicFont, 34, DimCream, "Every voyage begins with trust.", TextAnchor.MiddleLeft, new Vector2(0f, 1f), new Vector2(440f, -200f), new Vector2(880f, 48f));
+            Tagline(tt, new Vector2(440f, -204f), 880f);
         }
 
         // The menu: right-aligned, a little below centre.
@@ -164,19 +169,6 @@ public class OpeningMenu : MonoBehaviour
         var creditsButton = TextButton(bt, "Credits", "Credits", 42, new Vector2(0f, -15f), new Vector2(ColumnWidth, 60f), ToggleCredits);
         var quit = TextButton(bt, "Quit", "Quit", 42, new Vector2(0f, -75f), new Vector2(ColumnWidth, 60f), () => { Click(); Quit?.Invoke(); });
         Chain(beginButton, settings, creditsButton, quit);
-
-        // Rule and hints under the column, shared by the menu, settings and credits.
-        var foot = (RectTransform)new GameObject("Footer", typeof(RectTransform)).transform;
-        foot.SetParent(m, false);
-        Place(foot, new Vector2(1f, 0.5f), new Vector2(-Margin - ColumnWidth * 0.5f, -255f), new Vector2(ColumnWidth, 80f));
-        var rule = Raw(foot, "Rule", Ramp(0f, 1f), new Color(Cream.r, Cream.g, Cream.b, 0.7f));
-        Place(rule.rectTransform, new Vector2(0.5f, 1f), new Vector2(10f, 0f), new Vector2(ColumnWidth - 20f, 2f));
-        keyHints = Hints(foot, keycap, "Esc", "Back", "Enter", "Select");
-        padHints = Hints(foot, disc, "B", "Back", "A", "Select");
-
-        Label(m, "Mark", italicFont, 20, new Color(DimCream.r, DimCream.g, DimCream.b, 0.6f), "A GameJam+ 26/27 voyage", TextAnchor.MiddleRight,
-            new Vector2(1f, 0f), new Vector2(-Margin - 200f, 48f), new Vector2(400f, 30f));
-        crewStrip = Label(m, "Crew", bodyFont, 22, DimCream, "", TextAnchor.MiddleLeft, new Vector2(0f, 0f), new Vector2(Margin + 520f, 48f), new Vector2(1040f, 34f));
 
         // Credits: in the right column, in place of the menu.
         creditsPanel = new GameObject("Credits", typeof(RectTransform), typeof(Image));
@@ -239,21 +231,66 @@ public class OpeningMenu : MonoBehaviour
         rows.Add(SliderRow(s, "Master volume", ref y, GameSettings.Master, v => GameSettings.Master = v, v => Percent(v)));
         rows.Add(SliderRow(s, "Music", ref y, GameSettings.Music, v => GameSettings.Music = v, v => Percent(v)));
         rows.Add(SliderRow(s, "Sound effects", ref y, GameSettings.Effects, v => GameSettings.Effects = v, v => Percent(v)));
-        rows.Add(SliderRow(s, "Camera turn speed", ref y, GameSettings.CameraTurn, v => GameSettings.CameraTurn = v, v => v < 0.34f ? "Gentle" : v < 0.67f ? "Steady" : "Quick"));
+        rows.Add(SliderRow(s, "Camera speed", ref y, GameSettings.CameraTurn, v => GameSettings.CameraTurn = v, v => v < 0.34f ? "Gentle" : v < 0.67f ? "Steady" : "Quick"));
         var names = QualitySettings.names;
         var quality = SliderRow(s, "Graphics quality", ref y, GameSettings.Quality, v => GameSettings.Quality = Mathf.RoundToInt(v), v => names[Mathf.Clamp(Mathf.RoundToInt(v), 0, names.Length - 1)], 0f, names.Length - 1, true);
         rows.Add(quality);
         rows.Add(SliderRow(s, "Fullscreen", ref y, GameSettings.Fullscreen ? 1f : 0f, v => GameSettings.Fullscreen = v > 0.5f, v => v > 0.5f ? "On" : "Off", 0f, 1f, true));
         y -= 14f;
+        var controls = TextButton(s, "Controls", "Controls", 38, Vector2.zero, new Vector2(660f, 56f), () => OpenControls(true));
+        Place((RectTransform)controls.transform, new Vector2(0f, 1f), new Vector2(330f, y), new Vector2(660f, 56f));
+        rows.Add(controls);
+        y -= 60f;
         var back = TextButton(s, "Back", "Back", 38, Vector2.zero, new Vector2(660f, 56f), () => OpenSettings(false));
         Place((RectTransform)back.transform, new Vector2(0f, 1f), new Vector2(330f, y), new Vector2(660f, 56f));
         rows.Add(back);
         Chain(rows.ToArray());
         settingsGroupFirst = rows[0];
+        controlsButton = controls;
         SetGroup(settingsGroup, false);
+        BuildControls(m);
     }
 
-    Selectable settingsGroupFirst;
+    /// <summary>The how-to-play card, now kept under Settings > Controls instead of popping up at the start (Anadi).</summary>
+    void BuildControls(RectTransform m)
+    {
+        controlsGroup = Group(m, "Controls", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(1180f, 760f));
+        var c = (RectTransform)controlsGroup.transform;
+        var back = Panel(c, "Card", new Color(0.03f, 0.035f, 0.05f, 0.92f), Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f));
+        back.rectTransform.sizeDelta = Vector2.zero;
+        IntroCard.BuildManual(c);
+        var close = TextButton(c, "Back", "Back", 38, Vector2.zero, new Vector2(300f, 56f), () => OpenControls(false));
+        Place((RectTransform)close.transform, new Vector2(0.5f, 0f), new Vector2(0f, 52f), new Vector2(300f, 56f));
+        controlsFirst = close;
+        SetGroup(controlsGroup, false);
+    }
+
+    public bool ControlsOpen { get; private set; }
+
+    public void OpenControls(bool open)
+    {
+        if (controlsGroup == null) return;
+        Click();
+        ControlsOpen = open;
+        SetGroup(controlsGroup, open);
+        SetGroup(settingsGroup, !open);
+        SetGroup(titleGroup, !open);
+        if (interactive) StartCoroutine(SelectNextFrame(open ? controlsFirst : controlsButton));
+    }
+
+    /// <summary>"EVERY VOYAGE BEGINS WITH TRUST." in Bungee, brass, tilted a touch.</summary>
+    Text Tagline(RectTransform parent, Vector2 pos, float width)
+    {
+        var font = Resources.Load<Font>("Fonts/Bungee-Regular");
+        var t = Label(parent, "Tagline", font != null ? font : italicFont, font != null ? 30 : 34, Brass, "Every voyage begins with trust.",
+            TextAnchor.MiddleLeft, new Vector2(0f, 1f), pos, new Vector2(width, 50f));
+        t.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 2.5f);
+        AddShadow(t.gameObject, 0.8f);
+        return t;
+    }
+
+    Selectable settingsGroupFirst, controlsFirst, controlsButton;
+    CanvasGroup controlsGroup;
 
     static string Percent(float v) => Mathf.RoundToInt(v * 100f) + "%";
 
@@ -441,6 +478,7 @@ public class OpeningMenu : MonoBehaviour
     /// <summary>Esc / B while a sub-panel is open. True if it closed something.</summary>
     public bool Back()
     {
+        if (ControlsOpen) { OpenControls(false); return true; }
         if (SettingsOpen) { OpenSettings(false); return true; }
         if (CreditsOpen) { ToggleCredits(); return true; }
         return false;

@@ -29,20 +29,23 @@ Unzip, then double-click ThePromisedPort.exe. Windows 10/11, 64-bit. Unity isn't
 
 PLAYERS
 1-3 players on one screen. Bots fill the rest of the 4 crew seats, so it plays well solo.
-On the main menu: Space (keyboard) or A (gamepad) takes a seat, Enter or Start sets sail.
-A run takes about 9 minutes.
+Friends join on the main menu with Start on a controller. Begin Voyage sets sail.
+How to play is under Settings > Controls. A run takes about 9 minutes.
 
-CONTROLS              Keyboard    Gamepad
-Move                  W A S D     Left stick
-Interact (hold)       E           A
-Report done           R           Y
-Refuse                X           B
-Call for help         Q           X
-Muster vote (bell)    F           RB
-Pause                 Esc         Start
+CONTROLS              Keyboard + mouse   Gamepad
+Move                  W A S D            Left stick
+Look around           Mouse              Right stick
+Interact (hold)       E                  A
+Report done           R                  Y
+Refuse                X                  B
+Call for help         Q                  X
+Study the chart       E (bridge table)   A
+Skip a title card     Enter / Space      A
+Pause                 Esc                Start
 
 Follow the Captain's orders. For each one you can obey, fake it, or refuse.
-Watch the station lights and the three meters.
+Watch the station lights, the three meters and the readout under the clock.
+Listen to your crewmates, and look at the chart on the bridge.
 ";
 
     [MenuItem("Port/Build Windows (Development)")]

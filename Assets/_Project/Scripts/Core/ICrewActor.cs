@@ -51,9 +51,29 @@ public static class CrewRegistry
 
     static readonly string[] SeatNames = { "nobody", "Number One", "Number Two", "Number Three", "Number Four" };
 
-    /// <summary>"Number One" for seat 1, and so on.</summary>
+    /// <summary>"Number One" for seat 1, and so on. The Captain only ever uses these.</summary>
     public static string SeatName(int seat) =>
         seat >= 0 && seat < SeatNames.Length ? SeatNames[seat] : "Number " + seat;
+
+    // The crew's own names, per seat; the Captain never uses them, the crew do (name tags, whispers, results).
+    static readonly string[] CrewNames = { "", "Arthur", "Ezra", "Mabel", "Jonah" };
+
+    /// <summary>A bot's name ("Mabel"); a human player is "You" (solo) or "Player N".</summary>
+    public static string CrewName(ICrewActor c)
+    {
+        if (c == null) return "";
+        if (!c.IsBot)
+        {
+            int humans = 0;
+            foreach (var m in crew) if (!m.IsBot) humans++;
+            return humans <= 1 ? "You" : "Player " + c.Seat;
+        }
+        return c.Seat >= 0 && c.Seat < CrewNames.Length ? CrewNames[c.Seat] : SeatName(c.Seat);
+    }
+
+    /// <summary>A seat's crew name regardless of who sits there now (for the results, after the crew are gone).</summary>
+    public static string CrewNameForSeat(int seat) =>
+        seat >= 0 && seat < CrewNames.Length && CrewNames[seat] != "" ? CrewNames[seat] : SeatName(seat);
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     static void ResetStatics() => crew.Clear();
