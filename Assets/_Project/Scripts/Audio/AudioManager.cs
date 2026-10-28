@@ -207,8 +207,9 @@ public class AudioManager : MonoBehaviour
         Snapshot(part == 1 ? "Calm" : part == 2 ? "Off" : "Truth", fade);
         flood.target = 0f;
         drone.target = 0f;
-        waltz.target = part == 1 ? 0.55f : part == 2 ? 0.45f : 0f;
-        sustained.target = part == 3 ? 0.5f : 0f;
+        // No music in the story parts (her call, 28 Oct): no waltz, no Part 3 cello. Only the ship's own sounds.
+        waltz.target = 0f;
+        sustained.target = 0f;
         storm.target = part == 1 ? 0f : part == 2 ? 0.12f : 0.35f;
         passengers.target = part == 1 ? 0.3f : part == 2 ? 0.15f : 0f; // the passengers fall silent by Part 3
         ballroom.target = part == 1 ? 0.14f : part == 2 ? 0.06f : 0f;
