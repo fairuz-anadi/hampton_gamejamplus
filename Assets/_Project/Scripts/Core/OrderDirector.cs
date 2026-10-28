@@ -117,6 +117,15 @@ public class OrderDirector : MonoBehaviour
         if (data.kind == OrderKind.Final && active.Count > 0) return;
         if (StationsBusy(data)) return; // try again next frame, once the station is free
 
+        // With a player aboard, an order only arrives as the Captain announces it (Riham): a new part's opening line
+        // and any new drink go first, and nothing is issued while he's mid-line or a box waits for Space.
+        var captain = CaptainDirector.Instance;
+        if (captain != null && captain.WaitsForPlayers)
+        {
+            if (GameManager.Instance != null && data.part > GameManager.Instance.Part) { GameManager.Instance.EnterPart(data.part); return; }
+            if (!captain.ReadyForOrder(data.part, nextIndex + 1)) return;
+        }
+
         var assignee = PickAssignee(data);
         if (assignee == null && CrewRegistry.All.Count > 0) return; // everyone is busy, try again next frame
 

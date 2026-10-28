@@ -181,6 +181,128 @@ public class OpeningMenu : MonoBehaviour
         creditsPanel.SetActive(false);
 
         BuildSettings(m);
+        BuildNames(m);
+    }
+
+    // ---------- Crew names (Riham): Begin Voyage asks each player's name first; the Captain calls them by it ----------
+
+    CanvasGroup namesGroup;
+    readonly List<GameObject> nameRows = new List<GameObject>();
+    readonly List<InputField> nameFields = new List<InputField>();
+    Button setSailButton, namesBackButton;
+    int namesShown = -1;
+
+    public bool NamesOpen { get; private set; }
+
+    void BuildNames(RectTransform m)
+    {
+        namesGroup = Group(m, "Names", new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-Margin - 330f, 40f), new Vector2(660f, 520f));
+        var s = (RectTransform)namesGroup.transform;
+        Label(s, "Heading", titleFont, 40, Cream, "Your names", TextAnchor.MiddleRight, new Vector2(0f, 1f), new Vector2(330f, -26f), new Vector2(660f, 52f));
+        Label(s, "Note", bodyFont, 24, DimCream, "The Captain will call you by these.", TextAnchor.MiddleRight, new Vector2(0f, 1f), new Vector2(330f, -70f), new Vector2(660f, 34f));
+
+        float y = -130f;
+        for (int seat = 1; seat <= PlayerSlots.MaxPlayers; seat++)
+        {
+            var row = new GameObject("Player" + seat, typeof(RectTransform)).GetComponent<RectTransform>();
+            row.SetParent(s, false);
+            Place(row, new Vector2(0f, 1f), new Vector2(330f, y), new Vector2(660f, 56f));
+            Label(row, "Label", bodyFont, 28, Cream, "Player " + seat, TextAnchor.MiddleLeft, new Vector2(0f, 0.5f), new Vector2(130f, 0f), new Vector2(260f, 44f));
+            nameFields.Add(NameField(row, CrewRegistry.DefaultSeatName(seat)));
+            nameRows.Add(row.gameObject);
+            y -= 66f;
+        }
+
+        y = -130f - 66f * PlayerSlots.MaxPlayers - 20f;
+        setSailButton = TextButton(s, "SetSail", "Set Sail", 38, Vector2.zero, new Vector2(660f, 56f), ConfirmNames);
+        Place((RectTransform)setSailButton.transform, new Vector2(0f, 1f), new Vector2(330f, y), new Vector2(660f, 56f));
+        namesBackButton = TextButton(s, "Back", "Back", 38, Vector2.zero, new Vector2(660f, 56f), () => OpenNames(false));
+        Place((RectTransform)namesBackButton.transform, new Vector2(0f, 1f), new Vector2(330f, y - 60f), new Vector2(660f, 56f));
+        SetGroup(namesGroup, false);
+    }
+
+    /// <summary>A name box. Left empty, the greyed seat name shows, and that's what the Captain calls you.</summary>
+    InputField NameField(RectTransform row, string placeholderText)
+    {
+        var go = new GameObject("Field", typeof(RectTransform), typeof(Image), typeof(InputField));
+        go.transform.SetParent(row, false);
+        Place((RectTransform)go.transform, new Vector2(0f, 0.5f), new Vector2(470f, 0f), new Vector2(380f, 48f));
+        var back = go.GetComponent<Image>();
+        back.color = new Color(0.02f, 0.025f, 0.04f, 0.75f);
+        var rule = Panel((RectTransform)go.transform, "Rule", Brass, new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0.5f, 0f));
+        rule.rectTransform.sizeDelta = new Vector2(0f, 2f);
+
+        var text = Label((RectTransform)go.transform, "Text", bodyFont, 30, Cream, "", TextAnchor.MiddleLeft, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(350f, 44f));
+        text.supportRichText = false;
+        text.horizontalOverflow = HorizontalWrapMode.Overflow;
+        var hint = Label((RectTransform)go.transform, "Placeholder", italicFont != null ? italicFont : bodyFont, 30, new Color(DimCream.r, DimCream.g, DimCream.b, 0.5f),
+            placeholderText, TextAnchor.MiddleLeft, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(350f, 44f));
+
+        var field = go.GetComponent<InputField>();
+        field.textComponent = text;
+        field.placeholder = hint;
+        field.characterLimit = PlayerSlots.MaxNameLength;
+        field.lineType = InputField.LineType.SingleLine;
+        field.caretColor = Brass;
+        field.selectionColor = new Color(Brass.r, Brass.g, Brass.b, 0.35f);
+        var colors = field.colors;
+        colors.normalColor = Color.white; colors.highlightedColor = new Color(1f, 0.95f, 0.85f); colors.selectedColor = new Color(1f, 0.92f, 0.78f);
+        field.colors = colors;
+        // Enter in a name field sets sail, the same as the button.
+        field.onEndEdit.AddListener(_ =>
+        {
+            var kb = Keyboard.current;
+            if (NamesOpen && kb != null && (kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame)) ConfirmNames();
+        });
+        return field;
+    }
+
+    /// <summary>Shows one name field per human who'll play (at least one), remembered from last time.</summary>
+    public void OpenNames(bool open, bool silent = false, bool selectField = true)
+    {
+        if (namesGroup == null) return;
+        if (!silent) Click();
+        NamesOpen = open;
+        SetGroup(namesGroup, open);
+        SetGroup(mainButtons, !open && interactive);
+        if (open)
+        {
+            namesShown = -1;
+            RefreshNameRows();
+            for (int i = 0; i < nameFields.Count; i++)
+            {
+                nameFields[i].text = PlayerSlots.NameFor(i + 1);
+            }
+        }
+        if (interactive) StartCoroutine(SelectNextFrame(open ? (selectField ? nameFields[0] : setSailButton) : beginButton));
+    }
+
+    /// <summary>Rows follow how many have joined, so a friend pressing Start while this is open gets a field.</summary>
+    void RefreshNameRows()
+    {
+        int count = Mathf.Clamp(PlayerSlots.HumanCount, 1, nameRows.Count);
+        if (count == namesShown) return;
+        namesShown = count;
+        var chain = new List<Selectable>();
+        for (int i = 0; i < nameRows.Count; i++)
+        {
+            nameRows[i].SetActive(i < count);
+            if (i < count) chain.Add(nameFields[i]);
+        }
+        chain.Add(setSailButton);
+        chain.Add(namesBackButton);
+        Chain(chain.ToArray());
+    }
+
+    void ConfirmNames()
+    {
+        if (!NamesOpen) return;
+        for (int i = 0; i < namesShown && i < nameFields.Count; i++) PlayerSlots.SetName(i + 1, nameFields[i].text);
+        PlayerPrefs.Save();
+        NamesOpen = false; // the whole menu fades out next, so the main buttons don't come back first
+        SetGroup(namesGroup, false);
+        if (confirmSound != null) uiAudio.PlayOneShot(confirmSound);
+        BeginVoyage?.Invoke();
     }
 
     /// <summary>"[key] Back   [key] Select", right-aligned under the rule.</summary>
@@ -214,6 +336,7 @@ public class OpeningMenu : MonoBehaviour
     {
         // Hints for what the player holds: a controller's buttons when one is plugged in, else the keyboard's.
         bool pad = Gamepad.current != null;
+        if (NamesOpen) RefreshNameRows();
         if (padHints != null && padHints.activeSelf != pad) padHints.SetActive(pad);
         if (keyHints != null && keyHints.activeSelf == pad) keyHints.SetActive(!pad);
     }
@@ -399,7 +522,7 @@ public class OpeningMenu : MonoBehaviour
     public void ShowMenu(bool show, bool instant = false)
     {
         interactive = show;
-        if (!show) { OpenSettings(false, silent: true); if (creditsPanel != null) creditsPanel.SetActive(false); }
+        if (!show) { OpenSettings(false, silent: true); if (NamesOpen) OpenNames(false, silent: true); if (creditsPanel != null) creditsPanel.SetActive(false); }
         if (instant)
         {
             SetGroup(menuGroup, show);
@@ -476,6 +599,7 @@ public class OpeningMenu : MonoBehaviour
     /// <summary>Esc / B while a sub-panel is open. True if it closed something.</summary>
     public bool Back()
     {
+        if (NamesOpen) { OpenNames(false); return true; }
         if (ControlsOpen) { OpenControls(false); return true; }
         if (SettingsOpen) { OpenSettings(false); return true; }
         if (CreditsOpen) { ToggleCredits(); return true; }
@@ -484,9 +608,11 @@ public class OpeningMenu : MonoBehaviour
 
     void OnBeginClicked()
     {
-        if (!interactive) return;
-        if (confirmSound != null) uiAudio.PlayOneShot(confirmSound);
-        BeginVoyage?.Invoke();
+        if (!interactive || NamesOpen) return;
+        // A controller can't type, so it lands on Set Sail; the keyboard lands in the first name box.
+        bool pad = false;
+        foreach (var g in Gamepad.all) if (g.buttonSouth.wasPressedThisFrame || g.startButton.wasPressedThisFrame) pad = true;
+        OpenNames(true, selectField: !pad);
     }
 
     void Click() { if (hoverSound != null) uiAudio.PlayOneShot(hoverSound, 0.8f); }

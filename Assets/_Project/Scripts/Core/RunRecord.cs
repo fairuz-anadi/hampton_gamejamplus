@@ -15,7 +15,7 @@ public class ChoiceEntry
     public bool fakeNoticed;  // set later if the Captain caught a fake
     public bool fakeWitnessed; // a crewmate in the room saw the red light
 
-    /// <summary>"#3 Close door four · Number Two (bot) · faked it, the Captain noticed · Captain +2, Safety -4"</summary>
+    /// <summary>"#3 Close door four · Ezra (bot) · faked it, the Captain noticed · Captain +2, Safety -4"</summary>
     public string Describe()
     {
         string task = order != null ? order.resultsLine : "?";

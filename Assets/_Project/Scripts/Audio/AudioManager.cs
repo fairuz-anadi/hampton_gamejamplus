@@ -19,8 +19,8 @@ public class AudioManager : MonoBehaviour
     [Min(0.1f)] public float partFade = 4f;
     [Tooltip("Music and passengers drop to this while the Captain speaks.")]
     [Range(0f, 1f)] public float duckUnderVoice = 0.6f;
-    [Tooltip("Silences CaptainDirector's placeholder beep-per-letter voice; the speaker crackle plays while he talks.")]
-    public bool muteCaptainBlip = true;
+    [Tooltip("Silences CaptainDirector's beep-per-letter voice; the speaker crackle still plays while he talks.")]
+    public bool muteCaptainBlip = false;
 
     AudioBank bank;
     bool resultsOnly;
@@ -324,8 +324,8 @@ public class AudioManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Anything on the Captain's object goes through the Voice group. His placeholder per-letter blip is muted: it
-    /// sounded like a video game, so the speaker's click and crackle carry him instead. Real recorded lines can unmute it.
+    /// Anything on the Captain's object goes through the Voice group, his per-letter blip included (back on, and
+    /// louder, so the typing is heard over the ship; muteCaptainBlip silences it again).
     /// </summary>
     void RouteCaptain()
     {

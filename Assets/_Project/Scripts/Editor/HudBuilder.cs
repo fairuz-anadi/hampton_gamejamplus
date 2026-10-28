@@ -270,7 +270,7 @@ public static class HudBuilder
         var hints = Box(body, "Hints", new Vector2(1f, 0f), new Vector2(-18f, 8f), new Vector2(300f, 34f), new Vector2(1f, 0f));
         var reportKey = KeyHint(hints, "Report", "R", "Report done", new Vector2(-104f, 0f), 140f);
         var refuseKey = KeyHint(hints, "Refuse", "X", "Refuse", new Vector2(0f, 0f), 92f);
-        var botNote = Txt(body, "BotNote", italic, 19, Cream, "Number Three is on it", new Vector2(1f, 0f), new Vector2(-22f, 10f), new Vector2(280f, 26f), TextAnchor.LowerRight);
+        var botNote = Txt(body, "BotNote", italic, 19, Cream, "Mabel is on it", new Vector2(1f, 0f), new Vector2(-22f, 10f), new Vector2(280f, 26f), TextAnchor.LowerRight);
 
         var stamp = Txt(body, "Stamp", bold, 34, Cream, "REPORTED DONE", new Vector2(1f, 0.5f), new Vector2(-24f, 0f), new Vector2(420f, 50f), TextAnchor.MiddleRight);
         stamp.rectTransform.pivot = new Vector2(1f, 0.5f);

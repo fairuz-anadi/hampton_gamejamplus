@@ -41,6 +41,42 @@ public static class PlayerSlots
 
     public static void Clear() => devices.Clear();
 
+    // ---------- Names (typed on the menu, remembered between sessions) ----------
+
+    public const int MaxNameLength = 14;
+
+    static readonly string[] names = new string[MaxPlayers + 1];
+
+    /// <summary>The name a human in this seat typed, or "" if none (CrewRegistry then uses the seat's crew name).</summary>
+    public static string NameFor(int seat)
+    {
+        if (seat < 1 || seat > MaxPlayers) return "";
+        names[seat] ??= PlayerPrefs.GetString("PlayerName" + seat, "");
+        return names[seat];
+    }
+
+    public static void SetName(int seat, string name)
+    {
+        if (seat < 1 || seat > MaxPlayers) return;
+        names[seat] = Clean(name);
+        PlayerPrefs.SetString("PlayerName" + seat, names[seat]);
+    }
+
+    /// <summary>Trimmed, one line, and without the characters the Captain's typewriter treats as markup ({ | }).</summary>
+    public static string Clean(string raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw)) return "";
+        var sb = new System.Text.StringBuilder(raw.Length);
+        foreach (char c in raw.Trim())
+            if (!char.IsControl(c) && c != '{' && c != '}' && c != '|') sb.Append(c);
+        string s = sb.ToString().Trim();
+        return s.Length > MaxNameLength ? s.Substring(0, MaxNameLength).TrimEnd() : s;
+    }
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    static void ResetStatics() => devices.Clear();
+    static void ResetStatics()
+    {
+        devices.Clear();
+        System.Array.Clear(names, 0, names.Length);
+    }
 }

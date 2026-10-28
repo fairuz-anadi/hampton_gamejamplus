@@ -58,7 +58,7 @@ public static class MeterRules
     /// <summary>At 75+ the Captain shares "private" lines he shouldn't know.</summary>
     public static bool CaptainSharesPrivateLines => Captain >= CaptainPrivateLinesAt;
 
-    /// <summary>At 25 or below the Captain gets suspicious ("I'm watching you, Number Two").</summary>
+    /// <summary>At 25 or below the Captain gets suspicious ("I'm watching you, Ezra").</summary>
     public static bool CaptainSuspicious => Captain <= CaptainSuspiciousAt;
 
     /// <summary>Below 50 the HUD shows small leaks and the pumps sound strained.</summary>
