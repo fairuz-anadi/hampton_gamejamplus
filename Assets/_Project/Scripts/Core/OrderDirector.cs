@@ -38,7 +38,6 @@ public class OrderDirector : MonoBehaviour
     int nextIndex;
     int nextId = 1;
     int lastSeat;
-    bool lastWentToHuman;
 
     [Header("Speed reward")]
     [Tooltip("A player who obeys with at least this share of the timer left earns the bonus.")]
@@ -86,7 +85,6 @@ public class OrderDirector : MonoBehaviour
         nextIndex = 0;
         nextId = 1;
         lastSeat = 0;
-        lastWentToHuman = false;
         smartStreak = 0;
         running = true;
         nextIssueAt = Time.time + firstOrderDelay;
@@ -144,20 +142,20 @@ public class OrderDirector : MonoBehaviour
     }
 
     /// <summary>
-    /// Who gets the order. The players carry the voyage: the "off" orders and the final one go to a free human, and
-    /// normal orders alternate human / bot, so a solo player gets most orders and the bots fill in. Within humans and
-    /// within bots it's round-robin over seats that have no active order and aren't locked out (copes with seat gaps).
-    /// Nobody free in the wanted group: the other group takes it.
+    /// Who gets the order. The Captain's orders are the players' job: with any human aboard, every order goes to a
+    /// human (round-robin over seats with no active order, coping with seat gaps), and if they're all busy the order
+    /// waits for one of them. The bots do the ship's other work (repairs, help, ice warnings, chores). With no humans
+    /// at all (bot-only test voyages) the bots take the orders between them as before.
     /// </summary>
     ICrewActor PickAssignee(OrderData data)
     {
         var crew = CrewRegistry.All; // sorted by seat
         if (crew.Count == 0) return null;
-        bool wantHuman = data == null || data.kind != OrderKind.Normal || !lastWentToHuman;
-        var c = NextFree(crew, human: wantHuman) ?? NextFree(crew, human: !wantHuman);
+        bool anyHuman = false;
+        foreach (var m in crew) if (!m.IsBot) { anyHuman = true; break; }
+        var c = NextFree(crew, human: anyHuman);
         if (c == null) return null;
         lastSeat = c.Seat;
-        lastWentToHuman = !c.IsBot;
         return c;
     }
 

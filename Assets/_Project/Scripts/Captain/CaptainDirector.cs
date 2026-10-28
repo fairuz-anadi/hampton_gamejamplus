@@ -320,7 +320,7 @@ public class CaptainDirector : MonoBehaviour
     void Update()
     {
         // Wait for the intro card ("How to play") to close, then the opening line goes first.
-        if (speaking == null && queue.Count > 0 && !IntroCard.IsShowing)
+        if (speaking == null && queue.Count > 0 && !IntroCard.IsShowing && !PartCard.IsShowing) // and the part's title card (Anadi)
         {
             int at = Mathf.Max(0, queue.FindIndex(l => l.text == CaptainScript.Part1Start));
             var next = queue[at];

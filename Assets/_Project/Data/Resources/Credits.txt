@@ -13,6 +13,8 @@ KayKit Character Pack: Adventurers, Dungeon Remastered,
 Furniture Bits and Restaurant Bits by Kay Lousberg
 Universal Base Characters, Modular Character Outfits (Fantasy)
 and Universal Animation Library by Quaternius
+Fonts: Crimson Text, Cinzel, Special Elite, Pirata One,
+Patrick Hand and Bungee (SIL OFL / Apache 2.0)
 
 The ship and the Captain are fictional.
 In memory of everyone aboard the real ship in April 1912.

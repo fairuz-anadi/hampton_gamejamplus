@@ -152,7 +152,7 @@ public class TutorialHints : MonoBehaviour
             }
             w.atPickUpSince = -1f;
             if (idle) Say(CaptainScript.TutorialIdle, c.Seat);
-            return Key(c, "WASD", "Left stick", "move");
+            return ""; // no "WASD move" over the player's head (Anadi, 28 Oct): the order card already says where to go
         }
 
         var st = StationRegistry.Get(data.CheckStation) as Station;
@@ -161,7 +161,7 @@ public class TutorialHints : MonoBehaviour
         {
             w.idleAtStationSince = w.aloneSince = -1f;
             if (idle) Say(CaptainScript.TutorialIdle, c.Seat);
-            return Key(c, "WASD", "Left stick", "move");
+            return ""; // no "WASD move" over the player's head (Anadi, 28 Oct): the order card already says where to go
         }
 
         if (st.ActiveHolders == 0 && !carrying)

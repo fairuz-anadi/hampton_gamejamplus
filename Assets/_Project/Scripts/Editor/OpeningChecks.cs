@@ -30,7 +30,7 @@ public static class OpeningChecks
     static Quaternion menuRot;
     static Vector3 playerStart;
     static Keyboard keyboard;
-    static float followingSince = -1f;
+    static float followingSince = -1f, startPosErr, startRotErr;
     static InputSettings.BackgroundBehavior savedBackground;
     static InputSettings.EditorInputBehaviorInPlayMode savedEditorInput;
     static EnterPlayModeOptions savedOptions;
@@ -202,21 +202,27 @@ public static class OpeningChecks
                 if (SceneManager.GetActiveScene().name != "Ship" || GameManager.Instance == null) { Timeout(inStep, 30f, "Ship never loaded"); return; }
                 var rig = GameplayCameraRig.Instance;
                 if (rig == null || !rig.IsFollowing) { Timeout(inStep, 15f, "follow camera never took over"); return; }
-                if (followingSince < 0f) followingSince = now;
+                if (followingSince < 0f)
+                {
+                    // The pose is checked on the first following frame: with no how-to-play card holding time any
+                    // more, the camera is free to settle behind the player during the wait below (Anadi).
+                    followingSince = now;
+                    startPosErr = Vector3.Distance(Camera.main.transform.position, menuPos);
+                    startRotErr = Quaternion.Angle(Camera.main.transform.rotation, menuRot);
+                }
                 if (now - followingSince < 1.5f) return; // the crew are dressed a beat after they appear
                 Check(GameManager.Instance.State == GameState.Part1, $"Run starts at Part 1 ({GameManager.Instance.State})");
-                Check(OrderDirector.Instance != null && OrderDirector.Instance.Active.Count == 0, "No order issued while the how-to-play card holds the start");
+                Check(OrderDirector.Instance != null && OrderDirector.Instance.Active.Count == 0, "No order issued before the Captain's first line");
                 var ms = MeterSystem.Instance;
                 Check(ms != null && Mathf.Approximately(ms.CaptainTrust, 50f) && Mathf.Approximately(ms.ShipSafety, 80f) && Mathf.Approximately(ms.CrewTrust, 60f),
                     $"Meters untouched at the start ({ms?.CaptainTrust}/{ms?.ShipSafety}/{ms?.CrewTrust})");
                 Check(rig.Followed != null && rig.Followed.Seat == 1, "Third-person camera follows seat 1");
-                var c = Camera.main;
-                float posErr = Vector3.Distance(c.transform.position, menuPos), rotErr = Quaternion.Angle(c.transform.rotation, menuRot);
+                float posErr = startPosErr, rotErr = startRotErr;
                 Check(posErr < 0.3f && rotErr < 3f, $"Gameplay camera starts in the menu's pose ({posErr:0.00} m, {rotErr:0.0}°)");
                 CountCamerasAndListeners("gameplay");
                 int dressed = Object.FindObjectsByType<CrewVisual>(FindObjectsSortMode.None).Length;
                 Check(dressed == 4, $"All four crew wear crew models ({dressed})");
-                Check(IntroCard.IsShowing, "How-to-play card is up and holding time");
+                Check(!IntroCard.IsShowing, "No how-to-play card at the start (it's under Settings > Controls)");
                 Capture("handoff_card", withUi: true);
                 IntroCard.Instance?.Dismiss();
                 playerStart = rig.Followed.transform.position;
@@ -225,6 +231,7 @@ public static class OpeningChecks
                 break;
 
             case 6: // Hold W briefly: forward is the furnace, about two metres of clear deck
+                if (PartCard.IsShowing) { stepStart = now; return; } // the "Part One" title card holds time first
                 InputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.W));
                 if (inStep < 0.6f) return;
                 InputSystem.QueueStateEvent(keyboard, new KeyboardState());

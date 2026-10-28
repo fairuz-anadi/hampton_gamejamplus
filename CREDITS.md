@@ -78,6 +78,9 @@ Captain's blip voice were made for this project.
 |---|---|---|---|---|
 | Crimson Text (SemiBold, Bold, Italic, SemiBold Italic) | Sebastian Kosch | SIL OFL 1.1 | [Google Fonts](https://fonts.google.com/specimen/Crimson+Text) | All HUD text |
 | Cinzel (Black, Bold) | Natanael Gama | SIL OFL 1.1 | [Google Fonts](https://fonts.google.com/specimen/Cinzel) | Title logo lettering (rendered to Art/UI/Title/TitleLogo.png; licence beside it) |
-| Special Elite | Astigmatic | Apache 2.0 | [Google Fonts](https://fonts.google.com/specimen/Special+Elite) | Wireless messages (typewriter) |
+| Special Elite | Astigmatic | Apache 2.0 | [Google Fonts](https://fonts.google.com/specimen/Special+Elite) | Wireless messages and the Captain's opening lines (typewriter) |
+| Pirata One | Rodrigo Fuenzalida, Nicolas Massi | SIL OFL 1.1 | [Google Fonts](https://fonts.google.com/specimen/Pirata+One) | Ending screen and part-card titles (licence beside it in Art/UI/Resources/Fonts) |
+| Patrick Hand | Patrick Wagesreiter | SIL OFL 1.1 | [Google Fonts](https://fonts.google.com/specimen/Patrick+Hand) | Ending screen and part-card text (licence beside it in Art/UI/Resources/Fonts) |
+| Bungee | David Jonathan Ross | SIL OFL 1.1 | [Google Fonts](https://fonts.google.com/specimen/Bungee) | Title screen tagline (licence beside it in Art/UI/Resources/Fonts) |
 
 Licence files sit next to the fonts in `Assets/_Project/Art/UI/Fonts`. The HUD icons and shapes in `Art/UI/Sprites` were drawn for this project.

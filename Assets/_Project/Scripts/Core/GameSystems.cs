@@ -47,7 +47,14 @@ public static class GameSystems
         go.AddComponent<StationSfx>(); // placeholder tones until the real SFX arrive
         go.AddComponent<SmartStamp>(); // speed reward on screen
         go.AddComponent<CursorLock>(); // mouse look: cursor hidden while playing
-        if ((sceneName ?? SceneManager.GetActiveScene().name) == "Ship") go.AddComponent<IntroCard>();
+        if ((sceneName ?? SceneManager.GetActiveScene().name) == "Ship")
+        {
+            // No how-to-play card at the start any more: it lives under Settings > Controls on the main menu (Anadi).
+            go.AddComponent<CrewWhispers>(); // a crewmate doubts (or the Stoker urges) the suspicious orders
+            go.AddComponent<CrewNameTags>(); // names over the crew's heads
+            go.AddComponent<PartCard>(); // the bright title card at the start of each part
+            go.AddComponent<ChartView>(); // study the bridge chart (the pencilled course to Grey Cove)
+        }
         // Debug keys exist in the Editor and Development builds only, never in the release zip.
         if (Debug.isDebugBuild) go.AddComponent<DebugTools>();
         return go;

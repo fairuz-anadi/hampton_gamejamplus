@@ -24,6 +24,7 @@ public static class ShipDeckBuilder
     public const string ScenePath = "Assets/_Project/Scenes/Sandbox/Samprity_Art.unity";
     const string KayKit = "Assets/_Project/Art/ThirdParty/KayKit";
     const string MatFolder = "Assets/_Project/Art/Materials/Ship";
+    public const string BridgeChartPath = "Assets/_Project/Art/Textures/BridgeChart.png";
     const float WallScaleY = 0.7f; // KayKit walls are 4 m; 2.8 m fits human-sized crew and stays readable from the follow camera
     const string ParticleSource = "Packages/com.unity.render-pipelines.universal/Runtime/Materials/ParticlesUnlit.mat";
 
@@ -92,6 +93,7 @@ public static class ShipDeckBuilder
         ShiftForward(propT.Find("Details"));
         BuildCraft(propT);
         BuildExterior(hullT);
+        BuildUpperDecks(Group(t, "UpperDecks"));
         var fxT = Group(t, "Atmosphere");
         BuildAtmosphere(fxT);
 
@@ -100,6 +102,7 @@ public static class ShipDeckBuilder
         mood.sun = BuildSun(lightT);
         mood.moon = BuildMoon(lightT);
         mood.lamps = BuildLamps(lightT);
+        root.AddComponent<LampShadowBudget>(); // real-time lamp shadows near the camera only
         mood.calmVolume = PostVolume(fxT, "PostFX_Calm", "Calm", 1f);
         mood.offVolume = PostVolume(fxT, "PostFX_Off", "Off", 0f);
         mood.truthVolume = PostVolume(fxT, "PostFX_Truth", "Truth", 0f);
@@ -112,6 +115,7 @@ public static class ShipDeckBuilder
         Marker(markerT, "Spawn_2", new Vector3(-2.4f, 0.05f, 6.3f), 180f);
         Marker(markerT, "Spawn_3", new Vector3(0.95f, 0.05f, 6.0f), 180f);
         Marker(markerT, "Spawn_4", new Vector3(2.6f, 0.05f, 6.3f), 180f);
+        BuildChoreSpots(markerT);
         return root;
     }
 
@@ -211,15 +215,83 @@ public static class ShipDeckBuilder
         Speaker(props, "Speaker_Promenade", new Vector3(5.4f, 2.5f, z0 + 1.5f), -90f);
     }
 
+    /// <summary>
+    /// 200 x 200 vertices over 900 m, spaced about 1.6 m round the ship and about 10 m at the edge, so the swell is
+    /// smooth where the camera looks and the far sea costs little. Saved as an asset so the prefab can keep it.
+    /// </summary>
+    static Mesh SeaMesh()
+    {
+        const int n = 200;
+        const float half = 450f, uvPerMetre = 1f / 600f;
+        float Coord(int i) { float t = i / (float)(n - 1) * 2f - 1f; return half * (0.35f * t + 0.65f * t * t * t); }
+        var verts = new Vector3[n * n];
+        var uvs = new Vector2[n * n];
+        for (int z = 0; z < n; z++)
+        for (int x = 0; x < n; x++)
+        {
+            var v = new Vector3(Coord(x), 0f, Coord(z));
+            verts[z * n + x] = v;
+            uvs[z * n + x] = new Vector2(v.x * uvPerMetre + 0.5f, v.z * uvPerMetre + 0.5f);
+        }
+        var tris = new int[(n - 1) * (n - 1) * 6];
+        int k = 0;
+        for (int z = 0; z < n - 1; z++)
+        for (int x = 0; x < n - 1; x++)
+        {
+            int i = z * n + x;
+            tris[k++] = i; tris[k++] = i + n; tris[k++] = i + 1;
+            tris[k++] = i + 1; tris[k++] = i + n; tris[k++] = i + n + 1;
+        }
+        var mesh = new Mesh { name = "Sea" };
+        mesh.SetVertices(verts);
+        mesh.SetUVs(0, uvs);
+        mesh.SetTriangles(tris, 0);
+        mesh.RecalculateNormals();
+        // Big bounds: the shader lifts the vertices, and the sea must never be culled while it fills the view.
+        mesh.bounds = new Bounds(Vector3.zero, new Vector3(half * 2f, 6f, half * 2f));
+        MovementPrototypeBuilder.EnsureFolder(GeneratedMeshFolder);
+        AssetDatabase.DeleteAsset($"{GeneratedMeshFolder}/Sea.asset");
+        AssetDatabase.CreateAsset(mesh, $"{GeneratedMeshFolder}/Sea.asset");
+        return mesh;
+    }
+
+    /// <summary>
+    /// Where idle bots do the ship's other work (BotChores): each marker stands in front of a piece of furniture,
+    /// facing it, clear of the walkway's middle and of the stations players use.
+    /// </summary>
+    static void BuildChoreSpots(Transform markers)
+    {
+        var spots = new (string name, Vector3 pos, float yaw)[]
+        {
+            ("Chore_Boiler_Coal", new Vector3(2.6f, 0.05f, 5.1f), 90f),
+            ("Chore_Corridor_Buckets", new Vector3(4.5f, 0.05f, 14.8f), 90f),
+            ("Chore_Saloon_Table", new Vector3(2.85f, 0.05f, ShipLayout.InsertAt + 3.2f), 90f),
+            ("Chore_Saloon_Shelf", new Vector3(4.3f, 0.05f, SaloonEnd - 2.0f), 0f),
+            ("Chore_Galley_Stove", new Vector3(-3.7f, 0.05f, SaloonEnd + 4.2f), -90f),
+            ("Chore_Galley_Sink", new Vector3(-3.7f, 0.05f, SaloonEnd + 8.2f), -90f),
+            ("Chore_Galley_Stores", new Vector3(3.8f, 0.05f, SaloonEnd + 9.8f), 90f),
+            ("Chore_Quarters_Bunk", new Vector3(-3.0f, 0.05f, GalleyEnd + 4.7f), -90f),
+            ("Chore_Quarters_Locker", new Vector3(3.9f, 0.05f, GalleyEnd + 5.7f), 90f),
+            ("Chore_Bow_Rope", new Vector3(-2.5f, 0.05f, ShipLayout.Z(34.6f)), -90f),
+        };
+        foreach (var (name, pos, yaw) in spots) Marker(markers, name, pos, yaw);
+    }
+
     static void BuildHullAndSea(Transform p)
     {
         // Ship's side below the deck, and the sea. The camera sees these over the low walls.
         float len = ShipLayout.DeckLength, mid = (len - 1f) * 0.5f;
         Prim(PrimitiveType.Cube, "HullBody", p, new Vector3(0f, -1.3f, mid), Vector3.zero, new Vector3(13.2f, 2.6f, len + 1.5f), hull);
         Prim(PrimitiveType.Cube, "HullBand", p, new Vector3(0f, -0.15f, mid), Vector3.zero, new Vector3(13.4f, 0.3f, len + 1.7f), cream, false);
-        var seaGo = Prim(PrimitiveType.Plane, "Sea", p, new Vector3(0f, -2.2f, len * 0.5f), Vector3.zero, new Vector3(60f, 1f, 60f), sea);
-        Object.DestroyImmediate(seaGo.GetComponent<Collider>());
-        seaGo.isStatic = false;
+        // The sea: a grid fine near the ship (the Port/Sea shader moves its vertices into swells) and coarse toward the
+        // horizon, the same 600 m-per-uv as the old plane so SeaScroll's ripples keep their size.
+        var seaGo = new GameObject("Sea", typeof(MeshFilter), typeof(MeshRenderer));
+        seaGo.transform.SetParent(p, false);
+        seaGo.transform.localPosition = new Vector3(0f, -2.2f, len * 0.5f);
+        seaGo.GetComponent<MeshFilter>().sharedMesh = SeaMesh();
+        var seaRenderer = seaGo.GetComponent<MeshRenderer>();
+        seaRenderer.sharedMaterial = sea;
+        seaRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
         seaGo.AddComponent<SeaScroll>();
 
         // One flat collider for the whole walkable deck, so the NavMesh and players don't snag on tile seams.
@@ -355,7 +427,7 @@ public static class ShipDeckBuilder
         bell.localPosition = new Vector3(3.2f, 0f, 9.4f);
         Prim(PrimitiveType.Cylinder, "Post", bell, new Vector3(0f, 1.1f, 0f), Vector3.zero, new Vector3(0.15f, 1.1f, 0.15f), darkWood);
         Prim(PrimitiveType.Cube, "Arm", bell, new Vector3(0f, 2.15f, 0.3f), Vector3.zero, new Vector3(0.1f, 0.1f, 0.7f), darkWood, false);
-        Prim(PrimitiveType.Sphere, "Bell", bell, new Vector3(0f, 1.85f, 0.55f), Vector3.zero, new Vector3(0.45f, 0.5f, 0.45f), brass, false);
+        Prim(PrimitiveType.Sphere, "Bell", bell, new Vector3(0f, 1.85f, 0.55f), Vector3.zero, new Vector3(0.45f, 0.5f, 0.45f), brass); // solid: it hangs at head height
 
         Speaker(props, "Speaker_Corridor", new Vector3(5.4f, 2.5f, 15f), -90f);
         Kit(props, "Dungeon", "box_stacked", new Vector3(-4.4f, 0f, 9.3f), 0f);
@@ -367,7 +439,7 @@ public static class ShipDeckBuilder
         var st = Station(stations, "Station_Wireless", new Vector3(-4.6f, 0f, 20f));
         var s = st.transform;
         Prim(PrimitiveType.Cube, "Desk", s, new Vector3(0f, 0.45f, 0f), Vector3.zero, new Vector3(1.2f, 0.9f, 2.6f), darkWood);
-        Prim(PrimitiveType.Cube, "WirelessSet", s, new Vector3(-0.2f, 1.2f, 0.4f), Vector3.zero, new Vector3(0.6f, 0.6f, 1.1f), coal, false);
+        Prim(PrimitiveType.Cube, "WirelessSet", s, new Vector3(-0.2f, 1.2f, 0.4f), Vector3.zero, new Vector3(0.6f, 0.6f, 1.1f), coal);
         Prim(PrimitiveType.Cylinder, "Dial_A", s, new Vector3(0.11f, 1.3f, 0.15f), new Vector3(0f, 0f, 90f), new Vector3(0.22f, 0.02f, 0.22f), brass, false);
         Prim(PrimitiveType.Cylinder, "Dial_B", s, new Vector3(0.11f, 1.3f, 0.65f), new Vector3(0f, 0f, 90f), new Vector3(0.22f, 0.02f, 0.22f), brass, false);
         Prim(PrimitiveType.Cube, "MorseKey", s, new Vector3(0.25f, 0.95f, -0.3f), Vector3.zero, new Vector3(0.2f, 0.06f, 0.3f), brass, false);
@@ -391,6 +463,9 @@ public static class ShipDeckBuilder
         Prim(PrimitiveType.Cylinder, "Pedestal", s, new Vector3(0f, 0.6f, 0f), Vector3.zero, new Vector3(0.45f, 0.6f, 0.45f), darkWood);
         var wheel = Group(s, "Wheel");
         wheel.localPosition = new Vector3(0f, 1.35f, -0.3f);
+        // The rim and spokes are visual only, so one box round the whole wheel keeps players from walking into it.
+        var wheelBody = wheel.gameObject.AddComponent<BoxCollider>();
+        wheelBody.size = new Vector3(1.4f, 1.4f, 0.3f);
         Prim(PrimitiveType.Cylinder, "Rim", wheel, Vector3.zero, new Vector3(90f, 0f, 0f), new Vector3(1.3f, 0.03f, 1.3f), darkWood, false);
         Prim(PrimitiveType.Cylinder, "Hub", wheel, new Vector3(0f, 0f, -0.05f), new Vector3(90f, 0f, 0f), new Vector3(0.3f, 0.08f, 0.3f), brass, false);
         for (int i = 0; i < 4; i++)
@@ -403,11 +478,11 @@ public static class ShipDeckBuilder
         var tele = Group(props, "Telegraph");
         tele.localPosition = new Vector3(2.2f, 0f, 29.6f);
         Prim(PrimitiveType.Cylinder, "Post", tele, new Vector3(0f, 0.55f, 0f), Vector3.zero, new Vector3(0.25f, 0.55f, 0.25f), brass);
-        Prim(PrimitiveType.Cylinder, "Face", tele, new Vector3(0f, 1.3f, -0.05f), new Vector3(90f, 0f, 0f), new Vector3(0.6f, 0.08f, 0.6f), cream, false);
+        Prim(PrimitiveType.Cylinder, "Face", tele, new Vector3(0f, 1.3f, -0.05f), new Vector3(90f, 0f, 0f), new Vector3(0.6f, 0.08f, 0.6f), cream);
         var bin = Group(props, "Binnacle");
         bin.localPosition = new Vector3(-2.2f, 0f, 29.6f);
         Prim(PrimitiveType.Cylinder, "Post", bin, new Vector3(0f, 0.5f, 0f), Vector3.zero, new Vector3(0.35f, 0.5f, 0.35f), darkWood);
-        Prim(PrimitiveType.Sphere, "Compass", bin, new Vector3(0f, 1.15f, 0f), Vector3.zero, new Vector3(0.45f, 0.35f, 0.45f), brass, false);
+        Prim(PrimitiveType.Sphere, "Compass", bin, new Vector3(0f, 1.15f, 0f), Vector3.zero, new Vector3(0.45f, 0.35f, 0.45f), brass);
 
         // Chart table: where ice warnings are delivered.
         var chart = Kit(props, "Dungeon", "table_medium", new Vector3(-4.2f, 0f, 26f), 90f);
@@ -467,17 +542,21 @@ public static class ShipDeckBuilder
         {
             ("Lamp_Boiler", new Vector3(-5.25f, 2.3f, 5.5f), 1f),
             ("Lamp_Corridor", new Vector3(-1.25f, 2.3f, 13.5f), 1f),
-            ("Lamp_Promenade_A", new Vector3(-5.25f, 2.3f, prom + 8f), 1f),
-            ("Lamp_Promenade_B", new Vector3(5.25f, 2.3f, prom + 20f), -1f),
-            ("Lamp_Promenade_C", new Vector3(-5.25f, 2.3f, prom + 32f), 1f),
+            // Two lamps in each of the new rooms, on opposite walls: saloon, galley, quarters.
+            ("Lamp_Saloon_A", new Vector3(-5.25f, 2.3f, prom + 8f), 1f),
+            ("Lamp_Saloon_B", new Vector3(5.25f, 2.3f, prom + 3f), -1f),
+            ("Lamp_Galley_A", new Vector3(5.25f, 2.3f, prom + 20f), -1f),
+            ("Lamp_Galley_B", new Vector3(-5.25f, 2.3f, prom + 15f), 1f),
+            ("Lamp_Quarters_A", new Vector3(-5.25f, 2.3f, prom + 32f), 1f),
+            ("Lamp_Quarters_B", new Vector3(5.25f, 2.3f, prom + 37f), -1f),
             ("Lamp_Wireless", ShipLayout.P(new Vector3(5.25f, 2.3f, 18.5f)), -1f),
             ("Lamp_Bridge", ShipLayout.P(new Vector3(-5.25f, 2.3f, 28.5f)), 1f),
         };
         foreach (var (name, pos, side) in spots)
         {
             var l = PointLight(p, name, pos, new Color(1f, 0.76f, 0.48f), 2.2f, 11f);
-            // The promenade's lamps light the long walk but cast no shadows, to keep the shadowed lights to the rooms.
-            l.shadows = name.Contains("Promenade") ? LightShadows.None : LightShadows.Soft;
+            // Every lamp can cast soft real-time shadows; LampShadowBudget keeps only the ones near the camera doing so.
+            l.shadows = LightShadows.Soft;
             l.shadowStrength = 0.85f;
             l.shadowNearPlane = 0.3f;
             Prim(PrimitiveType.Cube, "Bracket", l.transform, new Vector3(-0.12f * side, 0f, 0f), Vector3.zero, new Vector3(0.25f, 0.08f, 0.08f), brass, false);
@@ -540,12 +619,280 @@ public static class ShipDeckBuilder
         // Bridge: voice pipe, the chart on the chart table, a lifebuoy.
         Pipe(d, "VoicePipe", new Vector3(1.25f, 0.7f, 30.6f), Vector3.zero, 1.4f, 0.12f, brass);
         Prim(PrimitiveType.Sphere, "VoicePipe_Mouth", d, new Vector3(1.25f, 1.45f, 30.55f), new Vector3(-20f, 0f, 0f), new Vector3(0.28f, 0.18f, 0.28f), brass, false);
-        Prim(PrimitiveType.Cube, "Chart", d, new Vector3(-4.2f, 1.01f, 26f), new Vector3(0f, 93f, 0f), new Vector3(1.3f, 0.01f, 0.85f), cream, false);
+        // The chart is a real map (Art/Textures/BridgeChart.png): the inked course to the Promised Port and the Captain's
+        // pencil line north to an X marked "G.C.". Top of the map faces the far wall, so it reads from the walkway; ChartView
+        // lets the player study it with E.
+        var chartMat = ShipMat("Ship_BridgeChart", Color.white, AssetDatabase.LoadAssetAtPath<Texture2D>(BridgeChartPath), 0f, 0.1f);
+        Prim(PrimitiveType.Quad, "Chart", d, new Vector3(-4.2f, 1.01f, 26f), new Vector3(90f, -87f, 0f), new Vector3(1.3f, 0.85f, 1f), chartMat, false);
         Lifebuoy(d, new Vector3(5.46f, 1.5f, 30.2f), -90f);
 
         // Bow: mooring bollards.
         foreach (float x in new[] { -4.4f, 4.4f })
             Prim(PrimitiveType.Cylinder, "Bollard", d, new Vector3(x, 0.3f, 34.4f), Vector3.zero, new Vector3(0.45f, 0.3f, 0.45f), coal);
+    }
+
+    // ---------- Upper decks (Anadi): a cabin deck and an open top deck over the working deck ----------
+
+    // The cabin floor sits a little above the deck's 2.8 m walls, higher than the follow camera rides, so looking
+    // down the ship you see a ceiling ahead, not a strip of cabin floor with beds on it.
+    const float CabinFloorY = 3.6f, CabinStep = 2.9f, UpperHalfW = 6.6f, DeckWallTop = 2.8f;
+    /// <summary>Two cabin floors, then the open top deck: four floors with the one you play on.</summary>
+    const int CabinFloors = 2;
+    const float TopDeckY = CabinFloorY + CabinFloors * CabinStep;
+    static Material upperWall;
+    /// <summary>The superstructure runs from the corridor bulkhead to the bridge; the boiler room and bridge stay open.</summary>
+    static readonly float[] UpperBays = { 8f, 16f, 24f, 32f, 40f, 48f, 56f, 64f };
+
+    /// <summary>
+    /// Two floors stacked on the deck you play on, like a real liner. Floor 2: passenger cabins down both sides of a
+    /// corridor, each with a bed, cabinet, rug and a lit window. Floor 3, the open top deck: railings, lifeboats on
+    /// davits, a second funnel, ventilator cowls, deck chairs, a skylight over the saloon and a deckhouse with the
+    /// pitched shingle roof. Nobody walks up there (no colliders, so the NavMesh ignores it). Built in 8 m bays, each
+    /// with a RoofFade, so the floors over you cut away: the cabins over you go shadow-only (your deck stays shaded),
+    /// and the top deck opens a bay further, so you look down into the cabins next to you.
+    /// </summary>
+    static void BuildUpperDecks(Transform root)
+    {
+        var shingle = ShipMat("Ship_RoofShingle", new Color(0.46f, 0.18f, 0.13f));
+        StylizedLook.Style(shingle, StylizedLook.Role.Paint);
+        // Plain painted plates: the deck's wall material maps the whole KayKit atlas onto a stretched cube.
+        upperWall = ShipMat("Ship_UpperWall", new Color(0.30f, 0.34f, 0.42f));
+        StylizedLook.Style(upperWall, StylizedLook.Role.PaintedIron);
+        for (int i = 0; i + 1 < UpperBays.Length; i++)
+        {
+            float z0 = UpperBays[i], z1 = UpperBays[i + 1];
+            var bay = Group(root, $"Bay_{z0:0}");
+            for (int f = 0; f < CabinFloors; f++)
+            {
+                // The floor just over you keeps its shadow; the ones above open a bay further each, so you look
+                // down into the cabins next to you.
+                var cabins = Group(bay, f == 0 ? "Cabins" : $"Cabins_{f + 1}");
+                float y = CabinFloorY + f * CabinStep;
+                BuildCabinBay(cabins, z0, z1, i == 0, i + 2 == UpperBays.Length, y, f == 0 ? DeckWallTop : y);
+                Fade(cabins, z0, z1, f == 0 ? 0.6f : 4.6f, f == 0);
+            }
+            var top = Group(bay, "TopDeck");
+            BuildTopDeckBay(top, z0, z1, i, shingle);
+            Fade(top, z0, z1, 8.6f, false);
+        }
+    }
+
+    static void Fade(Transform t, float z0, float z1, float margin, bool keepShadow)
+    {
+        var f = t.gameObject.AddComponent<RoofFade>();
+        f.roomMin = new Vector2(-UpperHalfW, z0);
+        f.roomMax = new Vector2(UpperHalfW, z1);
+        f.margin = margin;
+        f.keepShadow = keepShadow;
+    }
+
+    /// <summary>A cabin floor, one 8 m bay: two cabins a side off a central corridor. belowTop: where the walls
+    /// underneath stop, so a fascia closes any gap up to this floor.</summary>
+    static void BuildCabinBay(Transform c, float z0, float z1, bool sternEnd, bool bowEnd, float floorY, float belowTop)
+    {
+        const float port = -1f, stbd = 1f, h = 2.7f;
+        float len = z1 - z0, zm = (z0 + z1) * 0.5f, wallY = floorY + 0.1f + h * 0.5f;
+        Prim(PrimitiveType.Cube, "Floor", c, new Vector3(0f, floorY, zm), Vector3.zero, new Vector3(UpperHalfW * 2f, 0.2f, len), darkWood, false);
+        float fasciaH = floorY - belowTop, fasciaY = belowTop + fasciaH * 0.5f;
+        foreach (float side in new[] { port, stbd })
+        {
+            // Closes the gap between the deck's walls and the cabin floor, outside.
+            if (fasciaH > 0.05f) Prim(PrimitiveType.Cube, "Fascia", c, new Vector3(side * (UpperHalfW - 0.12f), fasciaY, zm), Vector3.zero, new Vector3(0.24f, fasciaH, len), upperWall, false);
+            // Outer wall, painted plates like the deck below, a lit window per cabin.
+            Prim(PrimitiveType.Cube, "OuterWall", c, new Vector3(side * (UpperHalfW - 0.12f), wallY, zm), Vector3.zero, new Vector3(0.24f, h, len), upperWall, false);
+            for (int k = 0; k < 2; k++)
+            {
+                float cz = z0 + k * 4f;
+                // Corridor wall with a door gap per cabin, and the wall between cabins.
+                Prim(PrimitiveType.Cube, "CorridorWall", c, new Vector3(side * 1.05f, wallY, cz + 1.6f), Vector3.zero, new Vector3(0.12f, h, 3.2f), cream, false);
+                Prim(PrimitiveType.Cube, "Partition", c, new Vector3(side * 3.8f, wallY, cz + 0.05f), Vector3.zero, new Vector3(5.3f, h, 0.12f), cream, false);
+                Prim(PrimitiveType.Cube, "Window", c, new Vector3(side * (UpperHalfW + 0.01f), wallY + 0.2f, cz + 2f), Vector3.zero, new Vector3(0.04f, 0.7f, 0.9f), portholeGlow, false);
+                Prim(PrimitiveType.Cube, "WindowFrame", c, new Vector3(side * (UpperHalfW - 0.02f), wallY + 0.2f, cz + 2f), Vector3.zero, new Vector3(0.04f, 0.86f, 1.06f), cream, false);
+                float face = side < 0f ? 90f : -90f;
+                Kit(c, "Furniture", (k + (side > 0f ? 1 : 0)) % 2 == 0 ? "bed_single_A" : "bed_single_B", new Vector3(side * 4.6f, floorY + 0.1f, cz + 1.2f), face, null, false);
+                Kit(c, "Furniture", "cabinet_small_decorated", new Vector3(side * 5.2f, floorY + 0.1f, cz + 3.3f), face, null, false);
+                Kit(c, "Furniture", "rug_rectangle_A", new Vector3(side * 2.9f, floorY + 0.12f, cz + 2.2f), 0f, Vector3.one * 0.6f, false);
+            }
+        }
+        Kit(c, "Furniture", "rug_rectangle_A", new Vector3(0f, floorY + 0.12f, zm), 90f, new Vector3(0.7f, 1f, 1f), false);
+        // The superstructure's end walls, with a row of windows.
+        if (sternEnd) EndWall(c, z0, wallY, h, -0.13f, fasciaY, fasciaH);
+        if (bowEnd) EndWall(c, z1, wallY, h, 0.13f, fasciaY, fasciaH);
+    }
+
+    static void EndWall(Transform c, float z, float wallY, float h, float outward, float fasciaY, float fasciaH)
+    {
+        if (fasciaH > 0.05f) Prim(PrimitiveType.Cube, "Fascia", c, new Vector3(0f, fasciaY, z), Vector3.zero, new Vector3(UpperHalfW * 2f, fasciaH, 0.24f), upperWall, false);
+        Prim(PrimitiveType.Cube, "EndWall", c, new Vector3(0f, wallY, z), Vector3.zero, new Vector3(UpperHalfW * 2f, h, 0.24f), upperWall, false);
+        for (float x = -4.5f; x <= 4.6f; x += 3f)
+            Prim(PrimitiveType.Cube, "Window", c, new Vector3(x, wallY + 0.2f, z + outward), Vector3.zero, new Vector3(0.9f, 0.7f, 0.04f), portholeGlow, false);
+    }
+
+    /// <summary>Floor 3, one 8 m bay of open deck: railings and lifeboats everywhere, plus this bay's centrepiece.</summary>
+    static void BuildTopDeckBay(Transform t, float z0, float z1, int index, Material shingle)
+    {
+        float len = z1 - z0, zm = (z0 + z1) * 0.5f, y = TopDeckY + 0.1f;
+        Prim(PrimitiveType.Cube, "Deck", t, new Vector3(0f, TopDeckY, zm), Vector3.zero, new Vector3(UpperHalfW * 2f + 0.3f, 0.2f, len), darkWood, false);
+        foreach (float side in new[] { -1f, 1f })
+        {
+            float x = side * (UpperHalfW + 0.05f);
+            Prim(PrimitiveType.Cube, "Rail", t, new Vector3(x, y + 0.95f, zm), Vector3.zero, new Vector3(0.09f, 0.09f, len), brass, false);
+            Prim(PrimitiveType.Cube, "RailMid", t, new Vector3(x, y + 0.5f, zm), Vector3.zero, new Vector3(0.04f, 0.04f, len), brass, false);
+            for (float z = z0 + 0.5f; z < z1; z += 1f)
+                Prim(PrimitiveType.Cylinder, "Post", t, new Vector3(x, y + 0.48f, z), Vector3.zero, new Vector3(0.06f, 0.48f, 0.06f), brass, false);
+            if (z0 >= 16f && z1 <= 56f) Lifeboat(t, side, zm, y);
+        }
+        switch (index)
+        {
+            case 0: // stern end: deck chairs facing the sea and a pair of vents
+            case 4:
+                for (float z = z0 + 1.5f; z < z1 - 1f; z += 2.2f)
+                    foreach (float x in new[] { -2.6f, 2.6f }) DeckChair(t, x, y, z, x < 0f ? 90f : -90f);
+                Vent(t, new Vector3(0f, y, z0 + 2f), 0f);
+                Vent(t, new Vector3(0f, y, z1 - 2f), 180f);
+                break;
+            case 1: // the saloon skylight
+            case 2:
+                Prim(PrimitiveType.Cube, "SkylightBase", t, new Vector3(0f, y + 0.3f, zm), Vector3.zero, new Vector3(3.2f, 0.6f, 5f), darkWood, false);
+                Prim(PrimitiveType.Cube, "SkylightGlass", t, new Vector3(0f, y + 0.62f, zm), Vector3.zero, new Vector3(3f, 0.06f, 4.8f), portholeGlow, false);
+                for (float z = zm - 2f; z <= zm + 2.1f; z += 1f)
+                    Prim(PrimitiveType.Cube, "SkylightBar", t, new Vector3(0f, y + 0.68f, z), Vector3.zero, new Vector3(3.1f, 0.06f, 0.08f), brass, false);
+                if (index == 2) Vent(t, new Vector3(-2.6f, y, z0 + 1.5f), 45f);
+                break;
+            case 3: // the second funnel
+                var f = Group(t, "Funnel2");
+                f.localPosition = new Vector3(0f, y, zm);
+                Prim(PrimitiveType.Cylinder, "Stack", f, new Vector3(0f, 3.1f, 0f), Vector3.zero, new Vector3(2.4f, 3.1f, 2.4f), buff, false);
+                Prim(PrimitiveType.Cylinder, "Top", f, new Vector3(0f, 6.0f, 0f), Vector3.zero, new Vector3(2.46f, 0.38f, 2.46f), coal, false);
+                Prim(PrimitiveType.Cylinder, "Base", f, new Vector3(0f, 0.2f, 0f), Vector3.zero, new Vector3(3f, 0.2f, 3f), coal, false);
+                Vent(t, new Vector3(2.6f, y, z1 - 1.2f), -90f);
+                Vent(t, new Vector3(-2.6f, y, z1 - 1.2f), 90f);
+                break;
+            case 5: // deck chairs under the boats
+                for (float z = z0 + 2f; z < z1 - 1f; z += 4f)
+                    foreach (float x in new[] { -2.2f, 2.2f }) DeckChair(t, x, y, z, x < 0f ? 90f : -90f);
+                Vent(t, new Vector3(0f, y, zm), 0f);
+                break;
+            case 6: // the officers' deckhouse, roofed in shingles
+                float hz0 = z0 + 1.2f, hz1 = z1 - 0.8f;
+                Prim(PrimitiveType.Cube, "Deckhouse", t, new Vector3(0f, y + 1.2f, (hz0 + hz1) * 0.5f), Vector3.zero, new Vector3(6.4f, 2.4f, hz1 - hz0), cream, false);
+                foreach (float side in new[] { -1f, 1f })
+                    for (float z = hz0 + 1.2f; z < hz1 - 0.5f; z += 1.6f)
+                        Prim(PrimitiveType.Cube, "Window", t, new Vector3(side * 3.21f, y + 1.4f, z), Vector3.zero, new Vector3(0.04f, 0.7f, 0.8f), portholeGlow, false);
+                Prim(PrimitiveType.Cube, "Door", t, new Vector3(0f, y + 0.95f, hz0 - 0.02f), Vector3.zero, new Vector3(1f, 1.9f, 0.05f), darkWood, false);
+                PitchedRoof(t, hz0 - 0.3f, hz1 + 0.3f, 3.6f, y + 2.4f, 1.7f, shingle);
+                break;
+        }
+    }
+
+    static void Lifeboat(Transform t, float side, float z, float y)
+    {
+        var b = Group(t, "Lifeboat");
+        b.localPosition = new Vector3(side * (UpperHalfW - 1.1f), y + 1.25f, z);
+        Prim(PrimitiveType.Capsule, "Hull", b, Vector3.zero, new Vector3(90f, 0f, 0f), new Vector3(1.35f, 2.6f, 0.85f), white, false);
+        Prim(PrimitiveType.Cube, "Cover", b, new Vector3(0f, 0.36f, 0f), Vector3.zero, new Vector3(1.1f, 0.12f, 4.2f), cream, false);
+        Prim(PrimitiveType.Cube, "Stripe", b, new Vector3(0f, -0.05f, 0f), Vector3.zero, new Vector3(1.37f, 0.08f, 4.6f), redPaint, false);
+        foreach (float dz in new[] { -2f, 2f })
+        {
+            // A davit: a post up from the deck, an arm out over the boat, and the rope down to it.
+            Prim(PrimitiveType.Cylinder, "Davit", b, new Vector3(side * 0.9f, 0.1f, dz), Vector3.zero, new Vector3(0.14f, 1.35f, 0.14f), steel, false);
+            Prim(PrimitiveType.Cylinder, "DavitArm", b, new Vector3(side * 0.45f, 1.42f, dz), new Vector3(0f, 0f, 90f), new Vector3(0.12f, 0.5f, 0.12f), steel, false);
+            Prim(PrimitiveType.Cylinder, "Fall", b, new Vector3(0f, 0.95f, dz), Vector3.zero, new Vector3(0.03f, 0.5f, 0.03f), coal, false);
+        }
+    }
+
+    static void Vent(Transform t, Vector3 at, float yaw)
+    {
+        var v = Group(t, "Ventilator");
+        v.localPosition = at;
+        v.localRotation = Quaternion.Euler(0f, yaw, 0f);
+        Prim(PrimitiveType.Cylinder, "Pipe", v, new Vector3(0f, 0.75f, 0f), Vector3.zero, new Vector3(0.38f, 0.75f, 0.38f), buff, false);
+        Prim(PrimitiveType.Sphere, "Cowl", v, new Vector3(0f, 1.6f, 0.12f), Vector3.zero, new Vector3(0.75f, 0.7f, 0.8f), buff, false);
+        Prim(PrimitiveType.Cylinder, "Mouth", v, new Vector3(0f, 1.62f, 0.42f), new Vector3(90f, 0f, 0f), new Vector3(0.5f, 0.05f, 0.5f), redPaint, false);
+    }
+
+    static void DeckChair(Transform t, float x, float y, float z, float yaw)
+    {
+        var ch = Group(t, "DeckChair");
+        ch.localPosition = new Vector3(x, y, z);
+        ch.localRotation = Quaternion.Euler(0f, yaw, 0f);
+        Prim(PrimitiveType.Cube, "Seat", ch, new Vector3(0f, 0.32f, 0.1f), new Vector3(-8f, 0f, 0f), new Vector3(0.62f, 0.07f, 1.3f), darkWood, false);
+        Prim(PrimitiveType.Cube, "Back", ch, new Vector3(0f, 0.65f, -0.62f), new Vector3(-35f, 0f, 0f), new Vector3(0.62f, 0.07f, 0.75f), darkWood, false);
+        Prim(PrimitiveType.Cube, "Cushion", ch, new Vector3(0f, 0.37f, 0.15f), new Vector3(-8f, 0f, 0f), new Vector3(0.5f, 0.05f, 1.1f), cream, false);
+        foreach (float lx in new[] { -0.26f, 0.26f })
+            Prim(PrimitiveType.Cube, "Leg", ch, new Vector3(lx, 0.16f, 0.1f), Vector3.zero, new Vector3(0.05f, 0.32f, 1.1f), darkWood, false);
+    }
+
+    /// <summary>
+    /// A pitched shingle roof: two thick slopes laid with overlapping shingle rows that throw little shadow lines, a
+    /// ridge beam, cream eave trim, and gable ends with a lit round window. Casts shadows.
+    /// </summary>
+    static Transform PitchedRoof(Transform parent, float z0, float z1, float span, float eave, float rise, Material shingle)
+    {
+        const float thick = 0.16f;
+        var roof = Group(parent, "PitchedRoof");
+        float len = z1 - z0, zm = (z0 + z1) * 0.5f, depth = len + 0.5f;
+        float slope = Mathf.Sqrt(span * span + rise * rise), angle = Mathf.Atan2(rise, span) * Mathf.Rad2Deg;
+        foreach (float side in new[] { -1f, 1f })
+        {
+            var face = Group(roof, side < 0f ? "Slope_Port" : "Slope_Starboard");
+            face.localPosition = new Vector3(side * span * 0.5f, eave + rise * 0.5f, zm);
+            face.localRotation = Quaternion.Euler(0f, 0f, -side * angle); // high edge at the ridge
+            Prim(PrimitiveType.Cube, "Slab", face, new Vector3(0f, -thick * 0.5f, 0f), Vector3.zero, new Vector3(slope, thick, depth), darkWood, false);
+            const int rows = 7;
+            float rowW = slope / rows;
+            for (int i = 0; i < rows; i++)
+            {
+                float u = side * (slope * 0.5f - rowW * (i + 0.5f)); // eave (outer edge) first
+                Prim(PrimitiveType.Cube, "Shingles", face, new Vector3(u, 0.05f + (i % 2) * 0.012f, 0f), new Vector3(0f, 0f, -side * 4f),
+                     new Vector3(rowW * 1.15f, 0.07f, depth), shingle, false);
+            }
+            Prim(PrimitiveType.Cube, "EaveTrim", roof, new Vector3(side * (span + 0.05f), eave - 0.08f, zm), Vector3.zero, new Vector3(0.22f, 0.2f, depth + 0.1f), cream, false);
+        }
+        Prim(PrimitiveType.Cube, "Ridge", roof, new Vector3(0f, eave + rise + 0.08f, zm), new Vector3(0f, 0f, 45f), new Vector3(0.28f, 0.28f, depth + 0.2f), darkWood, false);
+        var gable = GableMesh(span - 0.05f, rise - 0.05f, 0.18f);
+        foreach (float z in new[] { z0, z1 })
+        {
+            var g = new GameObject("Gable", typeof(MeshFilter), typeof(MeshRenderer));
+            g.transform.SetParent(roof, false);
+            g.transform.localPosition = new Vector3(0f, eave, z);
+            g.GetComponent<MeshFilter>().sharedMesh = gable;
+            g.GetComponent<MeshRenderer>().sharedMaterial = upperWall;
+            g.isStatic = true;
+            float o = z == z0 ? -0.1f : 0.1f;
+            Prim(PrimitiveType.Cylinder, "GableWindow", roof, new Vector3(0f, eave + rise * 0.4f, z + o), new Vector3(90f, 0f, 0f), new Vector3(0.5f, 0.03f, 0.5f), portholeGlow, false);
+            Prim(PrimitiveType.Cylinder, "GableWindowRim", roof, new Vector3(0f, eave + rise * 0.4f, z + o * 0.6f), new Vector3(90f, 0f, 0f), new Vector3(0.62f, 0.03f, 0.62f), brass, false);
+        }
+        return roof;
+    }
+
+    /// <summary>A triangular slab (gable end) centred on x, base on y = 0, extruded along z; saved with the other generated meshes.</summary>
+    static Mesh GableMesh(float halfBase, float height, float thickness)
+    {
+        float h = thickness * 0.5f;
+        Vector3 a = new Vector3(-halfBase, 0f, 0f), b = new Vector3(halfBase, 0f, 0f), c = new Vector3(0f, height, 0f);
+        var verts = new System.Collections.Generic.List<Vector3>();
+        var tris = new System.Collections.Generic.List<int>();
+        void Quad(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3)
+        {
+            int k = verts.Count;
+            verts.AddRange(new[] { p0, p1, p2, p3 });
+            tris.AddRange(new[] { k, k + 1, k + 2, k, k + 2, k + 3, k, k + 2, k + 1, k, k + 3, k + 2 }); // both sides
+        }
+        Vector3 F(Vector3 v) => v + new Vector3(0f, 0f, -h);
+        Vector3 B(Vector3 v) => v + new Vector3(0f, 0f, h);
+        int f0 = verts.Count; verts.AddRange(new[] { F(a), F(c), F(b) }); tris.AddRange(new[] { f0, f0 + 1, f0 + 2 });
+        int b0 = verts.Count; verts.AddRange(new[] { B(a), B(b), B(c) }); tris.AddRange(new[] { b0, b0 + 1, b0 + 2 });
+        Quad(F(a), B(a), B(c), F(c));
+        Quad(F(c), B(c), B(b), F(b));
+        Quad(F(b), B(b), B(a), F(a));
+        var m = new Mesh { name = "RoofGable" };
+        m.SetVertices(verts); m.SetTriangles(tris, 0);
+        m.RecalculateNormals(); m.RecalculateBounds();
+        MovementPrototypeBuilder.EnsureFolder(GeneratedMeshFolder);
+        AssetDatabase.DeleteAsset($"{GeneratedMeshFolder}/RoofGable.asset");
+        AssetDatabase.CreateAsset(m, $"{GeneratedMeshFolder}/RoofGable.asset");
+        return m;
     }
 
     /// <summary>Things outside the walls the camera sees: lit portholes down the hull, the funnel, the foremast.</summary>
@@ -558,8 +905,9 @@ public static class ShipDeckBuilder
 
         var funnel = Group(e, "Funnel");
         funnel.localPosition = new Vector3(0f, 0f, 1.6f);
-        Prim(PrimitiveType.Cylinder, "Stack", funnel, new Vector3(0f, 7.5f, 0f), Vector3.zero, new Vector3(2.6f, 3.2f, 2.6f), buff, false);
-        Prim(PrimitiveType.Cylinder, "Top", funnel, new Vector3(0f, 10.35f, 0f), Vector3.zero, new Vector3(2.66f, 0.4f, 2.66f), coal, false);
+        // Tall enough to stand clear of the upper decks (Anadi): 4.3 m up to 14.3 m.
+        Prim(PrimitiveType.Cylinder, "Stack", funnel, new Vector3(0f, 9.3f, 0f), Vector3.zero, new Vector3(2.6f, 5f, 2.6f), buff, false);
+        Prim(PrimitiveType.Cylinder, "Top", funnel, new Vector3(0f, 13.95f, 0f), Vector3.zero, new Vector3(2.66f, 0.4f, 2.66f), coal, false);
 
         var mast = Group(e, "Foremast");
         mast.localPosition = new Vector3(0f, 0f, ShipLayout.Z(34.6f));
@@ -760,7 +1108,7 @@ public static class ShipDeckBuilder
     /// <summary>Smoke, steam, embers, dust in the lamplight, a reflection probe for the brass.</summary>
     static void BuildAtmosphere(Transform p)
     {
-        Particles(p, "FunnelSmoke", new Vector3(0f, 10.9f, 1.6f), smokeMat, 6f, 7f, new Vector2(1.6f, 2.8f), new Vector2(0.8f, 1.4f), 10f, new Vector3(0f, 0.3f, -1.6f), 200);
+        Particles(p, "FunnelSmoke", new Vector3(0f, 14.5f, 1.6f), smokeMat, 6f, 7f, new Vector2(1.6f, 2.8f), new Vector2(0.8f, 1.4f), 10f, new Vector3(0f, 0.3f, -1.6f), 200);
         Particles(p, "BoilerSteam", new Vector3(0.9f, 2.9f, 2.4f), steamMat, 4f, 3.5f, new Vector2(0.3f, 0.7f), new Vector2(0.3f, 0.6f), 15f, Vector3.zero, 60);
         Particles(p, "ValveLeak", new Vector3(-2.5f, 2.45f, 1.05f), steamMat, 6f, 1.6f, new Vector2(0.15f, 0.35f), new Vector2(0.6f, 1.0f), 8f, Vector3.zero, 40);
         Particles(p, "FireboxEmbers", new Vector3(0f, 1.0f, 3.95f), emberMat, 5f, 1.4f, new Vector2(0.03f, 0.06f), new Vector2(0.4f, 1.1f), 25f, Vector3.zero, 40);
@@ -1095,6 +1443,10 @@ public static class ShipDeckBuilder
         }
         var go = CombinedMesh(parent, "RopeCoil", parts, mat, $"RopeCoil_{radius:0.00}");
         go.transform.localPosition = pos;
+        var body = go.AddComponent<CapsuleCollider>(); // a low coil you step round, not through
+        body.center = new Vector3(0f, 0.2f, 0f);
+        body.radius = radius;
+        body.height = 0.4f;
     }
 
     /// <param name="tints">Optional colour per part, written to the vertex colours (Port/Stylized's _VertexTint).</param>
@@ -1336,6 +1688,25 @@ public static class ShipDeckBuilder
         sea.SetFloat("_BumpScale", 0.6f);
         sea.SetTextureScale("_BaseMap", new Vector2(70f, 70f));
         sea.SetFloat("_Smoothness", 0.92f);
+        // Live water (Port/Sea): swells that stay calm round the hull and along the wake, so the foam strips sit on flat
+        // water, and stream aft at the same speed as SeaScroll's ripples.
+        var seaShader = Shader.Find("Port/Sea");
+        if (seaShader != null)
+        {
+            sea.shader = seaShader;
+            sea.SetVector("_HullRect", new Vector4(-6.9f, -40f, 6.9f, ShipLayout.Z(42.5f) + 2f));
+            sea.SetFloat("_Flow", 4f);
+            // Swells from four directions at unrelated wavelengths, so no single set of stripes reads; foam kept to
+            // thin caps on the highest crests.
+            sea.SetVector("_WaveA", new Vector4(1f, 0.55f, 0.15f, 31f));
+            sea.SetVector("_WaveB", new Vector4(-0.65f, 1f, 0.13f, 19f));
+            sea.SetVector("_WaveC", new Vector4(0.25f, -1f, 0.11f, 11.5f));
+            sea.SetVector("_WaveD", new Vector4(-1f, -0.3f, 0.09f, 6.7f));
+            sea.SetFloat("_Height", 0.75f);
+            sea.SetFloat("_FoamAmount", 0.5f);
+            sea.SetFloat("_FoamHeight", 0.82f);
+        }
+        else Debug.LogWarning("[ShipDeck] Port/Sea shader missing; the sea stays flat");
 
         smokeMat = ParticleMat("Ship_Smoke", new Color(0.12f, 0.12f, 0.13f, 0.55f));
         steamMat = ParticleMat("Ship_Steam", new Color(0.85f, 0.85f, 0.9f, 0.3f));
