@@ -517,6 +517,9 @@ public class OpeningMenu : MonoBehaviour
         subtitleSpeaker.text = speaker;
         subtitleLine.text = line;
         subtitleIcon.enabled = overSpeaker && speakerIcon != null;
+        // (Samprity) Just left of the speaker's name, however long it is ("SHIP'S SPEAKER" ran under a fixed spot).
+        float nameHalf = Mathf.Min(subtitleSpeaker.preferredWidth, subtitleSpeaker.rectTransform.sizeDelta.x) * 0.5f;
+        subtitleIcon.rectTransform.anchoredPosition = new Vector2(subtitleSpeaker.rectTransform.anchoredPosition.x - nameHalf - 24f, subtitleIcon.rectTransform.anchoredPosition.y);
         for (float t = 0f; t < 0.45f; t += Time.unscaledDeltaTime) { subtitleGroup.alpha = Mathf.SmoothStep(0f, 1f, t / 0.45f); yield return null; }
         subtitleGroup.alpha = 1f;
     }

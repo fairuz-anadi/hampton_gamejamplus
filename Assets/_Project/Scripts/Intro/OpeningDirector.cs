@@ -62,6 +62,8 @@ public class OpeningDirector : MonoBehaviour
     public float[] hornAt = { 1.8f, 15.5f };
     [Tooltip("When the camera goes indoors: ocean drops, the engine room's hum rises.")]
     public float indoorsFrom = 27f, indoorsTo = 33f;
+    [Tooltip("(Samprity) From here the camera is down among the rooms, and the roofs over it stop cutting away.")]
+    public float roomsFrom = 29f;
 
     public static bool IntroSeenThisSession { get; private set; }
     /// <summary>True between Begin Voyage and Ship's camera taking over, so Ship fades in from black.</summary>
@@ -100,6 +102,8 @@ public class OpeningDirector : MonoBehaviour
         Pose(0f);
     }
 
+    void OnDestroy() => RoofFade.Suspended = false;
+
     /// <summary>The run's start time of day, held still: Ship begins from the same light.</summary>
     void FreezeClock()
     {
@@ -111,6 +115,9 @@ public class OpeningDirector : MonoBehaviour
 
     void Update()
     {
+        // (Samprity) Only once the camera is down among the rooms: there the ship's own ceilings stay on over it, so
+        // the cabins above never show through. The aerial shots before that open the roofs as they always did.
+        RoofFade.Suspended = State == Phase.Intro && introTime >= roomsFrom;
         switch (State)
         {
             case Phase.Intro: TickIntro(Time.deltaTime); break;

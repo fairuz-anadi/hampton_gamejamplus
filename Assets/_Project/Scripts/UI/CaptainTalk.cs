@@ -255,6 +255,13 @@ public class CaptainTalk : MonoBehaviour
             float t = Time.unscaledTime;
             lineRect.anchoredPosition = lineHome + new Vector2(Mathf.Sin(t * 0.9f), Mathf.Cos(t * 1.7f) * 0.4f) * 6f * act;
             lineRect.localRotation = Quaternion.Euler(0f, 0f, Mathf.Sin(t * 1.3f) * 1.2f * act);
+            if (avatar != null)
+            {
+                // His face sways when he's had a few, and goes cold and red-lit in Part 3.
+                avatar.rectTransform.localRotation = Quaternion.Euler(0f, 0f, (Mathf.Sin(t * 0.8f) * 7f + Mathf.Sin(t * 1.9f) * 2f) * act);
+                bool truth = GameManager.Instance != null && GameManager.Instance.State >= GameState.Part3;
+                avatar.color = truth ? new Color(1f, 0.78f, 0.74f) : Color.white;
+            }
         }
     }
 
@@ -306,10 +313,29 @@ public class CaptainTalk : MonoBehaviour
         lineRect = lineText.rectTransform;
         lineHome = lineRect.anchoredPosition;
         moreText = Label(bubble, F(theme ? theme.body : null), 18, new Color(0.45f, 0.36f, 0.28f), new Vector2(190f, 34f), new Vector2(140f, 22f), TextAnchor.MiddleRight, bottom);
+
+        // His face, top left of the paper (the portrait from Resources/CaptainSet).
+        var set = CaptainSet.Load();
+        if (set != null && set.portrait != null)
+        {
+            avatar = new GameObject("Avatar", typeof(RectTransform), typeof(Image)).GetComponent<Image>();
+            avatar.transform.SetParent(bubble, false);
+            avatar.sprite = set.portrait;
+            avatar.preserveAspect = true;
+            avatar.raycastTarget = false;
+            var r = avatar.rectTransform;
+            r.anchorMin = r.anchorMax = bottom;
+            r.pivot = new Vector2(0.5f, 0.5f);
+            r.sizeDelta = new Vector2(AvatarSize, AvatarSize);
+        }
+        FitPage("");
     }
 
-    const float LineWidth = 510f;
+    const float AvatarSize = 66f;
+    // With his face at the left, the title and his words start further right.
+    const float LineWidth = 430f, LineX = 38f, TitleX = -74f;
     RectTransform paperRect, ruleRect, titleRect;
+    Image avatar;
 
     /// <summary>
     /// Sizes the paper to the whole page before it types out, so it never grows mid-line and a long page never spills
@@ -322,10 +348,11 @@ public class CaptainTalk : MonoBehaviour
         h = Mathf.Max(34f, h);
         float paperH = Mathf.Max(136f, h + 84f);
         paperRect.sizeDelta = new Vector2(560f, paperH);
-        titleRect.anchoredPosition = new Vector2(-150f, 20f + paperH - 18f);
-        ruleRect.anchoredPosition = new Vector2(-150f, 20f + paperH - 32f);
+        titleRect.anchoredPosition = new Vector2(TitleX, 20f + paperH - 18f);
+        ruleRect.anchoredPosition = new Vector2(TitleX, 20f + paperH - 32f);
+        if (avatar != null) avatar.rectTransform.anchoredPosition = new Vector2(-280f + 16f + AvatarSize * 0.5f, 20f + paperH - 12f - AvatarSize * 0.5f);
         lineRect.sizeDelta = new Vector2(LineWidth, h);
-        lineHome = new Vector2(0f, 20f + paperH - 44f - h * 0.5f);
+        lineHome = new Vector2(LineX, 20f + paperH - 44f - h * 0.5f);
         lineRect.anchoredPosition = lineHome;
         bubble.sizeDelta = new Vector2(560f, paperH + 20f);
     }
