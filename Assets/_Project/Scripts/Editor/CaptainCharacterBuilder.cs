@@ -123,12 +123,153 @@ public static class CaptainCharacterBuilder
         var set = AssetDatabase.LoadAssetAtPath<CaptainSet>(SetPath);
         if (set == null) { set = ScriptableObject.CreateInstance<CaptainSet>(); AssetDatabase.CreateAsset(set, SetPath); }
         set.prefab = prefab;
+        set.clueBottle = BuildClueBottle();
         EditorUtility.SetDirty(set);
         AssetDatabase.SaveAssets();
         Debug.Log("[Captain] Built " + PrefabPath);
     }
 
     public static void BuildBatch() => Build();
+
+    /// <summary>Builds only the clue bottle (leaves the Captain's prefab, animator and cap as they are).</summary>
+    [MenuItem("Port/Samprity/Build Captain's Bottle")]
+    public static void BuildBottle()
+    {
+        var set = AssetDatabase.LoadAssetAtPath<CaptainSet>(SetPath);
+        if (set == null) { Debug.LogWarning("[Captain] Build the Captain first"); return; }
+        set.clueBottle = BuildClueBottle();
+        EditorUtility.SetDirty(set);
+        AssetDatabase.SaveAssets();
+        Debug.Log("[Captain] Built the clue bottle " + ClueBottlePath);
+    }
+
+    public static void BuildBottleBatch() => BuildBottle();
+
+    // ---------- The clue bottle ----------
+
+    const string ClueBottlePath = "Assets/_Project/Prefabs/Crew/CaptainClueBottle.prefab";
+
+    /// <summary>
+    /// The Captain's bottle as the player finds it: a 29 cm dark-green rum bottle turned as one piece (base, body,
+    /// shoulder, long neck, lip), a cream label with a red stripe, and the cork still sealed under its red foil.
+    /// Nothing inside. It was never full.
+    /// </summary>
+    static GameObject BuildClueBottle()
+    {
+        var glass = GlassMat();
+        var cork = Mat("Captain_Cork", null, null, new Color(0.62f, 0.46f, 0.3f), StylizedLook.Role.Wood);
+        var wax = Mat("Captain_Wax", null, null, new Color(0.55f, 0.07f, 0.06f), StylizedLook.Role.Paint, 0.55f);
+        var label = Mat("Captain_Label", null, null, new Color(0.9f, 0.84f, 0.68f), StylizedLook.Role.Paint);
+        label.SetFloat("_Cull", 0f);
+        EditorUtility.SetDirty(label);
+
+        var root = new GameObject("CaptainClueBottle");
+        // A classic dark-green rum bottle, turned as one piece: (radius, height) from the base up. A tall straight
+        // body, a rounded shoulder, a long neck and a thick lip ring at the top.
+        var profile = new[]
+        {
+            new Vector2(0f, 0.004f), new Vector2(0.034f, 0.001f), new Vector2(0.038f, 0.006f), new Vector2(0.039f, 0.02f),
+            new Vector2(0.039f, 0.168f), new Vector2(0.037f, 0.182f), new Vector2(0.032f, 0.195f), new Vector2(0.024f, 0.207f),
+            new Vector2(0.016f, 0.217f), new Vector2(0.0135f, 0.228f), new Vector2(0.0125f, 0.272f), new Vector2(0.0155f, 0.274f),
+            new Vector2(0.0165f, 0.282f), new Vector2(0.0135f, 0.285f),
+        };
+        Piece(root.transform, "Glass", Lathe("CaptainBottle_Glass", profile, 48, 0f, 360f), glass, true);
+        // The label: a wide band of paper round the front, with a red stripe across its top.
+        var band = new[] { new Vector2(0.0396f, 0.05f), new Vector2(0.0396f, 0.135f) };
+        Piece(root.transform, "Label", Lathe("CaptainBottle_Label", band, 20, -78f, 78f), label, true);
+        var stripe = new[] { new Vector2(0.0399f, 0.118f), new Vector2(0.0399f, 0.128f) };
+        Piece(root.transform, "LabelStripe", Lathe("CaptainBottle_LabelStripe", stripe, 20, -78f, 78f), wax, true);
+        // Sealed: the cork pushed home under a tight red foil capsule over the top of the neck. Never opened.
+        var capsule = new[]
+        {
+            new Vector2(0.0138f, 0.252f), new Vector2(0.0138f, 0.271f), new Vector2(0.0172f, 0.274f), new Vector2(0.0176f, 0.284f),
+            new Vector2(0.0145f, 0.2875f), new Vector2(0f, 0.2885f),
+        };
+        Piece(root.transform, "Capsule", Lathe("CaptainBottle_Capsule", capsule, 32, 0f, 360f), wax, true);
+        var cylinder = Resources.GetBuiltinResource<Mesh>("Cylinder.fbx");
+        Part(root.transform, "Cork", cylinder, cork, new Vector3(0f, 0.262f, 0f), Quaternion.identity, new Vector3(0.022f, 0.012f, 0.022f));
+
+        var prefab = PrefabUtility.SaveAsPrefabAsset(root, ClueBottlePath);
+        Object.DestroyImmediate(root);
+        return prefab;
+    }
+
+    static void Piece(Transform parent, string name, Mesh mesh, Material mat, bool shadows)
+    {
+        var go = new GameObject(name, typeof(MeshFilter), typeof(MeshRenderer));
+        go.transform.SetParent(parent, false);
+        go.GetComponent<MeshFilter>().sharedMesh = mesh;
+        var mr = go.GetComponent<MeshRenderer>();
+        mr.sharedMaterial = mat;
+        mr.shadowCastingMode = shadows ? UnityEngine.Rendering.ShadowCastingMode.On : UnityEngine.Rendering.ShadowCastingMode.Off;
+    }
+
+    /// <summary>A surface of revolution: the (radius, height) profile turned from arcFrom to arcTo degrees round +Y.</summary>
+    static Mesh Lathe(string name, Vector2[] profile, int segments, float arcFrom, float arcTo)
+    {
+        var v = new List<Vector3>();
+        var uv = new List<Vector2>();
+        var tri = new List<int>();
+        int rows = profile.Length;
+        for (int s = 0; s <= segments; s++)
+        {
+            float a = Mathf.Lerp(arcFrom, arcTo, s / (float)segments) * Mathf.Deg2Rad;
+            var dir = new Vector3(Mathf.Sin(a), 0f, Mathf.Cos(a)); // 0° faces +Z, the bottle's front
+            for (int r = 0; r < rows; r++)
+            {
+                v.Add(dir * profile[r].x + Vector3.up * profile[r].y);
+                uv.Add(new Vector2(s / (float)segments, r / (float)(rows - 1)));
+            }
+        }
+        for (int s = 0; s < segments; s++)
+            for (int r = 0; r < rows - 1; r++)
+            {
+                int a = s * rows + r, b = a + 1, c = a + rows, d = c + 1;
+                tri.AddRange(new[] { a, c, b, c, d, b }); // clockwise seen from outside, so the normals face out
+            }
+        var mesh = new Mesh { name = name };
+        mesh.SetVertices(v);
+        mesh.SetUVs(0, uv);
+        mesh.SetTriangles(tri, 0);
+        mesh.RecalculateNormals();
+        mesh.RecalculateBounds();
+        mesh.RecalculateTangents();
+        MovementPrototypeBuilder.EnsureFolder(GeneratedFolder);
+        string path = $"{GeneratedFolder}/{name}.asset";
+        AssetDatabase.DeleteAsset(path);
+        AssetDatabase.CreateAsset(mesh, path);
+        return mesh;
+    }
+
+    /// <summary>Bottle glass: deep green, see-through enough to show it's empty, glossy; both faces drawn.</summary>
+    static Material GlassMat()
+    {
+        MovementPrototypeBuilder.EnsureFolder(MaterialFolder);
+        string path = $"{MaterialFolder}/Captain_BottleGlass.mat";
+        var lit = Shader.Find("Universal Render Pipeline/Lit");
+        var m = AssetDatabase.LoadAssetAtPath<Material>(path);
+        if (m == null) { m = new Material(lit); AssetDatabase.CreateAsset(m, path); }
+        m.shader = lit;
+        m.SetFloat("_Surface", 1f);
+        m.SetFloat("_Blend", 0f);
+        m.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
+        m.SetFloat("_DstBlend", (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+        m.SetFloat("_SrcBlendAlpha", (float)UnityEngine.Rendering.BlendMode.One);
+        m.SetFloat("_DstBlendAlpha", (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+        m.SetFloat("_ZWrite", 0f);
+        m.SetFloat("_Cull", 0f);
+        m.SetOverrideTag("RenderType", "Transparent");
+        m.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+        m.DisableKeyword("_ALPHATEST_ON");
+        m.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+        m.SetColor("_BaseColor", new Color(0.1f, 0.32f, 0.15f, 0.62f));
+        // Glossy but not a perfect mirror: near 1.0 the highlight can blow up to infinity and the bloom spreads it
+        // over the whole screen as black.
+        m.SetFloat("_Smoothness", 0.88f);
+        m.SetFloat("_Metallic", 0f);
+        EditorUtility.SetDirty(m);
+        return m;
+    }
 
     /// <summary>
     /// His own animator, so the crew's stays untouched: a "Speed" float drives two walks (Formal: the upright sober
