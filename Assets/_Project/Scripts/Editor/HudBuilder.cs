@@ -4,7 +4,8 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// Builds the HUD prefab (Prefabs/UI/Resources/HUD.prefab): meters, sun/moon dial, orders, station prompts, subtitles.
+/// Builds the HUD prefab (Prefabs/UI/Resources/HUD.prefab): sun/moon dial, orders, station prompts, subtitles.
+/// The three meter medallions were taken off the HUD (Riham, 28 Oct): too much to track; the minimap has the top left.
 /// Owner: Samprity. Styled after AFK Journey's soft painterly HUD (our own art and layout).
 ///   In the Editor:  Port > Samprity > Build HUD
 ///   Headless:       Unity.exe -batchmode -projectPath . -executeMethod HudBuilder.BuildBatch -quit
@@ -116,55 +117,12 @@ public static class HudBuilder
         group.blocksRaycasts = false;
         root.AddComponent<HUD>().root = group;
 
-        BuildMeters(root.transform);
         BuildDial(root.transform);
         BuildReadout(root.transform);
         BuildOrders(root.transform);
         BuildPrompts(root.transform, (RectTransform)root.transform);
         BuildSubtitles(root.transform);
         return root;
-    }
-
-    /// <summary>Three round medallions across the top left: a ring that fills with the meter, the icon, the number.</summary>
-    static void BuildMeters(Transform parent)
-    {
-        var box = Box(parent, "Meters", new Vector2(0f, 1f), new Vector2(34f, -26f), new Vector2(420f, 170f), new Vector2(0f, 1f));
-        var panelComp = box.gameObject.AddComponent<MeterPanel>();
-        panelComp.captain = Medallion(box, 0, "CAPTAIN", iconCaptain, Gold, 0, new[] { 25, 75 });
-        panelComp.safety = Medallion(box, 1, "SAFETY", iconSafety, new Color(0.55f, 0.8f, 1f), 30, new[] { 50 });
-        panelComp.crew = Medallion(box, 2, "CREW", iconCrew, new Color(0.6f, 0.9f, 0.62f), 30, new[] { 30, 70 });
-    }
-
-    static MeterBar Medallion(RectTransform box, int i, string label, Sprite icon, Color color, int danger, int[] ticks)
-    {
-        var m = Box(box, "Meter_" + label, new Vector2(0f, 1f), new Vector2(i * 136f, 0f), new Vector2(124f, 170f), new Vector2(0f, 1f));
-        var medal = Box(m, "Medallion", new Vector2(0.5f, 1f), new Vector2(0f, -4f), new Vector2(96f, 96f), new Vector2(0.5f, 1f));
-        Img(medal, "Shade", softDisc, new Color(0f, 0f, 0f, 0.55f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(132f, 132f), Image.Type.Simple);
-        Img(medal, "RingBack", ringThin, new Color(1f, 1f, 1f, 0.16f), Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, Image.Type.Simple);
-        var fill = Img(medal, "RingFill", ringThin, color, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, Image.Type.Filled);
-        fill.fillMethod = Image.FillMethod.Radial360;
-        fill.fillOrigin = (int)Image.Origin360.Top;
-        fill.fillClockwise = true;
-        foreach (int t in ticks)
-        {
-            // Small pip on the ring where the meter changes behaviour (e.g. the Captain at 25 and 75).
-            float a = t / 100f * Mathf.PI * 2f;
-            Img(medal, "Pip_" + t, disc, Cream, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(Mathf.Sin(a), Mathf.Cos(a)) * 44f, new Vector2(7f, 7f), Image.Type.Simple);
-        }
-        Img(medal, "Icon", icon, Cream, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(50f, 50f), Image.Type.Simple);
-
-        var value = Txt(m, "Value", bold, 34, Color.white, "50", new Vector2(0.5f, 1f), new Vector2(0f, -100f), new Vector2(120f, 40f), TextAnchor.UpperCenter);
-        Txt(m, "Label", regular, 16, Cream, Spaced(label), new Vector2(0.5f, 1f), new Vector2(0f, -140f), new Vector2(124f, 22f), TextAnchor.UpperCenter);
-        var delta = Txt(m, "Delta", bold, 22, Color.white, "", new Vector2(1f, 1f), new Vector2(-2f, -6f), new Vector2(50f, 26f), TextAnchor.UpperRight);
-        delta.color = new Color(1f, 1f, 1f, 0f);
-
-        var mb = m.gameObject.AddComponent<MeterBar>();
-        mb.fill = fill;
-        mb.valueText = value;
-        mb.deltaText = delta;
-        mb.color = color;
-        mb.dangerBelow = danger;
-        return mb;
     }
 
     /// <summary>Top right: the time of day, as a sun and moon riding round a dial.</summary>
@@ -495,6 +453,10 @@ public static class HudBuilder
             if (hud == null) hud = r.GetComponentInChildren<HUD>(true);
         }
         mover.readOwnInput = false;
+        // The order cards rearrange their own parts at runtime; a prefab instance won't allow that in edit mode,
+        // so the preview works on an unpacked copy (the scene is never saved).
+        if (PrefabUtility.IsPartOfPrefabInstance(hud.gameObject))
+            PrefabUtility.UnpackPrefabInstance(PrefabUtility.GetOutermostPrefabInstanceRoot(hud.gameObject), PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
         var cam = follow.GetComponent<Camera>();
         var canvas = hud.GetComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceCamera;
@@ -521,16 +483,21 @@ public static class HudBuilder
             subs.Preview(subtitle, part, withStatic);
             if (mood.cycle != null) dial.Show(mood.cycle, mood.cycle.PhaseOf(timeOfDay));
             MovementChecks.Sim(mover, follow, at, yaw, (1.2f, Vector2.zero));
-            meters.captain.SetValue(ctWas); meters.captain.SetValue(ct);
-            meters.safety.SetValue(ss);
-            meters.crew.SetValue(crew);
+            if (meters != null)
+            {
+                meters.captain.SetValue(ctWas); meters.captain.SetValue(ct);
+                meters.safety.SetValue(ss);
+                meters.crew.SetValue(crew);
+            }
             for (int i = 0; i < cards.Length; i++)
             {
                 if (i < orders.Length)
                 {
                     var o = orders[i];
+                    cards[i].PrepareForPreview();
                     cards[i].Show(o.n, o.d, o.seat, o.human, null);
                     cards[i].SetTimer(o.left, o.d.timer);
+                    if (i > 0 || name == "2_off") cards[i].SetOpen(false); // folded cards too, to show both looks
                     cards[i].SnapIn();
                 }
                 else cards[i].group.alpha = 0f;
