@@ -57,6 +57,13 @@ public class ShipReadout : MonoBehaviour
         if (Instance == this) Instance = null;
     }
 
+    /// <summary>Puts any text on the wireless strip for a while (ShipClues' message meant for the Captain).</summary>
+    public void ShowWireless(string text, float seconds)
+    {
+        wireless.text = text;
+        wirelessLeft = seconds;
+    }
+
     void OnWireless(int number, string text)
     {
         wireless.text = text;
@@ -92,15 +99,77 @@ public class ShipReadout : MonoBehaviour
         compass.text = $"{OffMoments.PointName(c)} {c:000}°";
         wheel.text = $"{OffMoments.PointName(w)} {w:000}°";
         clock.text = off.ClockText;
+        Notice(off, c, w);
 
         if (revealTime >= 0f && Time.time >= revealTime) DrawGreyCove();
         else eta.text = off.EtaText.Replace("Promised Port: ", "");
+        Flag(eta, ref etaFlash);
+    }
+
+    // ---------- Making the clues noticeable (Anadi, 28 Oct) ----------
+
+    float compassFlash, clockFlash, etaFlash;
+    int lastClock = -1;
+    string lastEta;
+
+    /// <summary>
+    /// The readout reacts when something doesn't add up: the compass turns red and pulses once it no longer agrees with
+    /// the wheel, the clock flickers red when it jumps back, the arrival time flashes when it gets longer. The first
+    /// time each happens, the player stops and thinks about it (PlayerThought).
+    /// </summary>
+    void Notice(OffMoments off, float c, float w)
+    {
+        float drift = Mathf.Abs(Mathf.DeltaAngle(w, c));
+        if (drift >= 2f)
+        {
+            compassFlash = Mathf.Max(compassFlash, 0.35f + 0.25f * Mathf.Sin(Time.unscaledTime * 5f)); // stays faintly red
+            if (drift >= 3f) PlayerThought.Think("Wait... the compass says we're turning north. The wheel says west.", "compass");
+        }
+        int minutes = ParseClock(off.ClockText);
+        if (lastClock >= 0 && minutes >= 0 && minutes < lastClock)
+        {
+            clockFlash = 1f;
+            PlayerThought.Think("Did the clock just... go backwards?", "clock");
+        }
+        if (minutes >= 0) lastClock = minutes;
+        string e = off.EtaText;
+        if (lastEta != null && e != lastEta && e.Contains("days") && e.Length > lastEta.Length)
+        {
+            etaFlash = 1f;
+            PlayerThought.Think("Two days... and now it's longer? We're going full speed!", "eta");
+        }
+        lastEta = e;
+        Flag(compass, ref compassFlash);
+        Flag(clock, ref clockFlash);
+    }
+
+    void Flag(Text t, ref float flash)
+    {
+        if (t == null) return;
+        if (!baseColors.TryGetValue(t, out var normal)) baseColors[t] = normal = t.color;
+        if (t == eta && revealTime >= 0f && Time.time >= revealTime) return; // Grey Cove draws its own colour
+        float f = Mathf.Clamp01(flash);
+        bool flicker = f > 0.5f && Mathf.PerlinNoise(Time.unscaledTime * 20f, t.GetHashCode() % 100) > 0.6f;
+        t.color = Color.Lerp(normal, revealColor, flicker ? 0.3f : f);
+        t.transform.localScale = Vector3.one * (1f + 0.12f * Mathf.Max(0f, f - 0.4f));
+        flash = Mathf.MoveTowards(flash, 0f, Time.unscaledDeltaTime * 0.35f);
+    }
+
+    readonly System.Collections.Generic.Dictionary<Text, Color> baseColors = new System.Collections.Generic.Dictionary<Text, Color>();
+
+    static int ParseClock(string s)
+    {
+        var parts = s.Split(':');
+        return parts.Length == 2 && int.TryParse(parts[0], out int h) && int.TryParse(parts[1], out int m) ? h * 60 + m : -1;
     }
 
     /// <summary>A second or two of glitching between the two ports, then Grey Cove counting down to the iceberg.</summary>
+    bool bigRevealShown;
+
     void DrawGreyCove()
     {
         float since = Time.time - revealTime;
+        if (!bigRevealShown) { bigRevealShown = true; GreyCoveReveal.Play(eta.rectTransform, minutesToCove); } // the big moment first
         float icebergAt = truthStart >= 0f ? truthStart + truthLength : revealTime + 60f;
         float left = Mathf.Clamp01((icebergAt - Time.time) / Mathf.Max(1f, icebergAt - revealTime));
         int minutes = Mathf.CeilToInt(minutesToCove * left);

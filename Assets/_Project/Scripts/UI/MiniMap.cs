@@ -40,9 +40,11 @@ public class MiniMap : MonoBehaviour
     [SerializeField] bool rotateWithCamera = true;
     [Tooltip("Metres from the followed human to the edge of the panel's shorter side.")]
     [SerializeField] float viewRadiusMetres = 14f;
-    [Tooltip("Ripples on an ice warning arriving or a help call, plus the slow sweep line.")]
+    [Tooltip("Ripples on an ice warning arriving or a help call.")]
     [SerializeField] bool pingsEnabled = true;
     [SerializeField] float pingSeconds = 1.0f;
+    [Tooltip("The slow radar sweep line. Separate from pingsEnabled, which only covers the ripples.")]
+    [SerializeField] bool sweepEnabled = false;
     [SerializeField] float sweepDegreesPerSecond = 40f;
 
     [SerializeField] CanvasGroup fadeGroup;
@@ -230,7 +232,7 @@ public class MiniMap : MonoBehaviour
 
         if (sweepLine != null)
         {
-            bool showSweep = pingsEnabled && !hiddenForState;
+            bool showSweep = sweepEnabled && !hiddenForState;
             sweepLine.gameObject.SetActive(showSweep);
             if (showSweep) sweepLine.localRotation = Quaternion.Euler(0f, 0f, -(Time.time * sweepDegreesPerSecond) % 360f);
         }

@@ -350,6 +350,18 @@ public class CaptainSubtitles : MonoBehaviour
         }
     }
 
+    /// <summary>Shows a line that isn't from CaptainDirector (Anadi's "he slips" moment), or hides it with "".</summary>
+    public void ShowAside(string text)
+    {
+        if (string.IsNullOrEmpty(text)) { target = 0f; return; }
+        OnLineStarted(text);
+        line.text = text;
+        target = 1f;
+    }
+
+    /// <summary>Changes the aside's words in place, without resizing (for its flicker).</summary>
+    public void SetAsideText(string text) => line.text = text;
+
     /// <summary>Editor preview: show a finished line in a given part's style.</summary>
     public void Preview(string text, int part, bool withStatic)
     {
