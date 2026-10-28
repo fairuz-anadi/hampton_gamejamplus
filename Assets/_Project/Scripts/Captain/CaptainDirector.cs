@@ -377,6 +377,7 @@ public class CaptainDirector : MonoBehaviour
     {
         speakingText = text;
         LineStarted?.Invoke(FinalText(text));
+        if (text == CaptainScript.RevealLine) ShipReadout.RevealGreyCove();
         var pages = text.Split('\n');
 
         for (int p = 0; p < pages.Length; p++)

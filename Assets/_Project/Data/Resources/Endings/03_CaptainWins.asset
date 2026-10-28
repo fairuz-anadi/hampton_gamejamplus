@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: 03_CaptainWins
   m_EditorClassIdentifier:
   ending: 2
-  title: "Record Time"
+  title: "The Captain's Night"
   body: "The ship went down fast, just as she'd been told to. Below is every order that was followed, and what it cost."
   closingLine: "Every order was his. Every \"yes\" was yours."
