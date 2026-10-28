@@ -6,8 +6,8 @@ using UnityEngine.SceneManagement;
 /// The run's state machine: Menu -> Part1 -> Part2 -> Part3 -> Iceberg -> Results. Owner: Anadi.
 ///
 /// Hooks for teammates:
-///   Riham:    GameEvents.TruthStarted fires when the 12 orders are done. The iceberg waits for
-///             CaptainDirector.MonologueSeconds (plus a beat), or truthSeconds if that's longer.
+///   Riham:    GameEvents.TruthStarted fires when the 12 orders are done. The iceberg waits until the
+///             Captain is quiet (CaptainDirector.IsQuiet) plus a beat, and at least truthSeconds.
 ///   Rabib:    IcebergSequence sets GameManager.Instance.IcebergHandledExternally = true in Awake,
 ///             listens for GameState.Iceberg, and calls FinishIceberg(angle) at impact.
 /// </summary>
@@ -104,11 +104,17 @@ public class GameManager : MonoBehaviour
     {
         if (State < GameState.Part3) SetState(GameState.Part3);
         GameEvents.RaiseTruthStarted();
-        yield return new WaitForSeconds(TruthWaitSeconds);
+        // Until the Captain has finished (players page through the speech with Space), then a beat, and never
+        // shorter than truthSeconds.
+        float start = Time.time;
+        yield return null;
+        var captain = CaptainDirector.Instance;
+        while (captain != null && !captain.IsQuiet) yield return null;
+        yield return new WaitForSeconds(Mathf.Max(afterMonologueBeat, truthSeconds - (Time.time - start)));
         StartIceberg();
     }
 
-    /// <summary>How long Part 3 lasts before the iceberg: never cuts the Captain off mid-monologue.</summary>
+    /// <summary>Roughly how long Part 3 lasts before the iceberg (the HUD's Grey Cove countdown); the real wait follows the Captain.</summary>
     public float TruthWaitSeconds
     {
         get

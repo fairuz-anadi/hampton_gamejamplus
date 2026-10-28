@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 /// <summary>
 /// The voice on the speaker. Queues the Captain's lines, types them out Undertale-style one text box (page) at a time,
@@ -10,7 +11,13 @@ using UnityEngine;
 /// He gets drunker as the voyage goes on (Mood 0-4, see CaptainScript): his lines change, he types slower and
 /// with stumbles, and his voice drops. Lines are split into pages on "\n". A line stops after its current page
 /// when something more important is waiting (or the speaker is backed up), so the first page of an order is
-/// always heard and the flavour pages give way.
+/// always heard and the flavour pages give way. Space finishes the text box at once, or moves on if it's all there.
+///
+/// With a human aboard, every text box waits for Space (or LB) before the next, so nothing is missed during a break.
+/// Orders wait for him: OrderDirector asks ReadyForOrder, and the order is issued the moment he announces it. While
+/// it's open its line stays up and Space does nothing. Reactions (done, refused, ran out, caught fakes, tutorial
+/// prompts, the vote) cut in at once with no Space needed; what they interrupted comes back after.
+/// Bot-only voyages keep the old timed pages, so test runs play out on their own.
 ///
 /// Samprity: build the text box from PageStarted / TextChanged (or VisibleText), swap the portrait on Mood, play
 /// the blip voice on Blip and speaker static on StokerBrain.StaticBurst, then set DrawFallbackSubtitles = false.
@@ -42,7 +49,8 @@ public class CaptainDirector : MonoBehaviour
 
     [Header("Drunkenness, by mood 0-4")]
     [SerializeField] float[] moodTypingSpeed = { 1f, 0.97f, 0.9f, 0.8f, 0.75f };
-    [SerializeField] float[] moodVoicePitch = { 1f, 0.95f, 0.88f, 0.8f, 0.72f };
+    [Tooltip("Extra pitch on top of his voice for each mood (the voice itself already drops as he 'drinks').")]
+    [SerializeField] float[] moodVoicePitch = { 1f, 1f, 1f, 1f, 1f };
     [Tooltip("Chance per letter of a little drunken stumble (pause) at moods 2 and 3.")]
     [SerializeField] float[] moodStumbleChance = { 0f, 0f, 0.03f, 0.08f, 0f };
 
@@ -51,9 +59,9 @@ public class CaptainDirector : MonoBehaviour
     [SerializeField, Range(0f, 1f)] float expiredLineChance = 0.6f;
     [SerializeField] Vector2 asideGap = new Vector2(30f, 45f);
 
-    [Header("Placeholder voice")]
+    [Header("Voice")]
     [SerializeField] bool placeholderBlip = true;
-    [SerializeField, Range(0f, 1f)] float blipVolume = 0.2f;
+    [SerializeField, Range(0f, 1f)] float blipVolume = 0.85f;
 
     enum Priority { Chatter, Order, Story }
 
@@ -61,11 +69,36 @@ public class CaptainDirector : MonoBehaviour
     {
         public string text;
         public Priority priority;
+        /// <summary>The ActiveOrder this line belongs to (its announcement or a prompt about it), or 0.</summary>
+        public int orderId;
     }
 
     readonly List<Line> queue = new List<Line>(8);
     readonly StringBuilder typed = new StringBuilder(160);
     Coroutine speaking;
+    bool typing, skipPage, nextPage, pausedLastFrame, onLastPage;
+    Line current;
+    int nowFrame = -1, nowInserted;
+
+    /// <summary>True while a text box is still typing out (Space would finish it); false while it's held on screen.</summary>
+    public bool IsTyping => speaking != null && typing;
+
+    /// <summary>Nothing on the speaker and nothing waiting.</summary>
+    public bool IsQuiet => speaking == null && queue.Count == 0;
+
+    /// <summary>A human is aboard, so text boxes wait for Space and orders wait for him.</summary>
+    public bool WaitsForPlayers
+    {
+        get { foreach (var c in CrewRegistry.All) if (!c.IsBot) return true; return false; }
+    }
+
+    /// <summary>
+    /// Showing the last box said about an open order: it stays until the order is done, refused or runs out, and
+    /// Space does nothing (CaptainSubtitles hides its hint).
+    /// </summary>
+    public bool HoldingForOrder =>
+        speaking != null && !typing && onLastPage && current.orderId != 0 && OrderOpen(current.orderId)
+        && !queue.Exists(l => l.orderId == current.orderId);
     float nextAsideAt = float.MaxValue;
     bool monologueStarted;
     int lastMood;
@@ -74,7 +107,6 @@ public class CaptainDirector : MonoBehaviour
     float staticUntil;
 
     AudioSource blipSource;
-    AudioClip blipClip;
     int blipCount;
 
     public string VisibleText { get; private set; } = "";
@@ -86,23 +118,18 @@ public class CaptainDirector : MonoBehaviour
     public bool OpeningDone => !HasOpeningQueued() && speakingText != CaptainScript.Part1Start;
 
     string speakingText;
-    public bool IsSpeaking => speaking != null;
+    /// <summary>His voice is going: a text box is typing out (not while a finished one waits for Space).</summary>
+    public bool IsSpeaking => speaking != null && typing;
 
     /// <summary>
     /// How far gone he is: 0 Part 1 (sober), 1 orders 6-7, 2 orders 8-9, 3 orders 10-11, 4 Part 3 (bottle empty).
     /// Samprity: use it to pick the portrait.
     /// </summary>
-    public int Mood
-    {
-        get
-        {
-            int part = GameManager.Instance != null ? GameManager.Instance.Part : 1;
-            if (part <= 1) return 0;
-            if (part >= 3) return 4;
-            int issued = OrderDirector.Instance != null ? OrderDirector.Instance.NextIndex : 6;
-            return issued <= 7 ? 1 : issued <= 9 ? 2 : 3;
-        }
-    }
+    public int Mood => MoodFor(GameManager.Instance != null ? GameManager.Instance.Part : 1,
+                               OrderDirector.Instance != null ? OrderDirector.Instance.NextIndex : 6);
+
+    static int MoodFor(int part, int issued) =>
+        part <= 1 ? 0 : part >= 3 ? 4 : issued <= 7 ? 1 : issued <= 9 ? 2 : 3;
 
     /// <summary>The final speech for this run, picked when the last order is done.</summary>
     string[] monologue = CaptainScript.Monologue;
@@ -160,7 +187,7 @@ public class CaptainDirector : MonoBehaviour
     // ---------- Public API ----------
 
     /// <summary>Queue a line. Story lines jump ahead of orders, orders ahead of chatter. Extra chatter is dropped.</summary>
-    void Say(string text, Priority priority, bool interrupt = false)
+    void Say(string text, Priority priority, bool interrupt = false, int orderId = 0)
     {
         if (string.IsNullOrEmpty(text)) return;
         if (interrupt) Silence();
@@ -173,17 +200,99 @@ public class CaptainDirector : MonoBehaviour
         int at = queue.Count;
         for (int i = 0; i < queue.Count; i++)
             if (queue[i].priority < priority) { at = i; break; }
-        queue.Insert(at, new Line { text = text, priority = priority });
+        queue.Insert(at, new Line { text = text, priority = priority, orderId = orderId });
     }
 
-    /// <summary>For other systems (e.g. the muster vote): the Captain says something now-ish.</summary>
-    public void SayStory(string text) => Say(text, Priority.Story);
+    /// <summary>
+    /// A reaction: on screen at once, no Space needed. What it cut off comes back after it (unless that was about an
+    /// order that's now closed). Several in one frame play in the order they were said, an order's announcement
+    /// ahead of any prompt about the same order. Without a human aboard it's queued like before.
+    /// </summary>
+    void SayNow(string text, Priority priority, int orderId = 0, bool announce = false)
+    {
+        if (string.IsNullOrEmpty(text)) return;
+        if (!WaitsForPlayers) { Say(text, priority, orderId: orderId); return; }
+        if (Time.frameCount != nowFrame)
+        {
+            nowFrame = Time.frameCount;
+            nowInserted = 0;
+            Interrupt();
+        }
+        int at = nowInserted;
+        if (announce)
+            for (int i = 0; i < nowInserted; i++)
+                if (queue[i].orderId == orderId) { at = i; break; }
+        queue.Insert(at, new Line { text = text, priority = priority, orderId = orderId });
+        nowInserted++;
+    }
 
-    /// <summary>For TutorialHints: queued like an order line, so it never jumps ahead of the order it's about.</summary>
-    public void SayTutorial(string text) => Say(text, Priority.Order);
+    /// <summary>Stops the line on screen and puts it back at the front, unless it was about an order that's closed.</summary>
+    void Interrupt()
+    {
+        if (speaking == null) return;
+        StopCoroutine(speaking);
+        var cut = current;
+        speaking = null;
+        speakingText = null;
+        typing = skipPage = nextPage = onLastPage = false;
+        SetVisible("");
+        bool keep = cut.orderId == 0 || OrderOpen(cut.orderId);
+        if (keep && !queue.Exists(l => l.text == cut.text)) queue.Insert(0, cut);
+    }
+
+    /// <summary>An order closed: drop what's left to say about it, including its line if it's on screen.</summary>
+    void EndOrder(int orderId)
+    {
+        queue.RemoveAll(l => l.orderId == orderId);
+        if (speaking != null && current.orderId == orderId)
+        {
+            StopCoroutine(speaking);
+            speaking = null;
+            speakingText = null;
+            typing = skipPage = nextPage = onLastPage = false;
+            SetVisible("");
+        }
+    }
+
+    static bool OrderOpen(int orderId)
+    {
+        var od = OrderDirector.Instance;
+        if (od == null) return false;
+        foreach (var o in od.Active) if (o.Id == orderId) return true;
+        return false;
+    }
+
+    /// <summary>
+    /// OrderDirector asks before issuing each order (when a human is aboard). False while he's still talking or a
+    /// box waits for Space; a new drink is announced first. True while he holds another open order's line, which the
+    /// new announcement then replaces (co-op).
+    /// </summary>
+    public bool ReadyForOrder(int part, int orderNumber)
+    {
+        if (!WaitsForPlayers) return true;
+        int mood = MoodFor(part, orderNumber);
+        if (mood > lastMood)
+        {
+            lastMood = mood;
+            Say(CaptainScript.MoodStart[Mathf.Clamp(mood, 0, CaptainScript.Moods - 1)], Priority.Order);
+            return false;
+        }
+        return queue.Count == 0 && (speaking == null || HoldingForOrder);
+    }
+
+    /// <summary>For other systems (e.g. the muster vote): the Captain says it now.</summary>
+    public void SayStory(string text) => SayNow(text, Priority.Story);
+
+    /// <summary>For TutorialHints: said now, tied to that crew member's open order, which comes back after it.</summary>
+    public void SayTutorial(string text, int seat = 0)
+    {
+        var order = OrderDirector.Instance != null ? OrderDirector.Instance.GetOrderFor(CrewRegistry.BySeat(seat)) : null;
+        SayNow(text, Priority.Order, order != null ? order.Id : 0);
+    }
 
     public void Silence()
     {
+        typing = skipPage = nextPage = onLastPage = false;
         queue.Clear();
         speakingText = null;
         if (speaking != null) StopCoroutine(speaking);
@@ -242,6 +351,7 @@ public class CaptainDirector : MonoBehaviour
 
     void OnOrderIssued(ActiveOrder o)
     {
+        // (With a human aboard, ReadyForOrder has already announced any new drink, so this finds nothing new.)
         // Another drink: announce the new mood once, just before the order that starts it.
         int mood = Mood;
         if (mood > lastMood)
@@ -257,13 +367,14 @@ public class CaptainDirector : MonoBehaviour
         if (knows != null) line += "\n" + knows;
 
         if (o.Data.kind == OrderKind.Final) unspokenFinalLine = line;
-        Say(line, Priority.Order);
+        SayNow(line, Priority.Order, o.Id, announce: true);
     }
 
     void OnOrderResolved(ActiveOrder o, Choice choice)
     {
         int seat = o.Assignee?.Seat ?? 0;
         int mood = Mood;
+        EndOrder(o.Id);
         switch (choice)
         {
             case Choice.Obey:
@@ -272,21 +383,21 @@ public class CaptainDirector : MonoBehaviour
                 string line = CaptainScript.ReportDone;
                 if (Random.value < praiseChance)
                     line += "\n" + Pick(CaptainScript.ForMood(CaptainScript.Praise, mood));
-                Say(Fill(line, seat, o), Priority.Order);
+                SayNow(Fill(line, seat, o), Priority.Order);
                 break;
             case Choice.Refuse:
-                Say(Fill(Pick(CaptainScript.ForMood(CaptainScript.Refuse, mood)), seat, o), Priority.Order);
+                SayNow(Fill(Pick(CaptainScript.ForMood(CaptainScript.Refuse, mood)), seat, o), Priority.Order);
                 break;
             default:
                 if (Random.value < expiredLineChance)
-                    Say(Fill(Pick(CaptainScript.ForMood(CaptainScript.Expired, mood)), seat, o), Priority.Chatter);
+                    SayNow(Fill(Pick(CaptainScript.ForMood(CaptainScript.Expired, mood)), seat, o), Priority.Chatter);
                 break;
         }
     }
 
     void OnFakeNoticed(ActiveOrder o)
     {
-        Say(Fill(Pick(CaptainScript.FakeNoticed), o.Assignee?.Seat ?? 0, o), Priority.Story);
+        SayNow(Fill(Pick(CaptainScript.FakeNoticed), o.Assignee?.Seat ?? 0, o), Priority.Story);
     }
 
     void OnIceWarningDelivered(int n)
@@ -319,13 +430,23 @@ public class CaptainDirector : MonoBehaviour
 
     void Update()
     {
+        // Space: finish the text box at once, or if it's already all there, go straight on to the next one. Not while
+        // a card or the pause menu has the game stopped, nor on the frame one closes (its Space shouldn't skip too).
+        bool paused = Time.timeScale == 0f;
+        if (NextPressed() && !paused && !pausedLastFrame && speaking != null)
+        {
+            if (typing) skipPage = true;
+            else nextPage = true;
+        }
+        pausedLastFrame = paused;
+
         // Wait for the intro card ("How to play") to close, then the opening line goes first.
         if (speaking == null && queue.Count > 0 && !IntroCard.IsShowing && !PartCard.IsShowing) // and the part's title card (Anadi)
         {
             int at = Mathf.Max(0, queue.FindIndex(l => l.text == CaptainScript.Part1Start));
-            var next = queue[at];
+            current = queue[at];
             queue.RemoveAt(at);
-            speaking = StartCoroutine(Speak(next.text, next.priority));
+            speaking = StartCoroutine(Speak(current.text, current.priority));
         }
 
         if (Time.time >= nextAsideAt && speaking == null && queue.Count == 0)
@@ -333,6 +454,15 @@ public class CaptainDirector : MonoBehaviour
             nextAsideAt = Time.time + Random.Range(asideGap.x, asideGap.y);
             Aside();
         }
+    }
+
+    /// <summary>Space on the keyboard, or LB on any controller.</summary>
+    static bool NextPressed()
+    {
+        var kb = Keyboard.current;
+        if (kb != null && kb.spaceKey.wasPressedThisFrame) return true;
+        foreach (var pad in Gamepad.all) if (pad.leftShoulder.wasPressedThisFrame) return true;
+        return false;
     }
 
     void Aside()
@@ -377,18 +507,25 @@ public class CaptainDirector : MonoBehaviour
     {
         speakingText = text;
         LineStarted?.Invoke(FinalText(text));
+        if (text == CaptainScript.RevealLine) ShipReadout.RevealGreyCove();
         var pages = text.Split('\n');
+        int lastPage = pages.Length - 1;
+        while (lastPage > 0 && pages[lastPage].Length == 0) lastPage--;
 
         for (int p = 0; p < pages.Length; p++)
         {
             string page = pages[p];
             if (page.Length == 0) continue;
-            if (p > 0 && ShouldYield(priority)) break;
+            // Flavour pages give way only on bot voyages; with a player aboard every box is read.
+            if (p > 0 && !WaitsForPlayers && ShouldYield(priority)) break;
+            onLastPage = p == lastPage;
             typed.Clear();
             PageStarted?.Invoke(FinalText(page));
+            typing = true;
+            skipPage = nextPage = false;
 
             int i = 0;
-            while (i < page.Length)
+            while (i < page.Length && !skipPage)
             {
                 // {wrong|right}: type the wrong word, pause, erase it, type the right one.
                 if (page[i] == '{')
@@ -399,27 +536,36 @@ public class CaptainDirector : MonoBehaviour
                     {
                         string wrong = page.Substring(i + 1, bar - i - 1);
                         string right = page.Substring(bar + 1, close - bar - 1);
-                        foreach (char c in wrong) yield return TypeChar(c);
-                        yield return new WaitForSeconds(correctionPause);
-                        for (int k = 0; k < wrong.Length; k++)
+                        foreach (char c in wrong) { if (skipPage) break; yield return Pause(TypeChar(c)); }
+                        yield return Pause(correctionPause);
+                        for (int k = 0; k < wrong.Length && !skipPage; k++)
                         {
                             typed.Length--;
                             SetVisible(typed.ToString());
-                            yield return new WaitForSeconds(0.5f / charsPerSecond);
+                            yield return Pause(0.5f / charsPerSecond);
                         }
-                        yield return new WaitForSeconds(0.15f);
-                        foreach (char c in right) yield return TypeChar(c);
+                        yield return Pause(0.15f);
+                        foreach (char c in right) { if (skipPage) break; yield return Pause(TypeChar(c)); }
                         i = close + 1;
                         continue;
                     }
                 }
-                yield return TypeChar(page[i]);
+                yield return Pause(TypeChar(page[i]));
                 i++;
             }
 
+            // Skipped: the whole box at once, corrections already made.
+            if (skipPage)
+            {
+                typed.Clear();
+                typed.Append(FinalText(page));
+                SetVisible(typed.ToString());
+            }
+            typing = skipPage = false;
+
             // Counts as heard once its first text box is fully typed, not when it starts.
             if (p == 0 && text == unspokenFinalLine) unspokenFinalLine = null;
-            yield return new WaitForSeconds(holdSeconds + typed.Length * holdPerChar);
+            yield return Hold(holdSeconds + typed.Length * holdPerChar);
         }
 
         SetVisible("");
@@ -437,16 +583,40 @@ public class CaptainDirector : MonoBehaviour
         return current != Priority.Story && queue.Count >= 2;
     }
 
-    WaitForSeconds TypeChar(char c)
+    /// <summary>
+    /// A finished box stays until Space (on an open order's last box, until the order closes). Bot-only voyages just
+    /// wait the old timed hold.
+    /// </summary>
+    IEnumerator Hold(float seconds)
+    {
+        nextPage = false;
+        for (float t = 0f; ; t += Time.deltaTime)
+        {
+            if (!WaitsForPlayers) { if (t >= seconds || nextPage) break; }
+            else if (HoldingForOrder) nextPage = false; // stuck on the order: Space does nothing
+            else if (nextPage) break;
+            yield return null;
+        }
+        nextPage = false;
+    }
+
+    /// <summary>Waits in game time, cut short by Space (skipPage while typing, nextPage while holding).</summary>
+    IEnumerator Pause(float seconds)
+    {
+        for (float t = 0f; t < seconds && !skipPage && !nextPage; t += Time.deltaTime) yield return null;
+    }
+
+    /// <summary>Types one letter and returns how long to wait before the next.</summary>
+    float TypeChar(char c)
     {
         typed.Append(c);
         SetVisible(typed.ToString());
-        if (!char.IsWhiteSpace(c) && !char.IsPunctuation(c) && (blipCount++ & 1) == 0) DoBlip();
+        if (!char.IsWhiteSpace(c) && !char.IsPunctuation(c) && (blipCount++ & 1) == 0) DoBlip(c);
         int mood = Mood;
         float wait = 1f / (charsPerSecond * MoodValue(moodTypingSpeed, mood, 1f));
         if (c == '.' || c == ',' || c == '?' || c == '!' || c == ':') wait += punctuationPause;
         if (Random.value < MoodValue(moodStumbleChance, mood, 0f)) wait += Random.Range(0.1f, 0.3f); // *hic*
-        return new WaitForSeconds(wait);
+        return wait;
     }
 
     void SetVisible(string s)
@@ -504,35 +674,127 @@ public class CaptainDirector : MonoBehaviour
 
     static string Pick(string[] lines) => lines[Random.Range(0, lines.Length)];
 
-    // ---------- Placeholder blip voice ----------
+    // ---------- His voice ----------
+    // Undertale-style: a short sound per couple of letters, but his own. A warm, slightly gravelly baritone saying a
+    // vowel ("ah", "eh", "ee", "oh", "oo"), picked from the letter so a word always sounds the same. Synthesised
+    // here (harmonics shaped by vowel formants, a little breath and gravel), one set per mood:
+    //   0  sober: brisk, bright, a confident little lift at the start of each syllable
+    //   1-3  "drunk": lower, longer, sliding downhill, wobbling, vowels going mushy toward "uh", more breath
+    //   4  Part 3, serious again: lowest, short and flat, no wobble, dark and gravelly; the act is over
+
+    const int VoiceRate = 22050;
+    static readonly float[] VoiceF0 = { 120f, 113f, 105f, 97f, 88f };          // Hz
+    static readonly float[] VoiceLength = { 0.065f, 0.075f, 0.09f, 0.11f, 0.06f };
+    static readonly float[] VoiceLift = { 0.06f, 0.03f, 0f, 0f, 0f };          // pitch rise into the syllable
+    static readonly float[] VoiceGlide = { 0.04f, 0.09f, 0.16f, 0.26f, 0.01f }; // pitch slide down across it
+    static readonly float[] VoiceVibrato = { 0.008f, 0.02f, 0.04f, 0.065f, 0f };
+    static readonly float[] VoiceVibratoRate = { 6f, 5.5f, 4.5f, 3.5f, 0f };
+    static readonly float[] VoiceBreath = { 0.035f, 0.05f, 0.08f, 0.11f, 0.03f };
+    static readonly float[] VoiceGravel = { 0.12f, 0.12f, 0.16f, 0.2f, 0.32f };
+    static readonly float[] VoiceBright = { 1.15f, 1.05f, 0.9f, 0.78f, 0.7f };
+    static readonly float[] VoiceSlur = { 0f, 0.15f, 0.35f, 0.55f, 0f };        // vowels drift toward "uh"
+    static readonly float[] VoiceWobble = { 0.035f, 0.06f, 0.09f, 0.13f, 0.012f }; // random pitch per syllable
+
+    // F1, F2, F3 (Hz) for ah, eh, ee, oh, oo, and "uh" for the slur.
+    static readonly Vector3[] Vowels =
+    {
+        new Vector3(730f, 1090f, 2440f), new Vector3(530f, 1840f, 2480f), new Vector3(300f, 2200f, 2950f),
+        new Vector3(570f, 840f, 2410f), new Vector3(320f, 870f, 2240f),
+    };
+    static readonly Vector3 Schwa = new Vector3(520f, 1400f, 2450f);
+
+    AudioClip[,] voice;
 
     void MakeBlip()
     {
-        const int rate = 22050;
-        int n = rate * 35 / 1000;
-        var data = new float[n];
-        for (int i = 0; i < n; i++)
-        {
-            float t = (float)i / rate;
-            float square = Mathf.Sign(Mathf.Sin(2f * Mathf.PI * 180f * t));
-            data[i] = square * (1f - (float)i / n) * 0.5f;
-        }
-        blipClip = AudioClip.Create("CaptainBlip", n, 1, rate, false);
-        blipClip.SetData(data, 0);
+        voice = new AudioClip[5, Vowels.Length];
+        var rng = new System.Random(1912);
+        for (int m = 0; m < 5; m++)
+            for (int v = 0; v < Vowels.Length; v++)
+                voice[m, v] = Syllable(m, v, rng);
         blipSource = gameObject.AddComponent<AudioSource>();
         blipSource.playOnAwake = false;
         blipSource.spatialBlend = 0f;
     }
 
-    void DoBlip()
+    static AudioClip Syllable(int mood, int vowel, System.Random rng)
+    {
+        float len = VoiceLength[mood], f0 = VoiceF0[mood];
+        var formant = Vector3.Lerp(Vowels[vowel], Schwa, VoiceSlur[mood]);
+        float bright = VoiceBright[mood];
+        int n = Mathf.CeilToInt(VoiceRate * len);
+        var data = new float[n];
+        double phase = 0;
+        float noise = 0f, peak = 0.0001f;
+        float attack = mood == 4 ? 0.004f : 0.006f + 0.004f * mood;
+        var tilt = new float[64]; // the voice's natural roll-off, 1 / k^0.5 (gentle, for a little treble)
+        for (int k = 1; k < tilt.Length; k++) tilt[k] = 1f / Mathf.Pow(k, 0.5f);
+        for (int i = 0; i < n; i++)
+        {
+            float t = (float)i / VoiceRate, u = t / len;
+            float f = f0 * (1f + VoiceLift[mood] * Mathf.Sin(Mathf.PI * Mathf.Min(1f, u * 2.5f)) - VoiceGlide[mood] * u * u)
+                         * (1f + VoiceVibrato[mood] * Mathf.Sin(2f * Mathf.PI * VoiceVibratoRate[mood] * t));
+            phase += 2.0 * System.Math.PI * f / VoiceRate;
+
+            // Harmonics of the voice, each weighted by how close it sits to the vowel's three formants.
+            float s = 0f;
+            for (int k = 1; k * f < 5000f && k < tilt.Length; k++)
+            {
+                float h = k * f;
+                float g = Resonance(h, formant.x, 90f) + bright * 0.7f * Resonance(h, formant.y, 120f)
+                        + bright * 0.35f * Resonance(h, formant.z, 180f)
+                        + bright * 0.18f * Resonance(h, 3400f, 400f) + 0.04f; // presence, so he cuts through the ship
+                s += (float)System.Math.Sin(k * phase) * g * tilt[k];
+            }
+            // Gravel: a slow flutter at half the pitch, like a voice worn by shouting over engines.
+            s *= 1f - VoiceGravel[mood] * 0.5f * (1f + (float)System.Math.Sin(phase * 0.5));
+            // Breath: soft filtered noise under it.
+            noise += 0.5f * ((float)rng.NextDouble() * 2f - 1f - noise);
+            s += noise * VoiceBreath[mood] * 6f;
+
+            float env = Mathf.Min(1f, t / attack) * (u < 0.5f ? 1f : Mathf.Pow(1f - (u - 0.5f) / 0.5f, 2f));
+            data[i] = s * env;
+            peak = Mathf.Max(peak, Mathf.Abs(data[i]));
+        }
+        for (int i = 0; i < n; i++) data[i] *= 0.9f / peak;
+        var clip = AudioClip.Create($"CaptainVoice_{mood}_{vowel}", n, 1, VoiceRate, false);
+        clip.SetData(data, 0);
+        return clip;
+    }
+
+    static float Resonance(float freq, float centre, float width)
+    {
+        float d = (freq - centre) / width;
+        return 1f / (1f + d * d);
+    }
+
+    /// <summary>The same letter always gets the same vowel, so words keep their shape.</summary>
+    static int VowelFor(char c)
+    {
+        switch (char.ToLowerInvariant(c))
+        {
+            case 'a': return 0;
+            case 'e': return 1;
+            case 'i': case 'y': return 2;
+            case 'o': return 3;
+            case 'u': case 'w': return 4;
+            default: return char.ToLowerInvariant(c) % Vowels.Length;
+        }
+    }
+
+    void DoBlip(char c)
     {
         Blip?.Invoke();
-        if (!placeholderBlip || blipSource == null) return;
-        // The voice drops with every drink, and wobbles more.
-        int mood = Mood;
-        float wobble = 0.08f + 0.04f * Mathf.Min(mood, 3);
-        blipSource.pitch = MoodValue(moodVoicePitch, mood, 1f) * Random.Range(1f - wobble, 1f + wobble);
-        blipSource.PlayOneShot(blipClip, blipVolume);
+        if (!placeholderBlip || blipSource == null || voice == null) return;
+        int mood = Mathf.Clamp(Mood, 0, 4);
+        float pitch = MoodValue(moodVoicePitch, mood, 1f) * Random.Range(1f - VoiceWobble[mood], 1f + VoiceWobble[mood]);
+        if (mood == 3 && Random.value < 0.1f) pitch *= 0.86f; // the odd syllable that falls off a cliff
+        // Each syllable cuts the last, like Undertale's voices, so it reads as speech rather than a buzz.
+        blipSource.Stop();
+        blipSource.clip = voice[mood, VowelFor(c)];
+        blipSource.pitch = pitch;
+        blipSource.volume = blipVolume;
+        blipSource.Play();
     }
 
     // ---------- Fallback subtitles ----------

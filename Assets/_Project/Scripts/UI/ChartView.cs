@@ -33,8 +33,8 @@ public class ChartView : MonoBehaviour
         var go = GameObject.Find("Chart");
         if (go == null) { enabled = false; return; }
         chart = go.transform;
-        var r = go.GetComponent<Renderer>();
-        Build(r != null && r.sharedMaterial != null ? r.sharedMaterial.mainTexture : null);
+        chartRenderer = go.GetComponent<Renderer>();
+        Build(chartRenderer != null && chartRenderer.sharedMaterial != null ? chartRenderer.sharedMaterial.mainTexture : null);
     }
 
     void OnDestroy()
@@ -93,8 +93,13 @@ public class ChartView : MonoBehaviour
         return d.magnitude;
     }
 
+    Renderer chartRenderer;
+    RawImage chartImage;
+
     void SetOpen(bool on, Component who)
     {
+        // The chart on the table changes as the night goes on (ShipClues): show the page that's there now.
+        if (on && chartRenderer != null && chartImage != null) chartImage.texture = chartRenderer.sharedMaterial.mainTexture;
         open = on;
         reader = on ? who : null;
         if (on) closeText.text = $"{HudText.KeyFor(HudText.Key.Interact, who)}   Put it down";
@@ -137,7 +142,7 @@ public class ChartView : MonoBehaviour
         dim.rectTransform.anchorMin = Vector2.zero; dim.rectTransform.anchorMax = Vector2.one;
         float w = 1500f, h = chartTex != null ? w * chartTex.height / chartTex.width : 980f;
         Box(view, new Color(0f, 0f, 0f, 0.5f), new Vector2(10f, -12f), new Vector2(w + 12f, h + 12f));
-        var img = new GameObject("Chart", typeof(RectTransform), typeof(RawImage)).GetComponent<RawImage>();
+        var img = chartImage = new GameObject("Chart", typeof(RectTransform), typeof(RawImage)).GetComponent<RawImage>();
         img.transform.SetParent(view, false);
         img.texture = chartTex;
         img.raycastTarget = false;

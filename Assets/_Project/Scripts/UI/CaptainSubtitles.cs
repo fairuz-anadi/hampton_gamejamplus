@@ -8,7 +8,9 @@ using UnityEngine.UI;
 ///   Part 1  warm brass, steady
 ///   Part 2  colder, the trim loses its warmth
 ///   Part 3  red trim, the text trembles slightly
-/// Also shows the Stoker's speaker static ("kssshhht") and plays a short crackle for it.
+/// Also shows the Stoker's speaker static ("kssshhht") and plays a short crackle for it, and a keycap hint at the
+/// strip's right end for CaptainDirector's Space key (Riham): dim "skip" while he types, then a bright "next" that pops
+/// in, nudges its arrow and pulses, harder the longer it waits; hidden while he holds an open order's line.
 /// </summary>
 public class CaptainSubtitles : MonoBehaviour
 {
@@ -65,6 +67,7 @@ public class CaptainSubtitles : MonoBehaviour
         CaptainDirector.Blip += OnBlip;
         StokerBrain.StaticBurst += OnStatic;
         GameEvents.PartChanged += OnPartChanged;
+        EnsureSkipHint();
         lineHome = line.rectTransform.anchoredPosition;
         ApplyStyle(GameManager.Instance != null && GameManager.Instance.Part > 0 ? GameManager.Instance.Part : 1);
         if (CaptainDirector.Instance != null && CaptainDirector.Instance.VisibleText.Length > 0)
@@ -146,6 +149,159 @@ public class CaptainSubtitles : MonoBehaviour
         label.color = style.label;
         line.color = style.text;
         horn.color = style.label;
+        if (hintRoot != null)
+        {
+            keyFrame.color = style.label;
+            keyText.color = style.label;
+            verbText.color = style.text;
+            arrow.color = style.label;
+        }
+    }
+
+    // ---------- The Space hint (Riham) ----------
+
+    const float HintReserve = 330f; // canvas units kept clear at the strip's right end so the words never run under it
+    RectTransform hintRoot, keyRect;
+    CanvasGroup hintGroup;
+    Image keyFrame, keyFill, arrow;
+    Text keyText, verbText;
+    string hintState = "", hintKey = "";
+    float hintSince, hintAlpha;
+
+    /// <summary>A brass-edged keycap ("SPACE"), the verb ("next" / "skip") and an arrow, at the strip's right end.</summary>
+    void EnsureSkipHint()
+    {
+        if (hintRoot != null || panel == null || label == null) return;
+        if (strip)
+            foreach (var t in new[] { line, sizer })
+            {
+                var r = t.rectTransform;
+                r.offsetMax = new Vector2(r.offsetMax.x - HintReserve, r.offsetMax.y);
+            }
+
+        hintRoot = new GameObject("SpaceHint", typeof(RectTransform), typeof(CanvasGroup)).GetComponent<RectTransform>();
+        hintRoot.SetParent(panel, false);
+        hintRoot.anchorMin = hintRoot.anchorMax = new Vector2(1f, 0f);
+        hintRoot.pivot = new Vector2(1f, 0.5f);
+        hintRoot.anchoredPosition = new Vector2(-40f, 48f);
+        hintRoot.sizeDelta = new Vector2(HintReserve - 40f, 52f);
+        hintGroup = hintRoot.GetComponent<CanvasGroup>();
+        hintGroup.alpha = 0f;
+        hintGroup.blocksRaycasts = false;
+
+        keyFrame = HintImage("Key", hintRoot, null);
+        keyRect = keyFrame.rectTransform;
+        keyFill = HintImage("Fill", keyRect, null);
+        keyFill.rectTransform.anchorMin = Vector2.zero;
+        keyFill.rectTransform.anchorMax = Vector2.one;
+        keyFill.rectTransform.offsetMin = new Vector2(3f, 3f);
+        keyFill.rectTransform.offsetMax = new Vector2(-3f, -3f);
+        keyText = HintText("KeyText", keyRect, 22, TextAnchor.MiddleCenter);
+        keyText.rectTransform.anchorMin = Vector2.zero;
+        keyText.rectTransform.anchorMax = Vector2.one;
+        keyText.rectTransform.offsetMin = keyText.rectTransform.offsetMax = Vector2.zero;
+
+        verbText = HintText("Verb", hintRoot, 30, TextAnchor.MiddleRight);
+        verbText.rectTransform.anchorMin = verbText.rectTransform.anchorMax = verbText.rectTransform.pivot = new Vector2(1f, 0.5f);
+        verbText.rectTransform.anchoredPosition = new Vector2(-38f, 0f);
+        verbText.rectTransform.sizeDelta = new Vector2(110f, 44f);
+
+        arrow = HintImage("Arrow", hintRoot, ArrowSprite());
+        arrow.rectTransform.anchorMin = arrow.rectTransform.anchorMax = arrow.rectTransform.pivot = new Vector2(1f, 0.5f);
+        arrow.rectTransform.sizeDelta = new Vector2(22f, 26f);
+        ApplyStyle(part);
+    }
+
+    Image HintImage(string name, RectTransform parent, Sprite sprite)
+    {
+        var img = new GameObject(name, typeof(RectTransform), typeof(Image)).GetComponent<Image>();
+        img.transform.SetParent(parent, false);
+        img.sprite = sprite;
+        img.raycastTarget = false;
+        return img;
+    }
+
+    Text HintText(string name, RectTransform parent, int size, TextAnchor align)
+    {
+        var t = new GameObject(name, typeof(RectTransform), typeof(Text)).GetComponent<Text>();
+        t.transform.SetParent(parent, false);
+        t.font = label.font;
+        t.fontSize = size;
+        t.fontStyle = FontStyle.Bold;
+        t.alignment = align;
+        t.horizontalOverflow = HorizontalWrapMode.Overflow;
+        t.raycastTarget = false;
+        return t;
+    }
+
+    static Sprite arrowSprite;
+
+    /// <summary>A solid right-pointing triangle, drawn once (fonts can't be trusted to have one).</summary>
+    static Sprite ArrowSprite()
+    {
+        if (arrowSprite != null) return arrowSprite;
+        const int w = 22, h = 26;
+        var tex = new Texture2D(w, h, TextureFormat.RGBA32, false) { filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp };
+        for (int y = 0; y < h; y++)
+            for (int x = 0; x < w; x++)
+            {
+                float half = (h * 0.5f) * (1f - (x + 0.5f) / w);
+                float a = Mathf.Clamp01(half - Mathf.Abs(y + 0.5f - h * 0.5f) + 0.5f);
+                tex.SetPixel(x, y, new Color(1f, 1f, 1f, a));
+            }
+        tex.Apply();
+        arrowSprite = Sprite.Create(tex, new Rect(0f, 0f, w, h), new Vector2(0.5f, 0.5f));
+        return arrowSprite;
+    }
+
+    void UpdateHint(float dt)
+    {
+        if (hintRoot == null) return;
+        var captain = CaptainDirector.Instance;
+        string state = captain == null || target <= 0f ? "" : captain.IsTyping ? "skip" : captain.HoldingForOrder ? "" : "next";
+        float now = Time.unscaledTime;
+        if (state != hintState)
+        {
+            hintState = state;
+            hintSince = now;
+            if (state.Length > 0) verbText.text = state;
+        }
+
+        string key = UnityEngine.InputSystem.Gamepad.current != null ? "SPACE / LB" : "SPACE";
+        if (key != hintKey)
+        {
+            hintKey = key;
+            keyText.text = key;
+        }
+        // Lay out right to left: arrow, verb, keycap.
+        float verbW = verbText.preferredWidth;
+        verbText.rectTransform.sizeDelta = new Vector2(verbW + 4f, 44f);
+        keyRect.anchorMin = keyRect.anchorMax = keyRect.pivot = new Vector2(1f, 0.5f);
+        keyRect.sizeDelta = new Vector2(keyText.preferredWidth + 30f, 44f);
+        keyRect.anchoredPosition = new Vector2(-38f - verbW - 16f, 0f);
+
+        float wantAlpha = state == "next" ? 1f : state == "skip" ? 0.5f : 0f;
+        hintAlpha = Mathf.MoveTowards(hintAlpha, wantAlpha, dt * (wantAlpha > hintAlpha ? 8f : 4f));
+        hintGroup.alpha = hintAlpha;
+
+        float since = now - hintSince;
+        if (state == "next")
+        {
+            // Pops in, then the arrow nudges and the key glows; after a few seconds unread, it breathes bigger too.
+            float pop = Mathf.Clamp01(1f - since / 0.35f);
+            bool nagging = since > 3f;
+            float beat = 0.5f + 0.5f * Mathf.Sin(now * (nagging ? 6f : 4.5f));
+            hintRoot.localScale = Vector3.one * (1f + 0.35f * pop * pop + (nagging ? 0.07f * beat : 0.02f * beat));
+            arrow.rectTransform.anchoredPosition = new Vector2(-6f + 8f * Mathf.Abs(Mathf.Sin(now * 4.5f)), 0f);
+            var glow = style.label;
+            keyFill.color = Color.Lerp(new Color(0.02f, 0.025f, 0.04f, 0.95f), new Color(glow.r, glow.g, glow.b, 0.55f), beat * (nagging ? 0.9f : 0.45f));
+        }
+        else
+        {
+            hintRoot.localScale = Vector3.one;
+            arrow.rectTransform.anchoredPosition = new Vector2(-6f, 0f);
+            keyFill.color = new Color(0.02f, 0.025f, 0.04f, 0.95f);
+        }
     }
 
     void Update()
@@ -179,6 +335,8 @@ public class CaptainSubtitles : MonoBehaviour
             horn.rectTransform.localRotation = Quaternion.identity;
         }
 
+        UpdateHint(dt);
+
         staticLeft -= dt;
         bool showStatic = staticLeft > 0f;
         staticText.enabled = showStatic;
@@ -191,6 +349,18 @@ public class CaptainSubtitles : MonoBehaviour
             if (shown < 0.5f) group.alpha = Mathf.Max(group.alpha, 0.85f);
         }
     }
+
+    /// <summary>Shows a line that isn't from CaptainDirector (Anadi's "he slips" moment), or hides it with "".</summary>
+    public void ShowAside(string text)
+    {
+        if (string.IsNullOrEmpty(text)) { target = 0f; return; }
+        OnLineStarted(text);
+        line.text = text;
+        target = 1f;
+    }
+
+    /// <summary>Changes the aside's words in place, without resizing (for its flicker).</summary>
+    public void SetAsideText(string text) => line.text = text;
 
     /// <summary>Editor preview: show a finished line in a given part's style.</summary>
     public void Preview(string text, int part, bool withStatic)
