@@ -33,6 +33,20 @@ public abstract class Station : MonoBehaviour, IStation
     public int ActiveHolders => CountFresh(holders);
     public int NeededHolders => RequiredHolders;
 
+    /// <summary>Fills buffer with up to buffer.Length crew currently holding here (fresh this frame or last),
+    /// for effects that need their positions (e.g. a link drawn between them). Returns how many were written.
+    /// No allocation: pass a reusable array.</summary>
+    public int GetFreshHolders(ICrewActor[] buffer)
+    {
+        int n = 0, frame = Time.frameCount;
+        foreach (var kv in holders)
+        {
+            if (n >= buffer.Length) break;
+            if (frame - kv.Value <= 1) buffer[n++] = kv.Key;
+        }
+        return n;
+    }
+
     void Awake()
     {
         if (statusLight == null)

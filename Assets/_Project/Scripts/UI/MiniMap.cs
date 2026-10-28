@@ -29,12 +29,21 @@ public class MiniMap : MonoBehaviour
     [System.Serializable]
     class IceIcon { public RectTransform root; public Image core; public Image glow; }
 
+    [System.Serializable]
+    class Ping { public RectTransform root; public Image ring; }
+
+    struct PingState { public Vector3 world; public float startedAt; public bool active; }
+
     [SerializeField] bool showBots = false;
     [SerializeField] float fadeSeconds = 0.3f;
     [Tooltip("Spin the map so the gameplay camera's facing is always up. Off: frozen north-up, still centred on the followed human.")]
     [SerializeField] bool rotateWithCamera = true;
     [Tooltip("Metres from the followed human to the edge of the panel's shorter side.")]
     [SerializeField] float viewRadiusMetres = 14f;
+    [Tooltip("Ripples on an ice warning arriving or a help call, plus the slow sweep line.")]
+    [SerializeField] bool pingsEnabled = true;
+    [SerializeField] float pingSeconds = 1.0f;
+    [SerializeField] float sweepDegreesPerSecond = 40f;
 
     [SerializeField] CanvasGroup fadeGroup;
     [SerializeField] RectTransform mapArea;
@@ -47,6 +56,8 @@ public class MiniMap : MonoBehaviour
     [SerializeField] RectTransform bridgeMarker;
     [SerializeField] CrewIcon[] crewIcons;
     [SerializeField] IceIcon[] iceWarningIcons;
+    [SerializeField] Ping[] pings;
+    [SerializeField] RectTransform sweepLine;
 
     static readonly StationType[] StationTypes = (StationType[])System.Enum.GetValues(typeof(StationType));
     static readonly string[] RoomIds = { "Boiler", "Corridor", "Wireless", "Bridge", "Bow" };
@@ -61,6 +72,7 @@ public class MiniMap : MonoBehaviour
     Vector3 bridgeWorldPos;
     bool hasBridge;
     float[] iceFade;
+    PingState[] pingStates;
 
     // Cached once in Start() from the same discovery the old static placement used; only panel position/rotation
     // moves after that, every frame, since the followed human (the anchor) moves.
@@ -90,6 +102,7 @@ public class MiniMap : MonoBehaviour
     void Start()
     {
         iceFade = new float[iceWarningIcons != null ? iceWarningIcons.Length : 0];
+        pingStates = new PingState[pings != null ? pings.Length : 0];
         roomWorldMin = new Vector3[RoomIds.Length];
         roomWorldMax = new Vector3[RoomIds.Length];
         stationWorldPos = new Vector3[StationTypes.Length];
@@ -109,13 +122,20 @@ public class MiniMap : MonoBehaviour
         else Debug.LogWarning("[MiniMap] HUD.Instance is null in Start() — staying unparented, off any Canvas, so nothing will render.");
 
         GameEvents.StateChanged += OnStateChanged;
+        GameEvents.IceWarningArrived += OnIceWarningArrivedPing;
+        GameEvents.HelpCalled += OnHelpCalledPing;
         hiddenForState = GameManager.Instance != null && GameManager.Instance.State == GameState.Iceberg;
         if (fadeGroup != null) fadeGroup.alpha = 0f;
 
         Debug.Log($"[MiniMap] Start: boundsReady={boundsReady} hasBridge={hasBridge} parentedToHud={parented} hiddenForState={hiddenForState}");
     }
 
-    void OnDestroy() => GameEvents.StateChanged -= OnStateChanged;
+    void OnDestroy()
+    {
+        GameEvents.StateChanged -= OnStateChanged;
+        GameEvents.IceWarningArrived -= OnIceWarningArrivedPing;
+        GameEvents.HelpCalled -= OnHelpCalledPing;
+    }
 
     void OnStateChanged(GameState s) => hiddenForState = s == GameState.Iceberg;
 
@@ -206,6 +226,68 @@ public class MiniMap : MonoBehaviour
         UpdateHighlightRing(followed, anchor, pxPerMetre);
         PlaceCrewIcons(followed, anchor, pxPerMetre);
         PlaceIceWarningIcons(anchor, pxPerMetre);
+        PositionPings(anchor, pxPerMetre);
+
+        if (sweepLine != null)
+        {
+            bool showSweep = pingsEnabled && !hiddenForState;
+            sweepLine.gameObject.SetActive(showSweep);
+            if (showSweep) sweepLine.localRotation = Quaternion.Euler(0f, 0f, -(Time.time * sweepDegreesPerSecond) % 360f);
+        }
+    }
+
+    /// <summary>A new ice warning arrived at the Wireless desk: ripple there. (IceWarningArrived only gives the
+    /// warning's number, not which IceWarningCarry instance it is, so this pings the desk itself rather than
+    /// guessing at a specific prop's position.)</summary>
+    void OnIceWarningArrivedPing(int n)
+    {
+        if (!pingsEnabled || hiddenForState) return;
+        var wireless = StationRegistry.Get(StationType.Wireless);
+        if (wireless != null) TriggerPing(wireless.Position);
+    }
+
+    void OnHelpCalledPing(ICrewActor who, StationType station)
+    {
+        if (!pingsEnabled || hiddenForState) return;
+        var st = StationRegistry.Get(station);
+        if (st != null) TriggerPing(st.Position);
+    }
+
+    /// <summary>Starts a ripple at a world position, reusing a free pool slot or (if all 6 are busy) the oldest one.</summary>
+    void TriggerPing(Vector3 world)
+    {
+        if (pings == null || pingStates == null || pings.Length == 0) return;
+        int slot = -1;
+        float oldest = float.MaxValue;
+        for (int i = 0; i < pings.Length; i++)
+        {
+            if (!pingStates[i].active) { slot = i; break; }
+            if (pingStates[i].startedAt < oldest) { oldest = pingStates[i].startedAt; slot = i; }
+        }
+        pingStates[slot] = new PingState { world = world, startedAt = Time.time, active = true };
+        if (pings[slot].root != null) pings[slot].root.gameObject.SetActive(true);
+    }
+
+    /// <summary>Ripples use the same world-to-panel transform as every other icon, so they re-centre and rotate
+    /// with the map and are clipped by the same mask.</summary>
+    void PositionPings(Vector3 anchor, float pxPerMetre)
+    {
+        if (pings == null || pingStates == null) return;
+        for (int i = 0; i < pings.Length && i < pingStates.Length; i++)
+        {
+            if (!pingStates[i].active) continue;
+            var p = pings[i];
+            if (p.root == null) { pingStates[i].active = false; continue; }
+
+            if (!pingsEnabled || hiddenForState) { pingStates[i].active = false; p.root.gameObject.SetActive(false); continue; }
+
+            float t = (Time.time - pingStates[i].startedAt) / Mathf.Max(0.01f, pingSeconds);
+            if (t >= 1f) { pingStates[i].active = false; p.root.gameObject.SetActive(false); continue; }
+
+            p.root.anchoredPosition = ToPanel(pingStates[i].world, anchor, pxPerMetre);
+            p.root.localScale = Vector3.one * Mathf.Lerp(0.3f, 2f, t);
+            if (p.ring != null) { var c = p.ring.color; c.a = 1f - t; p.ring.color = c; }
+        }
     }
 
     /// <summary>The human the minimap follows: lowest seat among humans, whatever the player count (not just solo).</summary>
