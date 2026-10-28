@@ -148,11 +148,20 @@ public static class OpeningChecks
                 var path = Object.FindAnyObjectByType<CinematicPath>();
                 path.Evaluate(path.Duration, out var endPos, out _, out _);
                 Check(Vector3.Distance(menuPos, endPos) < 0.01f, "Skip puts the camera on the menu shot");
+                // Open Settings straight away, while the menu is still fading in.
+                Object.FindAnyObjectByType<OpeningMenu>().OpenSettings(true, silent: true);
                 Next();
                 break;
 
             case 2: // Let the menu settle, capture it, then replay the intro from the top
                 if (inStep < 3f) return;
+                {
+                    var early = Object.FindAnyObjectByType<OpeningMenu>();
+                    Check(early.SettingsOpen && !early.MainButtonsVisible, "Settings opened during the menu's fade-in: the main buttons stay hidden under it");
+                    Capture("settings_during_fade", withUi: true);
+                    early.OpenSettings(false, silent: true);
+                    Check(early.MainButtonsVisible, "Closing Settings brings the main buttons back");
+                }
                 Capture("menu_after_skip", withUi: true);
                 typeof(OpeningDirector).GetProperty("IntroSeenThisSession").SetValue(null, false);
                 SceneManager.LoadScene("MainMenu");

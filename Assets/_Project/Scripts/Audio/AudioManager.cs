@@ -19,8 +19,9 @@ public class AudioManager : MonoBehaviour
     [Min(0.1f)] public float partFade = 4f;
     [Tooltip("Music and passengers drop to this while the Captain speaks.")]
     [Range(0f, 1f)] public float duckUnderVoice = 0.6f;
-    [Tooltip("Silences CaptainDirector's beep-per-letter voice; the speaker crackle still plays while he talks.")]
-    public bool muteCaptainBlip = false;
+    [Tooltip("Silences CaptainDirector's per-letter typing voice; the speaker crackle still plays while he talks. " +
+             "On (her call, 28 Oct): no typing voice, the Captain speaks with his recorded voice (CaptainNarrator).")]
+    public bool muteCaptainBlip = true;
 
     AudioBank bank;
     bool resultsOnly;
@@ -494,6 +495,27 @@ public class AudioManager : MonoBehaviour
 
     // ---------- Helpers ----------
 
+    [Tooltip("Everything else drops to this while the Captain's recorded voice plays, so his words carry over the ship.")]
+    [Range(0f, 1f)] public float duckUnderRecordedVoice = 0.4f;
+    float voiceDuck = 1f;
+    int voiceDuckFrame = -1;
+
+    /// <summary>
+    /// 1, or duckUnderRecordedVoice while CaptainNarrator is speaking: down in about a quarter of a second when a line
+    /// starts, back up over about a second when it ends. Applied on top of every layer's own fade.
+    /// </summary>
+    float VoiceDuck
+    {
+        get
+        {
+            if (voiceDuckFrame == Time.frameCount) return voiceDuck;
+            voiceDuckFrame = Time.frameCount;
+            float want = CaptainNarrator.Instance != null && CaptainNarrator.Instance.Speaking ? duckUnderRecordedVoice : 1f;
+            voiceDuck = Mathf.MoveTowards(voiceDuck, want, Time.unscaledDeltaTime * (want < voiceDuck ? 2.5f : 0.6f));
+            return voiceDuck;
+        }
+    }
+
     void Ease(Layer l)
     {
         float duck = speaking && (l == waltz || l == sustained || l == passengers || l == ballroom) ? duckUnderVoice : 1f;
@@ -505,7 +527,7 @@ public class AudioManager : MonoBehaviour
             l.source.Play();
         }
         else if (l.current <= 0.001f && l.target <= 0f && l.source.isPlaying) l.source.Pause();
-        l.category.BaseVolume = l.current;
+        l.category.BaseVolume = l.current * VoiceDuck;
     }
 
     Layer Loop(string name, AudioClip clip, UnityEngine.Audio.AudioMixerGroup group,
@@ -586,7 +608,8 @@ public class AudioManager : MonoBehaviour
         src.outputAudioMixerGroup = group;
         src.spatialBlend = spatial;
         src.pitch = pitch;
-        src.volume = volume * Effects;
+        // Footsteps and station sounds sit under the Captain's recorded voice too; his own speaker sounds don't.
+        src.volume = volume * Effects * (group == bank.voice ? 1f : VoiceDuck);
         src.Play();
     }
 

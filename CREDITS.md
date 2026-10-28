@@ -21,6 +21,9 @@ The night sky, sea ripple texture, post-processing profiles and all ship props/s
 
 ## Audio
 
+The Captain's voice was generated with [ElevenLabs](https://elevenlabs.io) text to speech (voice "George", Multilingual v2)
+by `Tools/make_captain_voice.py`, from the game's own lines. Everything is in `Assets/_Project/Audio/Voice/Captain`.
+
 Freesound sounds are all CC0 1.0. Each one was trimmed, looped or sliced and levelled by `Tools/make_game_audio.py`
 from Freesound's high-quality preview. Everything is in `Assets/_Project/Audio`.
 

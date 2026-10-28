@@ -188,8 +188,29 @@ public class CrewWhispers : MonoBehaviour
         nameText.text = actor != null ? CrewRegistry.CrewName(actor).ToUpperInvariant() : "";
         if (seat >= 0 && seat < CrewRoster.SeatColors.Length) nameDot.color = CrewRoster.SeatColors[seat];
         lineText.text = line;
+        FitBubble();
         shownAt = Time.time;
         if (heart != null) heart.Play();
+    }
+
+    /// <summary>
+    /// (Samprity) Grows the paper to fit the line, so a long doubt never spills out of it: the name and its seat dot
+    /// ride the top edge, the tail stays at the bottom.
+    /// </summary>
+    void FitBubble()
+    {
+        var paper = bubble.Find("Paper") as RectTransform;
+        if (paper == null) return;
+        const float width = 420f;
+        float h = Mathf.Max(30f, lineText.cachedTextGeneratorForLayout.GetPreferredHeight(lineText.text, lineText.GetGenerationSettings(new Vector2(width, 0f))) / lineText.pixelsPerUnit);
+        float paperH = Mathf.Max(96f, h + 50f);
+        paper.sizeDelta = new Vector2(460f, paperH);
+        float top = 20f + paperH;
+        nameDot.rectTransform.anchoredPosition = new Vector2(-200f, top - 22f);
+        nameText.rectTransform.anchoredPosition = new Vector2(-80f, top - 22f);
+        lineText.rectTransform.sizeDelta = new Vector2(width, h);
+        lineText.rectTransform.anchoredPosition = new Vector2(0f, 20f + (paperH - 34f) * 0.5f + 4f);
+        bubble.sizeDelta = new Vector2(460f, paperH + 14f);
     }
 
     void Release()
@@ -222,8 +243,11 @@ public class CrewWhispers : MonoBehaviour
 
     void Draw()
     {
-        bool talking = shownAt >= 0f && speaker != null && Time.time - shownAt < showSeconds;
-        bool unsure = talking || phase == Phase.Tap;
+        // (Samprity) Out of the way while something is being read up close (the telegram, the chart, the bottle):
+        // it would peek out from behind it.
+        bool covered = ShipClues.ReadingPaper || ChartView.IsOpen || ClueCloseUp.IsOpen;
+        bool talking = shownAt >= 0f && speaker != null && Time.time - shownAt < showSeconds && !covered;
+        bool unsure = (talking || phase == Phase.Tap) && !covered;
         float dt = Time.unscaledDeltaTime;
         group.alpha = Mathf.MoveTowards(group.alpha, talking ? 1f : 0f, dt * 4f);
         thoughtGroup.alpha = Mathf.MoveTowards(thoughtGroup.alpha, unsure ? 1f : 0f, dt * 3f);
@@ -245,7 +269,7 @@ public class CrewWhispers : MonoBehaviour
             var half = canvasRect.rect.size * 0.5f;
             // Clear of the order cards and readout (top right) and the radio strip (bottom).
             local.x = Mathf.Clamp(local.x, -half.x + 260f, half.x - 560f);
-            local.y = Mathf.Clamp(local.y, -half.y + 260f, half.y - 430f);
+            local.y = Mathf.Clamp(local.y, -half.y + 260f, half.y - bubble.sizeDelta.y - 320f);
             bubble.anchoredPosition = Vector2.Lerp(bubble.anchoredPosition, local, 1f - Mathf.Exp(-dt * 14f));
         }
         if (player != null && thoughtGroup.alpha > 0f)

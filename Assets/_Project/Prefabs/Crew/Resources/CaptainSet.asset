@@ -13,3 +13,4 @@ MonoBehaviour:
   m_Name: CaptainSet
   m_EditorClassIdentifier: Assembly-CSharp::CaptainSet
   prefab: {fileID: 3735937686658536369, guid: c392a037bb32d604d812327c3e9f9779, type: 3}
+  clueBottle: {fileID: 7131399527807214317, guid: 69419fd61a10ea744b1757c8bb4e6d91, type: 3}

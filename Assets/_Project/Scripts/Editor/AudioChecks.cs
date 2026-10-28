@@ -103,7 +103,8 @@ public static class AudioChecks
                 var captain = CaptainDirector.Instance;
                 var blip = captain != null ? captain.GetComponents<AudioSource>() : new AudioSource[0];
                 Check(blip.Length > 0 && blip.All(s => s.outputAudioMixerGroup != null && s.outputAudioMixerGroup.name == "Voice"), "The Captain's voice goes through the Voice group");
-                Check(blip.All(s => s.mute), "The placeholder beep-per-letter voice is muted");
+                // No typing voice (her call, 28 Oct): the Captain speaks with his recorded voice instead.
+                Check(blip.Length > 0 && blip.All(s => s.mute), "The per-letter typing voice is off");
                 GameManager.Instance.EnterPart(2);
                 Next();
                 break;

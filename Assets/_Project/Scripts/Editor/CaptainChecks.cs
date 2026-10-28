@@ -71,9 +71,29 @@ public static class CaptainChecks
     static void Next() { step++; stepStart = Time.realtimeSinceStartup; }
     static void Fail(string why) { Check(false, "Timed out: " + why); Finish(); }
 
+    static float lastSpace;
+    static int spaceUpFrame = -1;
+
+    /// <summary>
+    /// Space every couple of seconds, like a player reading his text boxes: with a human aboard each box waits for
+    /// it, and orders only arrive once he has announced them (Riham, 28 Oct). Not while a conversation is being
+    /// tested: his next speaker line would end it.
+    /// </summary>
+    static void ReadOn()
+    {
+        if (spaceUpFrame >= 0 && Time.frameCount >= spaceUpFrame && one != null) { InputSystem.QueueStateEvent(one, new KeyboardState()); spaceUpFrame = -1; }
+        bool reading = step == 2 || step == 3 || step >= 8;
+        if (!reading || one == null || Time.realtimeSinceStartup - lastSpace < 2.5f || spaceUpFrame >= 0) return;
+        lastSpace = Time.realtimeSinceStartup;
+        // Queued, not forced through now: the game's own frame must see it as pressed this frame.
+        InputSystem.QueueStateEvent(one, new KeyboardState(Key.Space));
+        spaceUpFrame = Time.frameCount + 3;
+    }
+
     static void Tick()
     {
         if (!EditorApplication.isPlaying) return;
+        ReadOn();
         float inStep = Time.realtimeSinceStartup - stepStart;
         var cap = CaptainOnDeck.Instance;
         var gm = GameManager.Instance;
@@ -115,8 +135,9 @@ public static class CaptainChecks
 
             case 2: // An order: he's at the pipe, talking into it
                 if (!orderSeen) { if (inStep > 60f) Fail("no order was issued"); return; }
-                if (Flat(cap.Position - cap.PipeSpot) > 0.5f || cap.ModeName != "AtPipe") { if (inStep > 20f) Fail($"didn't go to the pipe for the order ({cap.ModeName})"); return; }
-                Check(true, "Goes to the voice pipe when an order is issued");
+                // He may be out on his rounds (the far end is ~20 m away), so give him time to walk back.
+                if (Flat(cap.Position - cap.PipeSpot) > 0.5f || cap.ModeName != "AtPipe") { if (inStep > 60f) Fail($"didn't go to the pipe for the order ({cap.ModeName}, {Flat(cap.Position - cap.PipeSpot):0.0} m away)"); return; }
+                Check(true, $"Goes to the voice pipe when an order is issued (there {inStep:0} s after it)");
                 if (CaptainDirector.Instance != null && CaptainDirector.Instance.IsSpeaking) Check(cap.Body.Talking, "Plays his talking animation while the speaker line types");
                 Shoot("1_order_at_pipe", cap);
                 Next();
@@ -241,11 +262,11 @@ public static class CaptainChecks
         }
     }
 
+    /// <summary>E down, held for three game frames, then up (ReadOn lets it go), like a real press.</summary>
     static void Press()
     {
         InputSystem.QueueStateEvent(one, new KeyboardState(Key.E));
-        InputSystem.Update();
-        EditorApplication.delayCall += () => { if (one != null) InputSystem.QueueStateEvent(one, new KeyboardState()); };
+        spaceUpFrame = Time.frameCount + 3;
     }
 
     static float Flat(Vector3 v) { v.y = 0f; return v.magnitude; }

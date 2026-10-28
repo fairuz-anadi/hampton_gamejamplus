@@ -128,6 +128,8 @@ public class CaptainTalk : MonoBehaviour
         shownChars = 0f;
         pauseLeft = 0.25f;
         captain.BeginConversation(who);
+        FitPage(pages[0]);
+        CaptainNarrator.SayInPerson(pages[0]); // his recorded voice, if there is one
     }
 
     void Advance()
@@ -137,6 +139,8 @@ public class CaptainTalk : MonoBehaviour
         if (++page >= pages.Length) { Close(); return; }
         shownChars = 0f;
         pauseLeft = 0.15f;
+        FitPage(pages[page]);
+        CaptainNarrator.SayInPerson(pages[page]);
     }
 
     void Close()
@@ -145,6 +149,7 @@ public class CaptainTalk : MonoBehaviour
         pages = null;
         IsOpen = false;
         captain.EndConversation();
+        CaptainNarrator.StopInPerson();
     }
 
     void Type()
@@ -242,7 +247,7 @@ public class CaptainTalk : MonoBehaviour
             // Beside him, clear of the order cards and readout (top right) and the speaker strip (bottom).
             var half = canvasRect.rect.size * 0.5f;
             local.x = Mathf.Clamp(local.x + 60f, -half.x + 320f, half.x - 620f);
-            local.y = Mathf.Clamp(local.y, -half.y + 260f, half.y - 470f);
+            local.y = Mathf.Clamp(local.y, -half.y + 260f, half.y - bubble.sizeDelta.y - 320f);
             bubble.anchoredPosition = Vector2.Lerp(bubble.anchoredPosition, local, 1f - Mathf.Exp(-dt * 14f));
 
             // Part 2: the words won't sit still. Part 3: dead still.
@@ -288,17 +293,41 @@ public class CaptainTalk : MonoBehaviour
         var paper = new Color(0.97f, 0.93f, 0.84f, 0.97f);
         var bottom = new Vector2(0.5f, 0f);
         Box(bubble, "Tail", paper, new Vector2(-180f, 14f), new Vector2(26f, 26f), bottom, new Vector2(0.5f, 0.5f)).rectTransform.localRotation = Quaternion.Euler(0f, 0f, 45f);
-        Box(bubble, "Paper", paper, new Vector2(0f, 20f), new Vector2(560f, 136f), bottom, bottom);
-        Box(bubble, "Rule", new Color(0.55f, 0.2f, 0.15f, 0.5f), new Vector2(-150f, 124f), new Vector2(220f, 2f), bottom, new Vector2(0.5f, 0.5f));
+        paperRect = Box(bubble, "Paper", paper, new Vector2(0f, 20f), new Vector2(560f, 136f), bottom, bottom).rectTransform;
+        ruleRect = Box(bubble, "Rule", new Color(0.55f, 0.2f, 0.15f, 0.5f), new Vector2(-150f, 124f), new Vector2(220f, 2f), bottom, new Vector2(0.5f, 0.5f)).rectTransform;
 
         var ink = new Color(0.23f, 0.16f, 0.11f);
         var title = Label(bubble, F(theme ? theme.body : null), 18, new Color(0.55f, 0.2f, 0.15f), new Vector2(-150f, 138f), new Vector2(240f, 24f), TextAnchor.MiddleLeft, bottom);
         title.text = "THE CAPTAIN";
-        lineText = Label(bubble, F(theme ? theme.italic : null), 26, ink, new Vector2(0f, 74f), new Vector2(510f, 80f), TextAnchor.MiddleLeft, bottom);
+        titleRect = title.rectTransform;
+        // Typed from the top left, so the words don't climb the box as more lines arrive.
+        lineText = Label(bubble, F(theme ? theme.italic : null), 26, ink, new Vector2(0f, 74f), new Vector2(LineWidth, 80f), TextAnchor.UpperLeft, bottom);
         lineText.horizontalOverflow = HorizontalWrapMode.Wrap;
         lineRect = lineText.rectTransform;
         lineHome = lineRect.anchoredPosition;
         moreText = Label(bubble, F(theme ? theme.body : null), 18, new Color(0.45f, 0.36f, 0.28f), new Vector2(190f, 34f), new Vector2(140f, 22f), TextAnchor.MiddleRight, bottom);
+    }
+
+    const float LineWidth = 510f;
+    RectTransform paperRect, ruleRect, titleRect;
+
+    /// <summary>
+    /// Sizes the paper to the whole page before it types out, so it never grows mid-line and a long page never spills
+    /// out of it: the title and rule ride the top edge, the "E more" hint stays in the bottom corner.
+    /// </summary>
+    void FitPage(string page)
+    {
+        if (paperRect == null) return;
+        float h = lineText.cachedTextGeneratorForLayout.GetPreferredHeight(page, lineText.GetGenerationSettings(new Vector2(LineWidth, 0f))) / lineText.pixelsPerUnit;
+        h = Mathf.Max(34f, h);
+        float paperH = Mathf.Max(136f, h + 84f);
+        paperRect.sizeDelta = new Vector2(560f, paperH);
+        titleRect.anchoredPosition = new Vector2(-150f, 20f + paperH - 18f);
+        ruleRect.anchoredPosition = new Vector2(-150f, 20f + paperH - 32f);
+        lineRect.sizeDelta = new Vector2(LineWidth, h);
+        lineHome = new Vector2(0f, 20f + paperH - 44f - h * 0.5f);
+        lineRect.anchoredPosition = lineHome;
+        bubble.sizeDelta = new Vector2(560f, paperH + 20f);
     }
 
     static Image Box(RectTransform parent, string name, Color c, Vector2 pos, Vector2 size, Vector2 anchor, Vector2 pivot)
