@@ -1,6 +1,6 @@
 # The Promised Port
 
-A short co-op ship game for 1–3 players. Follow the Captain's orders, keep the ship running, and decide how far you trust the calm voice on the speaker.
+A short co-op ship game for 1–3 players. You're the newest crew member on a four-deck passenger liner, two days out to the Promised Port. Follow the Captain's orders, keep the ship running, and decide how far you trust the warm voice on the speaker, because something about this voyage is off.
 
 Made for GameJamPlus 2026/27 (GJ+ Bangladesh) by Anadi, Rabib, Riham and Samprity, in Unity 6.6. A run takes about 9 minutes, and bots fill any empty crew seats, so you can play solo.
 
@@ -8,21 +8,28 @@ Made for GameJamPlus 2026/27 (GJ+ Bangladesh) by Anadi, Rabib, Riham and Samprit
 
 ## How to play
 
-- Run between the Boiler, the Wheel, the Door levers and the Wireless desk.
-- The Captain gives orders on a timer. For each one you can **obey**, **fake it** or **refuse**.
+- The Captain gives **you** the orders, on a timer: shovel coal at the Boiler, hold the Wheel, pull the Door levers, work the Wireless desk. For each one you can **obey**, **fake it** or **refuse**.
+- The bots are the rest of the crew. They repair things, carry ice warnings, help when you call, and do chores around the ship (galley, saloon, bunks, coal) in between. One of them is secretly the Captain's man.
 - Some jobs need two people, so call a crewmate for help.
-- Keep an eye on the station lights and the three meters.
+- Watch the station lights, the three meters (Captain's Trust, Ship Safety, Crew Trust) and the readout under the clock: compass, wheel, clock and how far it is to port.
+- The minimap in the bottom-right corner shows the deck, the stations, your crew and any ice warning waiting to be carried.
+- Listen to your crewmates. When an order sounds wrong, someone near you may whisper a doubt, or urge you to obey.
+- Study the chart on the bridge table (**E**). It has the course everyone was told, and another one in pencil.
+- The voyage has three parts, each opened by its own title card: *Just doing my job*, *Why is he asking me this?* and *What are we sailing toward?*. It ends at the iceberg, with the wheel in your hands, and one of three endings.
 
-| Action | Keyboard | Gamepad |
+| Action | Keyboard and mouse | Gamepad |
 |---|---|---|
 | Move | W A S D | Left stick |
+| Look around | Mouse | Right stick |
 | Interact (hold) | E | A / ✕ |
 | Report done | R | Y / △ |
 | Refuse | X | B / ○ |
 | Call for help | Q | X / □ |
+| Study the chart (at the bridge table) | E | A / ✕ |
+| Skip a part's title card | Enter or Space | A / ✕ |
 | Pause | Esc | Start |
 
-On the main menu, press **Space** (keyboard) or **A** (gamepad) to take a seat, then **Enter** or **Start** to set sail. Up to 3 players can join, and bots fill the rest. **C** or **Y** shows the credits. Every menu works without a mouse: arrows or the d-pad to choose, **Enter** or **A** to pick, **Esc** or **B** to go back.
+The main menu has **Begin Voyage**, **Settings**, **Credits** and **Quit**. The how-to-play card is under **Settings → Controls**. It no longer pops up when the voyage starts. Friends join by pressing **Start** on a controller, up to 3 players, and bots fill the other seats. Every menu works with the mouse, the keyboard (arrows, Enter, Esc) or a gamepad (d-pad, A, B).
 
 ## Getting started
 
@@ -87,14 +94,21 @@ The systems spawn on their own when `Ship.unity`, or any scene whose name ends i
 | Read the meters | `MeterSystem.Instance.CaptainTrust / ShipSafety / CrewTrust`, and `GameEvents.MetersChanged` |
 | Change the meters (sabotage, votes, ice warnings) | `MeterSystem.Instance.Apply(new MeterDelta(captain, safety, crew))` |
 | Run the ice warnings (Rabib's Wireless desk, Riham's Stoker) | `IceWarnings` schedules MSG 1–3 at 3:20, 4:30 and 5:40 and applies the meters. Show one on `GameEvents.IceWarningArrived(n)`, call `IceWarnings.Instance.Deliver(n)` at the Bridge or `FileUnread(n)` at the desk, and use `TimeLeft(n)` for a countdown. The Stoker calls `HideNext()`. |
-| Use the plan's numbers for sabotage and the vote (Riham) | `MeterRules.SabotageJamStation`, `SabotageFalseReport`, `VoteCaughtStoker`, `VoteWrong`, `StokerActive`, `RepairSeconds`, `VoteSeconds`, `LockoutSeconds` and the rest. Apply them with `MeterSystem.Instance.Apply(...)`. |
+| Use the plan's numbers for sabotage (Riham) | `MeterRules.SabotageJamStation`, `SabotageFalseReport`, `StokerActive`, `RepairSeconds` and the rest. Apply them with `MeterSystem.Instance.Apply(...)`. The muster vote is switched off in the final plan (`CrewAISystems` no longer adds `MusterVote`; the code is still there). |
 | Use what the meters do (Riham, Samprity) | `MeterRules`: `StokerCooldown`, `BotHelpDelay`, `BotIgnoresHelpChance`, `BotRefusesOffOrderChance`, `CaptainSharesPrivateLines`, `CaptainSuspicious`, `ShipLeaking` |
 | Spawn the players who joined (Rabib) | `PlayerSlots.Devices[i]` is seat `i + 1`'s device: `PlayerInput.Instantiate(prefab, playerIndex: i, pairWithDevice: device)`. With nobody joined (pressing Play in a scene), use `PlayerSlots.FirstDevice`. |
 | Fill the empty seats with bots (Riham) | `PlayerSlots.HumanCount` humans, `PlayerSlots.BotCount` bots. Pick the Stoker when the crew spawns: Restart and Play again reload the scene, so it re-rolls. |
 | Pause, restart, change scene | `PauseMenu.Instance.Toggle()`, `GameManager.Restart()`, `GameManager.LoadScene(name)`. Don't bind Esc or Start yourself: the pause menu already handles them. |
 | Reopen the lifeboat store (Rabib) | Set `RunRecord.LifeboatStoreLocked = false` when two crew pull the Door levers. Obeying order 9 locks it. |
 | Run the iceberg scene (Rabib) | In `Awake`, set `GameManager.Instance.IcebergHandledExternally = true`. Start when the state becomes `Iceberg`, then call `GameManager.Instance.FinishIceberg(angle)` at impact. |
-| Build the results screen (Samprity) | Read `RunRecord`: `Ending`, `Impact`, `Choices` (each has `Describe()`), the final meters, `StokerSeat`. Ending text is `EndingData.For(RunRecord.Ending)`, and `EndingEvaluator.FoundCount` gives "Endings found". `UI/ResultsScreen.cs` is a working placeholder to replace. |
+| The ending screen | `UI/ResultsScreen.cs` draws it from `RunRecord`: the ending's ribbon, the Voyage Chart (every order as a badge along the route that bent north to Grey Cove), the three meters as dials, a WANTED poster for the Stoker, the endings found as ships in bottles, and wooden-sign buttons. The art is painted at runtime by `UI/EndingPainter.cs`; the text is Pirata One and Patrick Hand (`Art/UI/Resources/Fonts`). Ending text is `EndingData.For(RunRecord.Ending)`. |
+| Who gets the orders | `OrderDirector` gives every Captain's order to a human whenever one is aboard (bots only get orders in a bots-only run). Quick obeys earn a speed reward. |
+| Bots with nothing to do | `AI/BotChores.cs`: idle bots walk to the deck's `Chore_*` markers and work them. `BotBrain` calls it from its idle branch. |
+| Crew voices and names | `UI/CrewWhispers.cs` (a crewmate's doubt, or the Stoker's push, on suspicious orders), `UI/CrewNameTags.cs` (names over heads). Names come from `CrewRegistry.CrewName(actor)`. |
+| The Grey Cove reveal | `UI/ShipReadout.cs` turns the "Port" row into a countdown to GREY COVE during the truth speech. `ShipReadout.RevealGreyCove()` forces it. |
+| The bridge chart | `UI/ChartView.cs`: "E Study the chart" at the chart table opens `Art/Textures/BridgeChart.png` full screen. |
+| A part's title card | `UI/PartCard.cs` listens to `GameEvents.StateChanged`, closes the screen in a circle, shows the part's card (`Art/UI/Resources/PartCards`) and freezes time. Check `PartCard.IsShowing` before starting anything a player should see (the Captain's director already waits for it). |
+| The upper decks | `ShipDeckBuilder` builds two cabin floors and an open top deck (lifeboats, second funnel, vents, deckhouse) over the deck you play on. They have no colliders. Each 8 m bay has a `RoofFade`, so the floors over the player and the camera cut away. |
 
 The orders are `OrderData` assets in `Data/Resources/Orders`, issued in file-name order (`01_…` to `12_…`). Create new ones from **Create → Port → Order**.
 
@@ -113,7 +127,7 @@ The orders are `OrderData` assets in `Data/Resources/Orders`, issued in file-nam
 
 Use **Port → Build Windows (Development)** at each milestone. Development builds keep the debug keys and panel. Use **Port → Build Windows (Release)** for RC1, RC2 and the submission. It drops the debug keys, sets the version to 1.0, adds a `README.txt` (controls and player count), and packs `Builds/ThePromisedPort_Windows_v1.0.zip` without the Burst `..._ButDontShipItWithYourGame` folder. Builds go to `Builds/`, which git ignores.
 
-MainMenu, Ship and Results each have a working placeholder screen (`UI/MainMenuScreen` with credits, `UI/IntroCard`, `UI/PauseMenu`, `UI/ResultsScreen`) for Samprity to restyle. They share keyboard and gamepad navigation through `UI/MenuControls`. The intro card shows once per session at the start of Ship and holds the first order until a player dismisses it.
+The screens share keyboard and gamepad navigation through `UI/MenuControls`. The main menu is Samprity's `Intro/OpeningMenu`; the how-to-play text (`IntroCard.BuildManual`) lives under its **Settings → Controls**. Ship has `UI/PauseMenu`, the part cards (`UI/PartCard`) and the chart view; Results has the ending screen (`UI/ResultsScreen`).
 
 **Balance:** run **Port → Balance Report** after changing any order's numbers. It plays the 12 orders through common strategies and prints the ending each impact gives, so you can check all 3 endings stay reachable.
 
@@ -131,6 +145,6 @@ If a milestone slips by more than an hour, go straight to the cut list. Don't pu
 
 ## Assets and credits
 
-Only CC0 or properly licensed third-party assets (for example Kenney packs, or CC0 sounds from Freesound or OpenGameArt). Add every one to `Data/Resources/Credits.txt` when you import it, since that file is the in-game credits screen. All game code is written during the jam.
+Only CC0 or properly licensed third-party assets (for example Kenney packs, or CC0 sounds from Freesound or OpenGameArt). Add every one to `CREDITS.md` and to `Data/Resources/Credits.txt` when you import it, since that file is the in-game credits screen. Fonts (Crimson Text, Cinzel, Special Elite, Pirata One, Patrick Hand, Bungee) are all SIL OFL or Apache, with their licences beside them. All game code is written during the jam.
 
 The full team plan is `The_Promised_Port_Plan.html`, shared in the team chat.

@@ -203,6 +203,9 @@ public class BotBrain : MonoBehaviour, ICrewActor
             return;
         }
 
+        // A crewmate walking over to tap the player's shoulder about a suspicious order (Anadi's CrewWhispers).
+        if (CrewWhispers.Holds(this)) { StopWorking(); Activity = "whispering to the newcomer"; return; }
+
         var order = CurrentOrder;
         if (order != null)
         {
@@ -232,6 +235,8 @@ public class BotBrain : MonoBehaviour, ICrewActor
         if (!IsStoker && TickIceWarning()) return;
 
         StopWorking();
+        // Anadi: the Captain's orders go to the players now, so an idle bot does the ship's chores before loitering.
+        if (BotChores.Tick(this)) { Activity = "doing chores"; return; }
         Activity = "idle";
         Wander();
     }

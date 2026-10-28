@@ -95,8 +95,21 @@ public class IntroCard : MonoBehaviour
         Box(c, frame, new Vector2(0f, 0f), new Vector2(0f, 1f), Vector2.zero, Vector2.zero).rectTransform.sizeDelta = new Vector2(2f, 0f);
         Box(c, frame, new Vector2(1f, 0f), new Vector2(1f, 1f), Vector2.zero, Vector2.zero).rectTransform.sizeDelta = new Vector2(2f, 0f);
 
+        BuildManual(c);
+        Txt(c, F(theme ? theme.title : null), 30, UiTheme.Brass, "Press  Enter  or  A  to take your post", TextAnchor.MiddleCenter, -640f, 40f);
+    }
+
+    /// <summary>
+    /// The how-to-play text: what an order is, the three choices and their keys, how to move and call for help, and how
+    /// friends join. Used by Settings > Controls on the main menu (OpeningMenu); the card no longer pops up at the
+    /// start (Anadi, 28 Oct).
+    /// </summary>
+    public static void BuildManual(RectTransform c)
+    {
+        var theme = UiTheme.Load();
+        Font F(Font f) => f != null ? f : Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         float y = -64f;
-        Txt(c, F(theme ? theme.body : null), 22, UiTheme.Brass, "Y O U R   F I R S T   W A T C H", TextAnchor.MiddleCenter, y, 34f); y -= 52f;
+        Txt(c, F(theme ? theme.body : null), 22, UiTheme.Brass, "C O N T R O L S", TextAnchor.MiddleCenter, y, 34f); y -= 52f;
         Txt(c, F(theme ? theme.title : null), 62, UiTheme.Cream, "All hands on deck", TextAnchor.MiddleCenter, y, 70f); y -= 64f;
         if (theme != null && theme.diamond != null)
         {
@@ -112,8 +125,8 @@ public class IntroCard : MonoBehaviour
         Row(c, body, "OBEY", "Work the station till its light turns green, then report.", "hold E, then R", y); y -= 58f;
         Row(c, body, "FAKE IT", "Report it done while the light is still red. Someone might notice.", "R", y); y -= 58f;
         Row(c, body, "REFUSE", "Say no. Everyone hears it.", "X", y); y -= 76f;
-        Txt(c, body, 26, UiTheme.DimCream, "Walk with W A S D or the left stick.  Some jobs need two: call for help with Q.  Esc pauses.", TextAnchor.MiddleCenter, y, 36f); y -= 64f;
-        Txt(c, F(theme ? theme.title : null), 30, UiTheme.Brass, "Press  Enter  or  A  to take your post", TextAnchor.MiddleCenter, y, 40f);
+        Txt(c, body, 26, UiTheme.DimCream, "Walk with W A S D or the left stick, look with the mouse.  Some jobs need two: call for help with Q.", TextAnchor.MiddleCenter, y, 36f); y -= 44f;
+        Txt(c, body, 26, UiTheme.DimCream, "E at the chart table studies the chart.  Esc pauses.  Friends join with Start on a controller.", TextAnchor.MiddleCenter, y, 36f);
     }
 
     static void Row(RectTransform card, Font font, string choice, string what, string keys, float y)

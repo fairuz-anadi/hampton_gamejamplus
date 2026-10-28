@@ -18,7 +18,7 @@ public class TutorialHints : MonoBehaviour
     public static TutorialHints Instance { get; private set; }
 
     /// <summary>Simple IMGUI key prompt over the player's head until the real one exists.</summary>
-    public static bool DrawFallbackPrompts = true;
+    public static bool DrawFallbackPrompts = false; // off (Anadi, 28 Oct): no "R report  X refuse" over the player; the order card and station prompts carry the keys
 
     /// <summary>A human's key prompt changed: their seat and the key ("" when it clears).</summary>
     public static event System.Action<int, string> PromptChanged;
@@ -152,7 +152,7 @@ public class TutorialHints : MonoBehaviour
             }
             w.atPickUpSince = -1f;
             if (idle) Say(CaptainScript.TutorialIdle, c.Seat);
-            return Key(c, "WASD", "Left stick", "move");
+            return ""; // no "WASD move" over the player's head (Anadi, 28 Oct): the order card already says where to go
         }
 
         var st = StationRegistry.Get(data.CheckStation) as Station;
@@ -161,7 +161,7 @@ public class TutorialHints : MonoBehaviour
         {
             w.idleAtStationSince = w.aloneSince = -1f;
             if (idle) Say(CaptainScript.TutorialIdle, c.Seat);
-            return Key(c, "WASD", "Left stick", "move");
+            return ""; // no "WASD move" over the player's head (Anadi, 28 Oct): the order card already says where to go
         }
 
         if (st.ActiveHolders == 0 && !carrying)
@@ -244,7 +244,7 @@ public class TutorialHints : MonoBehaviour
     static void ResetStatics()
     {
         PromptChanged = null;
-        DrawFallbackPrompts = true;
+        DrawFallbackPrompts = false; // stays off after a domain reset too
         doneThisSession = false;
         said.Clear();
     }

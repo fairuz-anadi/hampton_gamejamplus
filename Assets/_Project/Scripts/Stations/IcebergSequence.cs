@@ -256,7 +256,9 @@ public class IcebergSequence : MonoBehaviour
 
     void OnGUI()
     {
-        if (impactTimer >= 0f) { DrawFlood(); return; }
+        // The flat flood overlay is a placeholder: with Samprity's finale camera (the Ship scene) it would lay a blue
+        // sheet over her framing and the HUD, so it only shows where her rig isn't running (sandboxes).
+        if (impactTimer >= 0f) { if (!CameraHandledExternally) DrawFlood(); return; }
         if (!running || !DrawDebugGui) return;
 
         const float w = 420f, h = 18f;

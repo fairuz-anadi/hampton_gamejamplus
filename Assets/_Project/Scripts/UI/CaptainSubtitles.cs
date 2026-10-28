@@ -35,6 +35,16 @@ public class CaptainSubtitles : MonoBehaviour
     public Style off = new Style { trim = new Color(0.6f, 0.68f, 0.78f, 0.8f), label = new Color(0.68f, 0.76f, 0.88f), text = new Color(0.9f, 0.93f, 0.98f), tremble = 0f };
     public Style truth = new Style { trim = new Color(0.85f, 0.18f, 0.14f, 0.9f), label = new Color(0.95f, 0.35f, 0.3f), text = new Color(1f, 0.88f, 0.84f), tremble = 1.4f };
 
+    [Header("The drunk act (final plan)")]
+    [Tooltip("Part 2: the Captain 'drinks' and his line sways on the speaker strip, more as the part goes on.")]
+    public float dizzySway = 1f; // degrees; the line pivots at its left end, so the far end moves ~25 px
+    [Tooltip("How far the swaying line drifts, in canvas units.")]
+    public float dizzyDrift = 9f;
+    [Tooltip("Seconds into Part 2 before the act is at its worst.")]
+    [Min(1f)] public float dizzyRamp = 150f;
+    [Tooltip("Part 3: 'the bottle was never full'. The line goes dead still and sharp.")]
+    public bool soberInTruth = true;
+
     [Header("Speaker static")]
     [Min(0f)] public float staticSeconds = 1.6f;
     [Range(0f, 1f)] public float staticVolume = 0.25f;
@@ -123,9 +133,15 @@ public class CaptainSubtitles : MonoBehaviour
 
     void OnPartChanged(int part) => ApplyStyle(part);
 
+    int part = 1;
+    float partSince;
+
     void ApplyStyle(int part)
     {
+        if (part != this.part) partSince = Time.time;
+        this.part = part;
         style = part switch { 2 => off, >= 3 => truth, _ => calm };
+        if (part >= 3 && soberInTruth) style.tremble = 0f;
         trim.color = style.trim;
         label.color = style.label;
         line.color = style.text;
@@ -144,6 +160,24 @@ public class CaptainSubtitles : MonoBehaviour
         line.rectTransform.anchoredPosition = style.tremble > 0f
             ? lineHome + new Vector2(Mathf.PerlinNoise(Time.unscaledTime * 23f, 0f) - 0.5f, Mathf.PerlinNoise(0f, Time.unscaledTime * 19f) - 0.5f) * 2f * style.tremble
             : lineHome;
+
+        // The drunk act: in Part 2 the line rolls and drifts like a man who's had a few, worse as the night goes on;
+        // in Part 3 it snaps dead still, because he was never drunk at all.
+        float act = part == 2 ? Mathf.Lerp(0.3f, 1f, Mathf.Clamp01((Time.time - partSince) / dizzyRamp)) : 0f;
+        if (act > 0f)
+        {
+            float t = Time.unscaledTime;
+            line.rectTransform.anchoredPosition += new Vector2(Mathf.Sin(t * 0.9f), Mathf.Cos(t * 1.7f) * 0.4f) * dizzyDrift * act;
+            line.rectTransform.localRotation = Quaternion.Euler(0f, 0f, (Mathf.Sin(t * 1.3f) + (Mathf.PerlinNoise(t * 0.7f, 5f) - 0.5f)) * dizzySway * act);
+            line.rectTransform.localScale = Vector3.one * (1f + 0.025f * Mathf.Sin(t * 2.1f) * act);
+            horn.rectTransform.localRotation = Quaternion.Euler(0f, 0f, Mathf.Sin(t * 1.1f) * 6f * act);
+        }
+        else
+        {
+            line.rectTransform.localRotation = Quaternion.identity;
+            line.rectTransform.localScale = Vector3.one;
+            horn.rectTransform.localRotation = Quaternion.identity;
+        }
 
         staticLeft -= dt;
         bool showStatic = staticLeft > 0f;

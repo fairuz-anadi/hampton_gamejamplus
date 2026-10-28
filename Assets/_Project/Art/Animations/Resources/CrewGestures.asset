@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 09f2abae9e5de5e4f9a4a500fdb61858, type: 3}
+  m_Name: CrewGestures
+  m_EditorClassIdentifier: Assembly-CSharp::CrewGestures
+  tap: {fileID: -2328835098782832033, guid: aad91d5b097d84348acf9961f3230e65, type: 3}
+  talk: {fileID: 6476497563760123848, guid: aad91d5b097d84348acf9961f3230e65, type: 3}
+  startle: {fileID: -245273357908900549, guid: aad91d5b097d84348acf9961f3230e65, type: 3}

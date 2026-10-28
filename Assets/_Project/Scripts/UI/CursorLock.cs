@@ -11,7 +11,7 @@ public class CursorLock : MonoBehaviour
     {
         var gm = GameManager.Instance;
         bool playing = gm != null && gm.State >= GameState.Part1 && gm.State <= GameState.Iceberg;
-        bool screenUp = IntroCard.IsShowing || (PauseMenu.Instance != null && PauseMenu.Instance.IsPaused)
+        bool screenUp = IntroCard.IsShowing || PartCard.IsShowing || (PauseMenu.Instance != null && PauseMenu.Instance.IsPaused)
                         || (MusterVote.Instance != null && MusterVote.Instance.IsRunning) || !Application.isFocused;
         Set(playing && !screenUp);
     }

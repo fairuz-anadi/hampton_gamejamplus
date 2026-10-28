@@ -38,7 +38,8 @@ public static class CrewAISystems
         if (Object.FindAnyObjectByType<SuspicionTracker>() == null) go.AddComponent<SuspicionTracker>();
         if (Object.FindAnyObjectByType<CaptainDirector>() == null) go.AddComponent<CaptainDirector>();
         if (Object.FindAnyObjectByType<OffMoments>() == null) go.AddComponent<OffMoments>();
-        if (Object.FindAnyObjectByType<MusterVote>() == null) go.AddComponent<MusterVote>();
+        // Muster vote switched off for the final game plan (Anadi, 28 Oct): the code stays, it just isn't spawned.
+        // To bring it back, restore: if (Object.FindAnyObjectByType<MusterVote>() == null) go.AddComponent<MusterVote>();
         if (Object.FindAnyObjectByType<TutorialHints>() == null) go.AddComponent<TutorialHints>();
         return go;
     }
