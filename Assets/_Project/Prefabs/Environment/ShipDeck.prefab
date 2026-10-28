@@ -5833,7 +5833,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RoofFade
   roomMin: {x: -6.6, y: 16}
   roomMax: {x: 6.6, y: 24}
-  margin: 8.6
+  margin: 1.5
   keepShadow: 0
   cameraAbove: 14
 --- !u!1 &274222165039630624
@@ -6896,7 +6896,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RoofFade
   roomMin: {x: -6.6, y: 8}
   roomMax: {x: 6.6, y: 16}
-  margin: 8.6
+  margin: 1.5
   keepShadow: 0
   cameraAbove: 14
 --- !u!1 &309040726943181674
@@ -54584,7 +54584,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RoofFade
   roomMin: {x: -6.6, y: 56}
   roomMax: {x: 6.6, y: 64}
-  margin: 8.6
+  margin: 1.5
   keepShadow: 0
   cameraAbove: 14
 --- !u!1 &3012817479960533533
@@ -77282,7 +77282,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RoofFade
   roomMin: {x: -6.6, y: 32}
   roomMax: {x: 6.6, y: 40}
-  margin: 8.6
+  margin: 1.5
   keepShadow: 0
   cameraAbove: 14
 --- !u!1 &4793985837703708794
@@ -91714,7 +91714,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RoofFade
   roomMin: {x: -6.6, y: 40}
   roomMax: {x: 6.6, y: 48}
-  margin: 8.6
+  margin: 1.5
   keepShadow: 0
   cameraAbove: 14
 --- !u!1 &5912345847869876619
@@ -114458,7 +114458,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RoofFade
   roomMin: {x: -6.6, y: 48}
   roomMax: {x: 6.6, y: 56}
-  margin: 8.6
+  margin: 1.5
   keepShadow: 0
   cameraAbove: 14
 --- !u!1 &7622625978644170559
@@ -117210,7 +117210,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RoofFade
   roomMin: {x: -6.6, y: 24}
   roomMax: {x: 6.6, y: 32}
-  margin: 8.6
+  margin: 1.5
   keepShadow: 0
   cameraAbove: 14
 --- !u!1 &7890087156488590243
