@@ -62,7 +62,7 @@ public class AutoFollowCamera : MonoBehaviour
     [Tooltip("Comfort zone round the camera. Walls entering it ease the camera in.")]
     [Range(0.05f, 1f)] public float collisionRadius = 0.45f;
     [Tooltip("Hard limit round the camera, about the size of its near plane. Walls entering it push the camera in at once.")]
-    [Range(0.05f, 0.5f)] public float hardRadius = 0.12f;
+    [Range(0.05f, 0.5f)] public float hardRadius = 0.35f;
     [Tooltip("Gap kept between the camera and whatever blocked it.")]
     [Range(0f, 1f)] public float collisionPadding = 0.15f;
     [Tooltip("Closest the camera may get to the focus point.")]
