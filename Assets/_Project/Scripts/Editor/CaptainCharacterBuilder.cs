@@ -3,6 +3,7 @@ using System.Linq;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Builds the Captain as a crew-style character: Quaternius' CC0 Ranger outfit (hood and shoulder guard left off),
@@ -144,6 +145,93 @@ public static class CaptainCharacterBuilder
     }
 
     public static void BuildBottleBatch() => BuildBottle();
+
+    // ---------- The portrait ----------
+
+    const string PortraitPath = "Assets/_Project/Art/UI/Captain/CaptainPortrait.png";
+
+    /// <summary>
+    /// His face for the dialog boxes: head and shoulders from the prefab, three-quarter on, warm key light and a cool
+    /// rim, cut into a round badge with a brass ring (the alpha is baked in, so no mask is needed).
+    /// </summary>
+    [MenuItem("Port/Samprity/Render Captain Portrait")]
+    public static void RenderPortrait()
+    {
+        var set = AssetDatabase.LoadAssetAtPath<CaptainSet>(SetPath);
+        if (set == null || set.prefab == null) { Debug.LogWarning("[Captain] Build the Captain first"); return; }
+        if (!Application.isBatchMode && !EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+        var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+        var model = (GameObject)PrefabUtility.InstantiatePrefab(set.prefab, scene);
+        var head = model.GetComponent<Animator>().GetBoneTransform(HumanBodyBones.Head);
+        // Framed on the middle of the head and cap, so the cap's peak and badge sit inside the badge's top.
+        var face = head.position + Vector3.up * 0.13f + Vector3.forward * 0.04f;
+
+        var key = new GameObject("Key", typeof(Light)).GetComponent<Light>();
+        key.type = LightType.Directional; key.intensity = 1.4f; key.color = new Color(1f, 0.9f, 0.76f);
+        key.transform.rotation = Quaternion.Euler(18f, 205f, 0f);
+        var rim = new GameObject("Rim", typeof(Light)).GetComponent<Light>();
+        rim.type = LightType.Directional; rim.intensity = 1.1f; rim.color = new Color(0.55f, 0.7f, 1f);
+        rim.transform.rotation = Quaternion.Euler(10f, 40f, 0f);
+        SceneManager.MoveGameObjectToScene(key.gameObject, scene);
+        SceneManager.MoveGameObjectToScene(rim.gameObject, scene);
+
+        var cam = new GameObject("PortraitCam", typeof(Camera)).GetComponent<Camera>();
+        SceneManager.MoveGameObjectToScene(cam.gameObject, scene);
+        cam.clearFlags = CameraClearFlags.SolidColor;
+        cam.backgroundColor = new Color(0.1f, 0.12f, 0.19f);
+        cam.fieldOfView = 24f;
+        cam.nearClipPlane = 0.05f;
+        // In front of him (he faces +Z), a little to his right and above: three-quarter on, the cap's peak readable.
+        cam.transform.position = face + new Vector3(-0.38f, 0.04f, 1.05f);
+        cam.transform.LookAt(face + Vector3.down * 0.04f);
+        var ambient = RenderSettings.ambientLight;
+        RenderSettings.ambientLight = new Color(0.32f, 0.33f, 0.4f);
+
+        const int size = 512;
+        var rt = new RenderTexture(size, size, 24);
+        cam.targetTexture = rt;
+        cam.Render();
+        cam.Render(); // the first render can come back without its textures
+        RenderTexture.active = rt;
+        var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+        tex.ReadPixels(new Rect(0, 0, size, size), 0, 0);
+        RenderTexture.active = null;
+        cam.targetTexture = null;
+        rt.Release();
+        RenderSettings.ambientLight = ambient;
+
+        // The badge: round, a brass ring, a soft dark edge inside it.
+        var px = tex.GetPixels();
+        var brass = new Color(0.86f, 0.68f, 0.36f);
+        float c = (size - 1) * 0.5f, outer = size * 0.5f - 2f, ring = outer - size * 0.045f;
+        for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++)
+            {
+                float d = Mathf.Sqrt((x - c) * (x - c) + (y - c) * (y - c));
+                var p = px[y * size + x];
+                if (d > ring) p = Color.Lerp(brass * 0.85f, brass, Mathf.InverseLerp(outer, ring, d));
+                else p = Color.Lerp(p, p * 0.55f, Mathf.Clamp01((d - ring * 0.82f) / (ring * 0.18f)));
+                p.a = Mathf.Clamp01(outer + 0.5f - d);
+                px[y * size + x] = p;
+            }
+        tex.SetPixels(px);
+        MovementPrototypeBuilder.EnsureFolder(System.IO.Path.GetDirectoryName(PortraitPath).Replace('\\', '/'));
+        System.IO.File.WriteAllBytes(PortraitPath, tex.EncodeToPNG());
+        Object.DestroyImmediate(tex);
+        AssetDatabase.ImportAsset(PortraitPath);
+        var imp = (TextureImporter)AssetImporter.GetAtPath(PortraitPath);
+        imp.textureType = TextureImporterType.Sprite;
+        imp.alphaIsTransparency = true;
+        imp.mipmapEnabled = false;
+        imp.SaveAndReimport();
+        set = AssetDatabase.LoadAssetAtPath<CaptainSet>(SetPath); // the import unloads the old handle
+        set.portrait = AssetDatabase.LoadAssetAtPath<Sprite>(PortraitPath);
+        EditorUtility.SetDirty(set);
+        AssetDatabase.SaveAssets();
+        Debug.Log("[Captain] Portrait rendered to " + PortraitPath);
+    }
+
+    public static void RenderPortraitBatch() => RenderPortrait();
 
     // ---------- The clue bottle ----------
 

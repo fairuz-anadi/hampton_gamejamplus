@@ -17,6 +17,10 @@ public class RoofFade : MonoBehaviour
     [Tooltip("A camera higher than this above the ship (the opening's aerial shots) sees the whole thing.")]
     public float cameraAbove = 14f;
 
+    /// <summary>(Samprity) Roofs stay put while this is on: the opening's camera flies through the rooms, and a roof
+    /// vanishing over it showed the cabins above. OpeningDirector sets it for the intro only.</summary>
+    public static bool Suspended;
+
     Renderer[] renderers;
     Transform ship;
     bool hidden;
@@ -34,11 +38,11 @@ public class RoofFade : MonoBehaviour
         bool useCam = cam != null && Local(cam.transform.position).y < cameraAbove;
         Vector3 camLocal = useCam ? Local(cam.transform.position) : Vector3.zero;
 
-        bool hide = useCam && Over(camLocal, camLocal);
-        if (!hide)
+        bool hide = !Suspended && useCam && Over(camLocal, camLocal);
+        if (!hide && !Suspended)
             foreach (var c in CrewRegistry.All)
                 if (!c.IsBot && Covers(Local(c.Position), useCam, camLocal)) { hide = true; break; }
-        if (!hide)
+        if (!hide && !Suspended)
             foreach (var m in ThirdPersonMover.All)
                 if (m != null && Covers(Local(m.transform.position), useCam, camLocal)) { hide = true; break; }
         if (hide == hidden) return;

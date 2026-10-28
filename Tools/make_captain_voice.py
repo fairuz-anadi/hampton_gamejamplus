@@ -208,6 +208,19 @@ def generate(key, voice, names, model, force):
     print("Done. In Unity: Port > Samprity > Build Captain Voice Bank.")
 
 
+def boost(db, ffmpeg):
+    """Evens every recording out to a loud, steady level (-16 LUFS + db), peaks kept under -1.5 dB. Run once per change."""
+    import subprocess
+    files = sorted(f for f in os.listdir(CLIPS) if f.endswith(".mp3"))
+    for i, name in enumerate(files, 1):
+        src = os.path.join(CLIPS, name)
+        tmp = src + ".tmp.mp3"
+        subprocess.run([ffmpeg, "-v", "error", "-y", "-i", src, "-af", f"loudnorm=I={-16 + db}:TP=-1.5:LRA=11",
+                        "-c:a", "libmp3lame", "-b:a", "128k", tmp], check=True)
+        os.replace(tmp, src)
+    print(f"{len(files)} recordings {db:+g} dB louder.")
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--credits", action="store_true")
@@ -218,7 +231,12 @@ def main():
     p.add_argument("--names", action="store_true", help="record named lines once per crew name")
     p.add_argument("--model", default="eleven_multilingual_v2")
     p.add_argument("--force", action="store_true")
+    p.add_argument("--boost", type=float, help="make every recording this many dB louder (needs --ffmpeg)")
+    p.add_argument("--ffmpeg", default="ffmpeg")
     a = p.parse_args()
+    if a.boost:
+        boost(a.boost, a.ffmpeg)
+        return
     key = api_key()
     if a.credits:
         used, limit, tier = credits(key)

@@ -115,11 +115,13 @@ public static class NarratorChecks
                 Note($"Box: \"{firstPage}\"");
                 Check(CaptainNarrator.Instance.Speaking, "The recording starts with its text box");
                 seaWhileSpeaking = SeaVolume();
+                pendingCapture = true;
                 Check(TypingMuted(), "The per-letter typing voice is quiet while he speaks");
                 Next();
                 break;
 
             case 2: // After the recording: the typing voice comes back
+                if (pendingCapture && inStep > 0.8f) { pendingCapture = false; Capture("strip"); } // his text box, with his face
                 if (CaptainNarrator.Instance.Speaking)
                 {
                     seaWhileSpeaking = Mathf.Min(seaWhileSpeaking, SeaVolume()); // the deepest point of the dip
@@ -146,6 +148,31 @@ public static class NarratorChecks
     static void Note(string what) => report.Append($"  ....  {what}\n");
 
     static float seaWhileSpeaking;
+    static bool pendingCapture;
+
+    static void Capture(string name)
+    {
+        var cam = Camera.main;
+        if (cam == null) return;
+        var canvases = Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None).Where(c => c.isRootCanvas && c.renderMode == RenderMode.ScreenSpaceOverlay).ToList();
+        foreach (var c in canvases) { c.renderMode = RenderMode.ScreenSpaceCamera; c.worldCamera = cam; c.planeDistance = cam.nearClipPlane + 0.05f; }
+        Canvas.ForceUpdateCanvases();
+        var rt = new RenderTexture(1280, 720, 24);
+        var target = cam.targetTexture;
+        cam.targetTexture = rt;
+        cam.Render();
+        cam.targetTexture = target;
+        foreach (var c in canvases) c.renderMode = RenderMode.ScreenSpaceOverlay;
+        RenderTexture.active = rt;
+        var tex = new Texture2D(rt.width, rt.height, TextureFormat.RGB24, false);
+        tex.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
+        tex.Apply();
+        RenderTexture.active = null;
+        System.IO.File.WriteAllBytes($"Logs/Narrator_{name}.png", tex.EncodeToPNG());
+        Object.DestroyImmediate(tex);
+        rt.Release();
+        Object.DestroyImmediate(rt);
+    }
 
     /// <summary>The sea loop's volume right now (before the player's Effects setting).</summary>
     static float SeaVolume()

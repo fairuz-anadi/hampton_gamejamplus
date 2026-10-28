@@ -68,6 +68,7 @@ public class CaptainSubtitles : MonoBehaviour
         StokerBrain.StaticBurst += OnStatic;
         GameEvents.PartChanged += OnPartChanged;
         EnsureSkipHint();
+        EnsureAvatar();
         lineHome = line.rectTransform.anchoredPosition;
         ApplyStyle(GameManager.Instance != null && GameManager.Instance.Part > 0 ? GameManager.Instance.Part : 1);
         if (CaptainDirector.Instance != null && CaptainDirector.Instance.VisibleText.Length > 0)
@@ -139,12 +140,46 @@ public class CaptainSubtitles : MonoBehaviour
     int part = 1;
     float partSince;
 
+    // ---------- His face ----------
+
+    const float AvatarSize = 76f, AvatarRoom = 86f;
+    Image avatar;
+
+    /// <summary>
+    /// The Captain's round portrait (Resources/CaptainSet) at the left of the strip; "THE CAPTAIN", the channel, the
+    /// divider and his words move right to make room. Added at runtime, once, so the HUD prefab is left as it is.
+    /// </summary>
+    void EnsureAvatar()
+    {
+        if (avatar != null || panel == null) return;
+        var set = CaptainSet.Load();
+        if (set == null || set.portrait == null) return;
+        avatar = new GameObject("Avatar", typeof(RectTransform), typeof(Image)).GetComponent<Image>();
+        avatar.transform.SetParent(panel, false);
+        avatar.sprite = set.portrait;
+        avatar.preserveAspect = true;
+        avatar.raycastTarget = false;
+        var r = avatar.rectTransform;
+        r.anchorMin = r.anchorMax = new Vector2(0f, 1f);
+        r.pivot = new Vector2(0.5f, 0.5f);
+        r.sizeDelta = new Vector2(AvatarSize, AvatarSize);
+        r.anchoredPosition = new Vector2(24f + AvatarSize * 0.5f, -10f - AvatarSize * 0.5f);
+        foreach (var name in new[] { "Head", "Channel", "Divider" })
+        {
+            var t = panel.Find(name) as RectTransform;
+            if (t != null) t.anchoredPosition += new Vector2(AvatarRoom, 0f);
+        }
+        foreach (var t in new[] { line.rectTransform, sizer.rectTransform }) t.offsetMin += new Vector2(AvatarRoom, 0f);
+    }
+
     void ApplyStyle(int part)
     {
         if (part != this.part) partSince = Time.time;
         this.part = part;
         style = part switch { 2 => off, >= 3 => truth, _ => calm };
         if (part >= 3 && soberInTruth) style.tremble = 0f;
+        // His face goes cold and red-lit in Part 3.
+        if (avatar != null) avatar.color = part >= 3 ? new Color(1f, 0.78f, 0.74f) : Color.white;
         trim.color = style.trim;
         label.color = style.label;
         line.color = style.text;
@@ -327,13 +362,17 @@ public class CaptainSubtitles : MonoBehaviour
             line.rectTransform.localRotation = Quaternion.Euler(0f, 0f, (Mathf.Sin(t * 1.3f) + (Mathf.PerlinNoise(t * 0.7f, 5f) - 0.5f)) * dizzySway * act);
             line.rectTransform.localScale = Vector3.one * (1f + 0.025f * Mathf.Sin(t * 2.1f) * act);
             horn.rectTransform.localRotation = Quaternion.Euler(0f, 0f, Mathf.Sin(t * 1.1f) * 6f * act);
+            if (avatar != null) avatar.rectTransform.localRotation = Quaternion.Euler(0f, 0f, (Mathf.Sin(t * 0.8f) * 7f + Mathf.Sin(t * 1.9f) * 2f) * act);
         }
         else
         {
             line.rectTransform.localRotation = Quaternion.identity;
             line.rectTransform.localScale = Vector3.one;
             horn.rectTransform.localRotation = Quaternion.identity;
+            if (avatar != null) avatar.rectTransform.localRotation = Quaternion.identity;
         }
+        // His face nods with his voice, a touch, as he talks.
+        if (avatar != null) avatar.rectTransform.localScale = Vector3.one * (1f + 0.04f * pulse);
 
         UpdateHint(dt);
 
