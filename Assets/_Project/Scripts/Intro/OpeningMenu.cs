@@ -118,11 +118,9 @@ public class OpeningMenu : MonoBehaviour
 
     void BuildSkip(RectTransform root)
     {
-        skipGroup = Group(root, "Skip", new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-150f, 46f), new Vector2(260f, 44f));
-        var b = TextButton((RectTransform)skipGroup.transform, "SkipIntro", "Skip intro   ›", 24, Vector2.zero, new Vector2(260f, 44f), () => SkipIntro?.Invoke(), withMarker: false);
-        var hint = Label((RectTransform)skipGroup.transform, "Hint", bodyFont, 16, DimCream, "Esc  ·  Start", TextAnchor.MiddleRight, new Vector2(1f, 0f), new Vector2(-110f, -14f), new Vector2(220f, 22f));
-        hint.color = new Color(DimCream.r, DimCream.g, DimCream.b, 0.6f);
-        b.navigation = new Navigation { mode = Navigation.Mode.None };
+        // Anadi's skip button: a brass-edged pill in the letterbox bar, with running arrows and the intro's progress.
+        skipGroup = Group(root, "Skip", new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-230f, 54f), new Vector2(360f, 66f));
+        SkipIntroButton.Build((RectTransform)skipGroup.transform, bodyFont, () => SkipIntro?.Invoke());
     }
 
     // Layout, in 1920x1080 reference pixels: the title lockup on the left, the menu right-aligned on the right with

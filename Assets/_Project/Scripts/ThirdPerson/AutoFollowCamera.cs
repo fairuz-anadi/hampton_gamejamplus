@@ -278,7 +278,7 @@ public class AutoFollowCamera : MonoBehaviour
             if (h.distance <= 0f) continue;
             var col = h.collider;
             if (col.transform.IsChildOf(root)) continue;
-            if (ignoreOtherCrew && col is CharacterController) continue;
+            if (ignoreOtherCrew && (col is CharacterController || col.GetComponentInParent<ICrewActor>() != null)) continue; // bots too (Anadi)
             best = Mathf.Min(best, h.distance - collisionPadding);
         }
         return Mathf.Max(0f, best);
