@@ -69,6 +69,13 @@ public static class AudioChecks
 
     static AudioSource Layer(string name) => AudioManager.Instance != null ? AudioManager.Instance.transform.Find(name)?.GetComponent<AudioSource>() : null;
 
+    /// <summary>The loop is missing, stopped, or faded right down.</summary>
+    static bool Silent(string name)
+    {
+        var src = Layer(name);
+        return src == null || !src.isPlaying || src.volume < 0.01f;
+    }
+
     static void Tick()
     {
         if (!EditorApplication.isPlaying) return;
@@ -87,11 +94,12 @@ public static class AudioChecks
             case 1: // Part 1 settles
                 if (inStep < 3f) return;
                 Check(audio.CurrentSnapshot == "Calm", $"Part 1 uses the Calm snapshot ({audio.CurrentSnapshot})");
-                foreach (var name in new[] { "Sea", "Deck", "Engine", "HullCreak", "Passengers", "Waltz" })
+                foreach (var name in new[] { "Sea", "Deck", "Engine", "HullCreak", "Passengers" })
                 {
                     var src = Layer(name);
                     Check(src != null && src.isPlaying && src.clip != null, $"{name} loop is playing");
                 }
+                Check(Silent("Waltz"), "No music in Part 1 (the waltz stays silent)");
                 var captain = CaptainDirector.Instance;
                 var blip = captain != null ? captain.GetComponents<AudioSource>() : new AudioSource[0];
                 Check(blip.Length > 0 && blip.All(s => s.outputAudioMixerGroup != null && s.outputAudioMixerGroup.name == "Voice"), "The Captain's voice goes through the Voice group");
@@ -102,10 +110,9 @@ public static class AudioChecks
 
             case 2: // Part 2: the off snapshot, detuned waltz, still footsteps from the crew walking about
                 if (inStep < 2f) return;
-                Check(audio.CurrentSnapshot == "Off", $"Part 2 switches to the Off snapshot ({audio.CurrentSnapshot})");
-                var waltz = Layer("Waltz");
-                Check(waltz != null && waltz.pitch < 0.99f, $"Part 2 waltz is detuned (pitch {waltz?.pitch:0.000})");
                 if (audio.StepsPlayed == 0 && inStep < 25f) return;
+                Check(audio.CurrentSnapshot == "Off", $"Part 2 switches to the Off snapshot ({audio.CurrentSnapshot})");
+                Check(Silent("Waltz"), "No music in Part 2");
                 Check(audio.StepsPlayed > 0, $"Crew footsteps play ({audio.StepsPlayed} so far)");
                 GameManager.Instance.EnterPart(3);
                 Next();
@@ -114,7 +121,7 @@ public static class AudioChecks
             case 3:
                 if (inStep < 2f) return;
                 Check(audio.CurrentSnapshot == "Truth", $"Part 3 switches to the Truth snapshot ({audio.CurrentSnapshot})");
-                Check(Layer("Sustained") != null && Layer("Sustained").isPlaying, "Part 3 holds the sustained note");
+                Check(Silent("Sustained") && Silent("Waltz"), "No music in Part 3 (no held cello note)");
                 GameManager.Instance.StartIceberg();
                 Next();
                 break;
