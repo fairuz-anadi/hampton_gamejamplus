@@ -96,9 +96,14 @@ public static class MiniMapBuilder
         float hullWidth = RootWidth - Margin * 2f;
         float hullHeight = RootHeight - Margin - TitleHeight - Gap - BowTickHeight - Gap - Margin;
         var hullArea = Box(root.transform, "HullArea", new Vector2(0.5f, 0f), new Vector2(0f, Margin), new Vector2(hullWidth, hullHeight), new Vector2(0.5f, 0f));
+        hullArea.gameObject.AddComponent<RectMask2D>(); // clips the rotating content to the panel's rectangle
 
-        Img(hullArea, "Outer", hullOuter, Gold, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, Image.Type.Simple);
-        var fill = Img(hullArea, "Fill", hullInner, Navy, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, Image.Type.Simple);
+        // Rotated every frame to put the camera's facing up (MiniMap.rotatingRoot). Outer/Fill, and everything
+        // parented under Fill, ride along with it, clipped by HullArea's mask above.
+        var hull = Box(hullArea, "Hull", new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(hullWidth, hullHeight), new Vector2(0.5f, 0.5f));
+
+        Img(hull, "Outer", hullOuter, Gold, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, Image.Type.Simple);
+        var fill = Img(hull, "Fill", hullInner, Navy, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, Image.Type.Simple);
         var fillShadow = fill.gameObject.AddComponent<Shadow>();
         fillShadow.effectColor = ShadowColor;
         fillShadow.effectDistance = new Vector2(3f, -4f);
@@ -118,7 +123,7 @@ public static class MiniMapBuilder
 
         // Point-anchored (not stretched) and a fixed small size: this sits ON the station glyph it highlights,
         // not stretched to fill the whole hull — that was the earlier "huge ring outside the hull" bug.
-        var highlightRing = Img(fill.transform, "Highlight", ring, Gold, Vector2.zero, Vector2.zero, Vector2.zero, new Vector2(20f, 20f), Image.Type.Simple);
+        var highlightRing = Img(fill.transform, "Highlight", ring, Gold, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(20f, 20f), Image.Type.Simple);
         highlightRing.gameObject.SetActive(false);
 
         var bridgeRoot = BuildBridgeMarker(fill.transform, triangle);
@@ -132,17 +137,18 @@ public static class MiniMapBuilder
             iceParts[i] = BuildIceIcon(fill.transform, "IceWarning_" + (i + 1), circle, ring);
 
         var mini = root.AddComponent<MiniMap>();
-        WireMiniMap(mini, fadeGroup, fill.rectTransform, highlightRing, bridgeRoot, roomParts, stationGlyphRoots, crewParts, iceParts);
+        WireMiniMap(mini, fadeGroup, fill.rectTransform, hull, highlightRing, bridgeRoot, roomParts, stationGlyphRoots, crewParts, iceParts);
 
         return root;
     }
 
-    static void WireMiniMap(MiniMap mini, CanvasGroup fadeGroup, RectTransform mapArea, Image highlightRing, RectTransform bridgeRoot,
+    static void WireMiniMap(MiniMap mini, CanvasGroup fadeGroup, RectTransform mapArea, RectTransform rotatingRoot, Image highlightRing, RectTransform bridgeRoot,
         RoomPart[] roomParts, RectTransform[] stationGlyphRoots, CrewPart[] crewParts, IcePart[] iceParts)
     {
         var so = new SerializedObject(mini);
         so.FindProperty("fadeGroup").objectReferenceValue = fadeGroup;
         so.FindProperty("mapArea").objectReferenceValue = mapArea;
+        so.FindProperty("rotatingRoot").objectReferenceValue = rotatingRoot;
         so.FindProperty("highlightRing").objectReferenceValue = highlightRing;
         so.FindProperty("bridgeMarker").objectReferenceValue = bridgeRoot;
 
@@ -189,7 +195,7 @@ public static class MiniMapBuilder
 
     static RoomPart BuildRoomZone(Transform parent, string roomId, Color tint, Sprite roundedRect)
     {
-        var root = Box(parent, "Room_" + roomId, Vector2.zero, Vector2.zero, new Vector2(20f, 20f), new Vector2(0.5f, 0.5f));
+        var root = Box(parent, "Room_" + roomId, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(20f, 20f), new Vector2(0.5f, 0.5f));
         Img(root, "Tint", roundedRect, tint, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, Image.Type.Simple);
 
         // Left-edge anchored (not centred/stretched) and sized to its own text, not the zone, so MiniMap.cs can
@@ -206,7 +212,7 @@ public static class MiniMapBuilder
 
     static RectTransform BuildGlyphBoiler(Transform parent, Sprite triangle)
     {
-        var root = Box(parent, "Glyph_Boiler", Vector2.zero, Vector2.zero, new Vector2(22f, 22f), new Vector2(0.5f, 0.5f));
+        var root = Box(parent, "Glyph_Boiler", new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(22f, 22f), new Vector2(0.5f, 0.5f));
         Img(root, "Flame", triangle, GlyphGold, Vector2.zero, Vector2.one, Vector2.zero, new Vector2(-5f, -3f), Image.Type.Simple);
         root.gameObject.SetActive(false);
         return root;
@@ -214,7 +220,7 @@ public static class MiniMapBuilder
 
     static RectTransform BuildGlyphWheel(Transform parent, Sprite ring, Sprite circle)
     {
-        var root = Box(parent, "Glyph_Wheel", Vector2.zero, Vector2.zero, new Vector2(22f, 22f), new Vector2(0.5f, 0.5f));
+        var root = Box(parent, "Glyph_Wheel", new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(22f, 22f), new Vector2(0.5f, 0.5f));
         Img(root, "Rim", ring, GlyphGold, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, Image.Type.Simple);
         var spokeA = Img(root, "SpokeA", null, GlyphGold, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(19f, 3f), Image.Type.Simple);
         spokeA.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 0f);
@@ -227,7 +233,7 @@ public static class MiniMapBuilder
 
     static RectTransform BuildGlyphDoors(Transform parent, Sprite roundedRect)
     {
-        var root = Box(parent, "Glyph_Doors", Vector2.zero, Vector2.zero, new Vector2(18f, 22f), new Vector2(0.5f, 0.5f));
+        var root = Box(parent, "Glyph_Doors", new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(18f, 22f), new Vector2(0.5f, 0.5f));
         Img(root, "Body", roundedRect, GlyphGold, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, Image.Type.Simple);
         Img(root, "Seam", null, DarkOutline, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(2f, 18f), Image.Type.Simple);
         root.gameObject.SetActive(false);
@@ -236,7 +242,7 @@ public static class MiniMapBuilder
 
     static RectTransform BuildGlyphWireless(Transform parent, Sprite circle)
     {
-        var root = Box(parent, "Glyph_Wireless", Vector2.zero, Vector2.zero, new Vector2(14f, 22f), new Vector2(0.5f, 0.5f));
+        var root = Box(parent, "Glyph_Wireless", new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(14f, 22f), new Vector2(0.5f, 0.5f));
         Img(root, "Pole", null, GlyphGold, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 8.5f), new Vector2(2.5f, 17f), Image.Type.Simple);
         Img(root, "Node", circle, GlyphGold, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -3.5f), new Vector2(7f, 7f), Image.Type.Simple);
         root.gameObject.SetActive(false);
@@ -245,7 +251,7 @@ public static class MiniMapBuilder
 
     static RectTransform BuildBridgeMarker(Transform parent, Sprite triangle)
     {
-        var root = Box(parent, "Bridge", Vector2.zero, Vector2.zero, new Vector2(12f, 16f), new Vector2(0.5f, 0.5f));
+        var root = Box(parent, "Bridge", new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(12f, 16f), new Vector2(0.5f, 0.5f));
         Img(root, "Pole", null, Cream, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 5f), new Vector2(1.5f, 10f), Image.Type.Simple);
         var flag = Img(root, "Flag", triangle, Gold, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(3f, -1f), new Vector2(8f, 8f), Image.Type.Simple);
         flag.rectTransform.localRotation = Quaternion.Euler(0f, 0f, -90f);
@@ -258,7 +264,7 @@ public static class MiniMapBuilder
 
     static CrewPart BuildCrewIcon(Transform parent, string name, Sprite circle, Sprite ring, Sprite triangle)
     {
-        var root = Box(parent, name, Vector2.zero, Vector2.zero, new Vector2(14f, 14f), new Vector2(0.5f, 0.5f));
+        var root = Box(parent, name, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(14f, 14f), new Vector2(0.5f, 0.5f));
         var ringImg = Img(root, "Ring", ring, new Color(Cream.r, Cream.g, Cream.b, 0.9f), Vector2.zero, Vector2.one, Vector2.zero, new Vector2(6f, 6f), Image.Type.Simple);
         ringImg.gameObject.SetActive(false);
         var dot = Img(root, "Dot", circle, Color.white, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, Image.Type.Simple);
@@ -273,7 +279,7 @@ public static class MiniMapBuilder
 
     static IcePart BuildIceIcon(Transform parent, string name, Sprite circle, Sprite ring)
     {
-        var root = Box(parent, name, Vector2.zero, Vector2.zero, new Vector2(14f, 14f), new Vector2(0.5f, 0.5f));
+        var root = Box(parent, name, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(14f, 14f), new Vector2(0.5f, 0.5f));
         var glow = Img(root, "Glow", ring, IceWarnColor, Vector2.zero, Vector2.one, Vector2.zero, new Vector2(8f, 8f), Image.Type.Simple);
         var core = Img(root, "Core", circle, IceWarnColor, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, Image.Type.Simple);
         var outline = core.gameObject.AddComponent<Outline>();
