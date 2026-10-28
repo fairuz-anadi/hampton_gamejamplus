@@ -54,6 +54,9 @@ public static class GameSystems
             go.AddComponent<CrewNameTags>(); // names over the crew's heads
             go.AddComponent<PartCard>(); // the bright title card at the start of each part
             go.AddComponent<ChartView>(); // study the bridge chart (the pencilled course to Grey Cove)
+            go.AddComponent<GreyCoveOnHorizon>(); // the bay to the north, closing in from Part 2
+            go.AddComponent<PlayerThought>(); // "..." then "Wait, what?" over the player when something doesn't add up
+            go.AddComponent<ShipClues>(); // the full bottle, the slip, the backwards clock, the needle, the growing chart, the message
         }
         // Debug keys exist in the Editor and Development builds only, never in the release zip.
         if (Debug.isDebugBuild) go.AddComponent<DebugTools>();

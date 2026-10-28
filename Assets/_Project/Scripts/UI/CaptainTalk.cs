@@ -111,6 +111,7 @@ public class CaptainTalk : MonoBehaviour
         if (Flat(who.transform.position) > range) return false;
         if (chart != null && Vector3.Distance(Flat3(who.transform.position), Flat3(chart.position)) < 2.1f) return false; // the chart's E
         if (ChartView.IsOpen) return false;
+        if (ShipClues.NearBottle(who.transform.position)) return false; // E there looks at his bottle (Anadi)
         var interactor = who.GetComponent<Interactor>();
         return interactor == null || (!interactor.IsCarrying && interactor.NearestStation == null);
     }
