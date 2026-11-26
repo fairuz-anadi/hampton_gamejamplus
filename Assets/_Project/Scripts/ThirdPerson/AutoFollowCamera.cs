@@ -281,6 +281,8 @@ public class AutoFollowCamera : MonoBehaviour
             if (ignoreOtherCrew && (col is CharacterController || col.GetComponentInParent<ICrewActor>() != null)) continue; // bots too (Anadi)
             best = Mathf.Min(best, h.distance - collisionPadding);
         }
+        // The decks over you have no colliders (the NavMesh mustn't see them): stay under the ceiling anyway.
+        best = Mathf.Min(best, ShipCeiling.ClearDistance(origin, dir, maxDist));
         return Mathf.Max(0f, best);
     }
 

@@ -61,6 +61,10 @@ public static class BotChores
         bot != null && states.TryGetValue(bot, out var s) && s.spot != null && s.workUntil >= 0f
         && Time.time - s.lastTick <= TickGap;
 
+    /// <summary>The Chore_* marker this bot is working at, or null (CrewVisual picks the chore's animation from it).</summary>
+    public static Transform SpotOf(BotBrain bot) =>
+        IsDoingChore(bot) ? states[bot].spot : null;
+
     static void Release(State s)
     {
         s.spot = null;

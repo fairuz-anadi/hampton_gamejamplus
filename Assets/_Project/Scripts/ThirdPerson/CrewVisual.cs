@@ -6,6 +6,10 @@ using UnityEngine;
 /// Bots that already are crew models (CrewRoster spawns them from the crew prefabs) keep their own model; this only
 /// gives them the animator with the work loop. The model walks and idles from how fast the actor moves, and plays
 /// its work loop while a player holds Interact or a bot works a station. GameplayCameraRig adds this to everyone.
+/// The work loop fits the job (WorkAnimations): shovelling coal at the Boiler (with a shovel in hand), hauling a lever
+/// at the Doors, hand over hand at the Wheel, tapping the key at the Wireless, kneeling to fix anything broken, and
+/// the bots' chores. It plays in the animator's "Push" state through a per-actor override, so the shared controller
+/// is untouched; without the WorkAnimations asset it stays the old push.
 /// </summary>
 public class CrewVisual : MonoBehaviour
 {
@@ -20,6 +24,17 @@ public class CrewVisual : MonoBehaviour
     Vector3 lastPos;
     float speed;
     bool working;
+
+    // The job's own work loop, swapped into the "Push" state for this actor only.
+    AnimatorOverrideController overrides;
+    AnimationClip pushClip, shownClip;
+    Interactor interactor;
+    Transform shovel;
+
+    // Where the borrowed shovel sits in the right hand (hand bone space). Tune here if the grip looks off.
+    static readonly Vector3 ShovelGrip = new Vector3(0f, 0.04f, 0.02f);
+    static readonly Vector3 ShovelGripEuler = new Vector3(0f, 0f, -90f);
+    const float ShovelGripUpHandle = 0.95f; // how far up the handle (from the blade end) the hand holds it
 
     /// <summary>Puts seat N's crew model on the actor. Does nothing if it already has one or the set is missing.</summary>
     public static CrewVisual Attach(GameObject actor, int seat, CrewVisualSet set, bool human)
@@ -39,6 +54,7 @@ public class CrewVisual : MonoBehaviour
             v.bot = actor.GetComponent<BotBrain>();
             v.driveSpeed = actor.GetComponent<BotMover>() == null; // BotMover already feeds Speed
             v.lastPos = actor.transform.position;
+            v.SetUpWorkLoop();
             return v;
         }
 
@@ -75,6 +91,7 @@ public class CrewVisual : MonoBehaviour
         visual.player = actor.GetComponent<PlayerController>();
         visual.bot = actor.GetComponent<BotBrain>();
         visual.lastPos = actor.transform.position;
+        visual.SetUpWorkLoop();
 
         // A soft ring in the seat's colour under human players, so each player finds themselves at a glance.
         if (human && set.seatRing != null)
@@ -103,9 +120,101 @@ public class CrewVisual : MonoBehaviour
 
         // Holding Interact (or a bot working a station) while standing still: put your back into it.
         bool work = ((player != null && player.InteractHeld) || (bot != null && (bot.IsWorking || BotChores.IsDoingChore(bot)))) && speed < 0.3f;
+        // The loop that fits the job; a different job while already working (a station broke) switches over.
+        bool newJob = work && ShowWorkLoop(WorkClip());
+        ShowShovel(work && shownClip != null && shownClip == WorkAnimations.Load()?.shovel);
+        if (work && working && newJob)
+        {
+            // Already in the work state: crossfading to it again would be ignored, so restart it on the new loop.
+            if (animator.HasState(0, WorkHash)) animator.Play(WorkHash, 0, 0f);
+            return;
+        }
         if (work == working) return;
         working = work;
         if (animator.HasState(0, work ? WorkHash : LocomotionHash))
             animator.CrossFadeInFixedTime(work ? WorkHash : LocomotionHash, 0.2f);
+    }
+
+    void OnDestroy()
+    {
+        if (shovel != null) Destroy(shovel.gameObject);
+    }
+
+    // ---------- The job's work loop ----------
+
+    void SetUpWorkLoop()
+    {
+        interactor = GetComponent<Interactor>();
+        if (animator == null || animator.runtimeAnimatorController == null || WorkAnimations.Load() == null) return;
+        overrides = new AnimatorOverrideController(animator.runtimeAnimatorController);
+        foreach (var clip in overrides.animationClips)
+            if (clip != null && clip.name.EndsWith("Push_Loop")) { pushClip = clip; break; }
+        if (pushClip == null) { overrides = null; return; }
+        animator.runtimeAnimatorController = overrides;
+        shownClip = pushClip;
+    }
+
+    /// <summary>What this actor is working on right now, as a clip; null leaves the push.</summary>
+    AnimationClip WorkClip()
+    {
+        var set = WorkAnimations.Load();
+        if (set == null) return null;
+        if (player != null) return set.For(interactor != null ? interactor.NearestStation as Station : null) ?? set.tap;
+        if (bot != null)
+        {
+            if (bot.WorkingAt != null) return set.For(bot.WorkingAt);
+            var spot = BotChores.SpotOf(bot);
+            if (spot != null) return set.ForChore(spot.name);
+        }
+        return set.tap;
+    }
+
+    /// <summary>Puts clip in the work state. True when it changed (the state then restarts on the new loop).</summary>
+    bool ShowWorkLoop(AnimationClip clip)
+    {
+        if (overrides == null) return false;
+        if (clip == null) clip = pushClip;
+        if (clip == shownClip) return false;
+        overrides[pushClip] = clip;
+        shownClip = clip;
+        return true;
+    }
+
+    /// <summary>At the coal: one of the boiler room's shovels, copied into the right hand while they work.</summary>
+    void ShowShovel(bool show)
+    {
+        if (!show)
+        {
+            if (shovel != null) shovel.gameObject.SetActive(false);
+            return;
+        }
+        if (shovel == null)
+        {
+            var hand = animator.isHuman ? animator.GetBoneTransform(HumanBodyBones.RightHand) : null;
+            var source = hand != null ? FindShovel() : null;
+            if (source == null) return;
+            shovel = Instantiate(source).transform;
+            shovel.name = "HeldShovel";
+            foreach (var c in shovel.GetComponentsInChildren<Collider>()) Destroy(c);
+            // Placed in world space, then parented, so a scaled rig (bones in centimetres) can't shrink or blow it up.
+            var rot = hand.rotation * Quaternion.Euler(ShovelGripEuler);
+            // The prop's origin is the blade end; slide it so the hand closes round the handle.
+            var pos = hand.TransformPoint(Vector3.zero) + hand.rotation * ShovelGrip - rot * (Vector3.up * ShovelGripUpHandle);
+            shovel.SetPositionAndRotation(pos, rot);
+            shovel.localScale = source.transform.lossyScale;
+            shovel.SetParent(hand, true);
+        }
+        shovel.gameObject.SetActive(true);
+    }
+
+    static GameObject shovelSource;
+
+    /// <summary>The deck's own shovel prop (ShipDeckBuilder leans two in the boiler room).</summary>
+    static GameObject FindShovel()
+    {
+        if (shovelSource != null) return shovelSource;
+        foreach (var t in FindObjectsByType<Transform>(FindObjectsInactive.Exclude))
+            if (t.name == "Shovel" && t.GetComponentInChildren<Renderer>() != null) { shovelSource = t.gameObject; break; }
+        return shovelSource;
     }
 }

@@ -44,6 +44,8 @@ public class BotBrain : MonoBehaviour, ICrewActor
     public BotMover Mover { get; private set; }
     /// <summary>Holding Interact at a station right now (Samprity's crew models play their work animation).</summary>
     public bool IsWorking => workingAt != null;
+    /// <summary>The station this bot is holding Interact at, or null (for the work animation).</summary>
+    public Station WorkingAt => workingAt;
     public StokerBrain Stoker { get; private set; }
     public Vector3 Home { get; private set; }
 

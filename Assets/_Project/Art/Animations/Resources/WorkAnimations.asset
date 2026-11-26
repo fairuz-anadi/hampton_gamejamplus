@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 16f4ae0c8c6b408fb866131afbf25486, type: 3}
+  m_Name: WorkAnimations
+  m_EditorClassIdentifier: Assembly-CSharp::WorkAnimations
+  shovel: {fileID: 7400000, guid: e70b78f2cbe92124d89399bf11695dc3, type: 2}
+  lever: {fileID: 7400000, guid: 0c66aae8b516b5a44b26ff4f26d67e6c, type: 2}
+  wheel: {fileID: 7400000, guid: d0486594025f5194ab00f61d9bbb65e4, type: 2}
+  morse: {fileID: 7400000, guid: c05f5b429dbe51640b840388dd635f45, type: 2}
+  repair: {fileID: 7400000, guid: ab913364d533eb843a9c1718bcbe0be1, type: 2}
+  tap: {fileID: 7400000, guid: 1125e65d70a787b4b8c2c86fa54f3c1a, type: 2}
+  pickUp: {fileID: 7400000, guid: aa0d62f89b413f649804ca04a1bce38b, type: 2}
