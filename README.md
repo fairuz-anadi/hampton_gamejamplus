@@ -11,11 +11,13 @@ Made for GameJamPlus 2026/27 (GJ+ Bangladesh) by Anadi, Rabib, Riham and Samprit
 - The Captain gives **you** the orders, on a timer: shovel coal at the Boiler, hold the Wheel, pull the Door levers, work the Wireless desk. For each one you can **obey**, **fake it** or **refuse**.
 - The bots are the rest of the crew. They repair things, carry ice warnings, help when you call, and do chores around the ship (galley, saloon, bunks, coal) in between. One of them is secretly the Captain's man.
 - Some jobs need two people, so call a crewmate for help.
-- Watch the station lights, the three meters (Captain's Trust, Ship Safety, Crew Trust) and the readout under the clock: compass, wheel, clock and how far it is to port.
-- The minimap in the bottom-right corner shows the deck, the stations, your crew and any ice warning waiting to be carried.
+- Your order shows on a paper card: the task, the station, the seconds left and the keys. After a few seconds it folds into its timer circle; **Tab** opens it again.
+- Every answer moves three hidden meters (Captain's Trust, Ship Safety, Crew Trust), and where they end up decides the ending. The first time you report, refuse or run out of time, a card shows how they moved, and after that a small note does. Watch the station lights and the readout under the clock: compass, wheel, clock and how far it is to port.
+- The minimap in the top-left corner shows the deck, the stations, your crew and any ice warning waiting to be carried.
 - Listen to your crewmates. When an order sounds wrong, someone near you may whisper a doubt, or urge you to obey.
 - Study the chart on the bridge table (**E**). It has the course everyone was told, and another one in pencil.
-- The voyage has three parts, each opened by its own title card: *Just doing my job*, *Why is he asking me this?* and *What are we sailing toward?*. It ends at the iceberg, with the wheel in your hands, and one of three endings.
+- The voyage has three parts, each opened by its own title card: *Just doing my job*, *Why is he asking me this?* and *What are we sailing toward?*. It ends at the iceberg, with the wheel in your hands, and one of four endings.
+- Don't push him too far. Refuse three of his ordinary orders in a row, or let them run out, and the Captain throws you overboard. He warns you by name after the second. Saying no to an order that's plainly wrong never counts against you, and reporting a job done resets the count. In co-op only the player who's thrown off is out, and the rest sail on. When the last player aboard goes over the side, the voyage ends there with the *Man Overboard* ending.
 
 | Action | Keyboard and mouse | Gamepad |
 |---|---|---|
@@ -25,6 +27,7 @@ Made for GameJamPlus 2026/27 (GJ+ Bangladesh) by Anadi, Rabib, Riham and Samprit
 | Report done | R | Y / △ |
 | Refuse | X | B / ○ |
 | Call for help | Q | X / □ |
+| Open the folded order card | Tab | View / Select |
 | Study the chart (at the bridge table) | E | A / ✕ |
 | Skip a part's title card | Enter or Space | A / ✕ |
 | Pause | Esc | Start |
@@ -40,8 +43,7 @@ The main menu has **Begin Voyage**, **Settings**, **Credits** and **Quit**. The 
    | Who | Role | Branch | Your sandbox scene |
    |---|---|---|---|
    | Anadi | Systems lead, builds and submission | `anadi-systems` | `Scenes/Sandbox/Anadi_Systems.unity` |
-   | Rabib | Players, stations, iceberg scene | `rabib-stations` | `Scenes/Sandbox/Rabib_Stations.unity` |
-   | Riham | Bots, the Captain, all writing | `riham-ai` | `Scenes/Sandbox/Riham_AI.unity` |
+   | Rabib | Players, stations, iceberg scene; also bots, the Captain and all writing since Riham left | `rabib-stations` (`riham-ai` for the bots and Captain) | `Scenes/Sandbox/Rabib_Stations.unity`, `Scenes/Sandbox/Riham_AI.unity` |
    | Samprity | Art, audio, UI and feel | `samprity-art` | `Scenes/Sandbox/Samprity_Art.unity` |
 
 ## Project setup
@@ -67,10 +69,10 @@ If something gets lost, run **Port → Run Project Setup** (`Scripts/Editor/Proj
 Assets/_Project/
   Art/        Models, Materials, Textures, Animations, UI, VFX   (Samprity)
   Audio/      Music, SFX, Voice, Mixer                           (Samprity)
-  Data/       Resources/Orders/ (the 12 orders), Resources/Endings/ (the 3 endings)   (Anadi; text by Riham)
+  Data/       Resources/Orders/ (the 12 orders), Resources/Endings/ (the 4 endings)   (Anadi; text by Rabib)
   Prefabs/    Crew, Stations, UI
   Scenes/     MainMenu, Ship, Results, Sandbox/
-  Scripts/    Core + Debug + Editor (Anadi), Crew + Stations (Rabib), AI + Captain (Riham), UI + Audio (Samprity)
+  Scripts/    Core + Debug + Editor (Anadi), Crew + Stations (Rabib), AI + Captain (Rabib, from Riham), UI + Audio (Samprity)
   Settings/   URP, Input
 ```
 
@@ -80,7 +82,7 @@ Assets/_Project/
 
 The systems spawn on their own when `Ship.unity`, or any scene whose name ends in `_Systems`, loads. You never need to add them to a scene. In your own sandbox, call `GameSystems.Ensure()` from any script if you want orders and meters running.
 
-**The golden rule:** players and bots use exactly the same station methods, so Rabib and Riham never block each other.
+**The golden rule:** players and bots use exactly the same station methods, so the player and bot code never block each other.
 
 | Need to… | Use |
 |---|---|
@@ -93,15 +95,16 @@ The systems spawn on their own when `Ship.unity`, or any scene whose name ends i
 | React to stations and ice warnings | `GameEvents.StationBroken`, `StationRepaired`, `HelpCalled`, `IceWarningArrived`, `IceWarningDelivered`, `IceWarningLost` |
 | Read the meters | `MeterSystem.Instance.CaptainTrust / ShipSafety / CrewTrust`, and `GameEvents.MetersChanged` |
 | Change the meters (sabotage, votes, ice warnings) | `MeterSystem.Instance.Apply(new MeterDelta(captain, safety, crew))` |
-| Run the ice warnings (Rabib's Wireless desk, Riham's Stoker) | `IceWarnings` schedules MSG 1–3 at 3:20, 4:30 and 5:40 and applies the meters. Show one on `GameEvents.IceWarningArrived(n)`, call `IceWarnings.Instance.Deliver(n)` at the Bridge or `FileUnread(n)` at the desk, and use `TimeLeft(n)` for a countdown. The Stoker calls `HideNext()`. |
-| Use the plan's numbers for sabotage (Riham) | `MeterRules.SabotageJamStation`, `SabotageFalseReport`, `StokerActive`, `RepairSeconds` and the rest. Apply them with `MeterSystem.Instance.Apply(...)`. The muster vote is switched off in the final plan (`CrewAISystems` no longer adds `MusterVote`; the code is still there). |
-| Use what the meters do (Riham, Samprity) | `MeterRules`: `StokerCooldown`, `BotHelpDelay`, `BotIgnoresHelpChance`, `BotRefusesOffOrderChance`, `CaptainSharesPrivateLines`, `CaptainSuspicious`, `ShipLeaking` |
+| Run the ice warnings (Rabib's Wireless desk and Stoker) | `IceWarnings` schedules MSG 1–3 at 3:20, 4:30 and 5:40 and applies the meters. Show one on `GameEvents.IceWarningArrived(n)`, call `IceWarnings.Instance.Deliver(n)` at the Bridge or `FileUnread(n)` at the desk, and use `TimeLeft(n)` for a countdown. The Stoker calls `HideNext()`. |
+| Use the plan's numbers for sabotage (Rabib) | `MeterRules.SabotageJamStation`, `SabotageFalseReport`, `StokerActive`, `RepairSeconds` and the rest. Apply them with `MeterSystem.Instance.Apply(...)`. The muster vote is switched off in the final plan (`CrewAISystems` no longer adds `MusterVote`; the code is still there). |
+| Use what the meters do (Rabib, Samprity) | `MeterRules`: `StokerCooldown`, `BotHelpDelay`, `BotIgnoresHelpChance`, `BotRefusesOffOrderChance`, `CaptainSharesPrivateLines`, `CaptainSuspicious`, `ShipLeaking` |
 | Spawn the players who joined (Rabib) | `PlayerSlots.Devices[i]` is seat `i + 1`'s device: `PlayerInput.Instantiate(prefab, playerIndex: i, pairWithDevice: device)`. With nobody joined (pressing Play in a scene), use `PlayerSlots.FirstDevice`. |
-| Fill the empty seats with bots (Riham) | `PlayerSlots.HumanCount` humans, `PlayerSlots.BotCount` bots. Pick the Stoker when the crew spawns: Restart and Play again reload the scene, so it re-rolls. |
+| Fill the empty seats with bots (Rabib) | `PlayerSlots.HumanCount` humans, `PlayerSlots.BotCount` bots. Pick the Stoker when the crew spawns: Restart and Play again reload the scene, so it re-rolls. |
 | Pause, restart, change scene | `PauseMenu.Instance.Toggle()`, `GameManager.Restart()`, `GameManager.LoadScene(name)`. Don't bind Esc or Start yourself: the pause menu already handles them. |
 | Reopen the lifeboat store (Rabib) | Set `RunRecord.LifeboatStoreLocked = false` when two crew pull the Door levers. Obeying order 9 locks it. |
 | Run the iceberg scene (Rabib) | In `Awake`, set `GameManager.Instance.IcebergHandledExternally = true`. Start when the state becomes `Iceberg`, then call `GameManager.Instance.FinishIceberg(angle)` at impact. |
 | The ending screen | `UI/ResultsScreen.cs` draws it from `RunRecord`: the ending's ribbon, the Voyage Chart (every order as a badge along the route that bent north to Grey Cove), the three meters as dials, a WANTED poster for the Stoker, the endings found as ships in bottles, and wooden-sign buttons. The art is painted at runtime by `UI/EndingPainter.cs`; the text is Pirata One and Patrick Hand (`Art/UI/Resources/Fonts`). Ending text is `EndingData.For(RunRecord.Ending)`. |
+| Thrown overboard (the fourth ending) | `Core/MutinyWatch.cs` counts each player's refused or expired orders in a row (`Streak(seat)`). Refusals of off orders are excused, and a report resets the count. At `Warning` (2), `CaptainDirector` says a line from `CaptainScript.WarnRefuse` or `WarnExpired`. At `Limit` (3) it says `LastWord` and `GameManager.ThrowOverboard(seat)` runs. With other players still aboard, `PlayerController.GoOverboard` takes that one off the deck (`MutinyWatch.ThrownOverboard` plays the splash) and `RunRecord.ThrownOverboard` lists them on the results. For the last player aboard, `EndingEvaluator.ResolveOverboard` ends the run with `Ending.Overboard` and its film in `EndingCinematic.Overboard()`. The film's shove, hit, fall and swim clips are set on `EndingSet`. |
 | Who gets the orders | `OrderDirector` gives every Captain's order to a human whenever one is aboard (bots only get orders in a bots-only run). Quick obeys earn a speed reward. |
 | Bots with nothing to do | `AI/BotChores.cs`: idle bots walk to the deck's `Chore_*` markers and work them. `BotBrain` calls it from its idle branch. |
 | Crew voices and names | `UI/CrewWhispers.cs` (a crewmate's doubt, or the Stoker's push, on suspicious orders), `UI/CrewNameTags.cs` (names over heads). Names come from `CrewRegistry.CrewName(actor)`. |
@@ -129,7 +132,7 @@ Use **Port → Build Windows (Development)** at each milestone. Development buil
 
 The screens share keyboard and gamepad navigation through `UI/MenuControls`. The main menu is Samprity's `Intro/OpeningMenu`; the how-to-play text (`IntroCard.BuildManual`) lives under its **Settings → Controls**. Ship has `UI/PauseMenu`, the part cards (`UI/PartCard`) and the chart view; Results has the ending screen (`UI/ResultsScreen`).
 
-**Balance:** run **Port → Balance Report** after changing any order's numbers. It plays the 12 orders through common strategies and prints the ending each impact gives, so you can check all 3 endings stay reachable.
+**Balance:** run **Port → Balance Report** after changing any order's numbers. It plays the 12 orders through common strategies and prints the ending each impact gives, so you can check all 4 endings stay reachable. It plays a solo voyage, so a strategy that says no to three ordinary orders in a row shows as Overboard at that order.
 
 ## Milestones (Dhaka time)
 
