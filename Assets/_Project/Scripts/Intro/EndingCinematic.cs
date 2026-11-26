@@ -42,6 +42,7 @@ public class EndingCinematic : MonoBehaviour
     Image fader;
     CanvasGroup titleGroup, lineGroup, skipGroup;
     Text titleText, lineText;
+    RawImage lineBacking;
     readonly List<GameObject> hidden = new List<GameObject>();
     readonly List<Behaviour> paused = new List<Behaviour>();
     AudioCategory seaSound, creakSound, floodSound, oneShots;
@@ -627,7 +628,7 @@ public class EndingCinematic : MonoBehaviour
 
     void Line(bool on, string text)
     {
-        if (on && lineText.text != text) lineText.text = text;
+        if (on && lineText.text != text) { lineText.text = text; TextLegibility.Fit(lineBacking, lineText); }
         lineGroup.alpha = Mathf.MoveTowards(lineGroup.alpha, on ? 1f : 0f, Time.deltaTime * 1.2f);
     }
 
@@ -661,15 +662,15 @@ public class EndingCinematic : MonoBehaviour
         titleRect.anchoredPosition = new Vector2(0f, 40f);
         titleText = Label(titleRect, F(theme ? theme.title : null), 88, ink);
         titleText.text = EndingData.For(RunRecord.Ending)?.title ?? RunRecord.Ending.ToString();
-        var shadow = titleText.gameObject.AddComponent<Shadow>();
-        shadow.effectColor = new Color(0f, 0f, 0f, 0.6f);
-        shadow.effectDistance = new Vector2(2f, -3f);
+        TextLegibility.Ink(titleText, 2.2f, 0.7f);
 
         lineGroup = Group("Line", out var lineRect);
         lineRect.anchorMin = lineRect.anchorMax = new Vector2(0.5f, 0.5f);
         lineRect.anchoredPosition = new Vector2(0f, -40f);
         lineText = Label(lineRect, F(theme ? theme.italic : null), 38, ink);
-        lineText.gameObject.AddComponent<Shadow>().effectColor = new Color(0f, 0f, 0f, 0.6f);
+        // The film can be bright (sky, ice, sea): outline, drop shadow and a soft dark backing keep the line readable.
+        TextLegibility.Ink(lineText);
+        lineBacking = TextLegibility.Backing(lineText);
 
         skipGroup = Group("Skip", out var skipRect);
         skipRect.anchorMin = skipRect.anchorMax = new Vector2(1f, 0f);

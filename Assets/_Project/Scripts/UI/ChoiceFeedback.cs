@@ -16,6 +16,9 @@ public class ChoiceFeedback : MonoBehaviour
 {
     public static bool IsShowing { get; private set; }
 
+    /// <summary>The big meters card just came up (AudioManager plays its sound).</summary>
+    public static event System.Action CardOpened;
+
     [Min(1f)] public float toastSeconds = 2.6f;
     [Min(2f)] public float hintSeconds = 8f;
     [Tooltip("Seconds after the first order comes in before the crewmate whispers.")]
@@ -212,6 +215,7 @@ public class ChoiceFeedback : MonoBehaviour
         prevTimeScale = Time.timeScale > 0f ? Time.timeScale : 1f;
         Time.timeScale = 0f;
         IsShowing = true;
+        CardOpened?.Invoke();
     }
 
     void CloseCard()

@@ -158,6 +158,7 @@ public class AudioManager : MonoBehaviour
         StokerBrain.StaticBurst += OnStaticBurst;
         StokerBrain.Sabotaged += OnSabotaged;
         MusterVote.VoteStarted += OnVoteStarted;
+        ChoiceFeedback.CardOpened += OnChoiceCard;
     }
 
     void OnDisable()
@@ -175,6 +176,7 @@ public class AudioManager : MonoBehaviour
         StokerBrain.StaticBurst -= OnStaticBurst;
         StokerBrain.Sabotaged -= OnSabotaged;
         MusterVote.VoteStarted -= OnVoteStarted;
+        ChoiceFeedback.CardOpened -= OnChoiceCard;
     }
 
     /// <summary>True while the real speaker static plays, so CaptainSubtitles skips its placeholder crackle.</summary>
@@ -264,6 +266,13 @@ public class AudioManager : MonoBehaviour
         bool human = o.Assignee != null && !o.Assignee.IsBot;
         if (choice == Choice.Obey) PlayUi(bank.success, human ? 0.6f : 0.3f);
         else if (choice == Choice.Refuse) PlayVoice(bank.refuseHm, 0.8f); // the Captain's displeased "hm"
+    }
+
+    /// <summary>The meters card (Captain's Trust, Ship Safety, Crew Trust) pops up: a paper slap and a low bell.</summary>
+    void OnChoiceCard()
+    {
+        PlayUi(bank.paper, 0.75f);
+        PlayUi(bank.orderBell, 0.4f, 0.75f);
     }
 
     void OnFakeNoticed(ActiveOrder o) => PlayVoice(bank.refuseHm, 0.9f, 0.9f);

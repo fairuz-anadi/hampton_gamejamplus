@@ -41,6 +41,7 @@ public class OpeningMenu : MonoBehaviour
     Text subtitleSpeaker, subtitleLine, crewStrip, credits;
     GameObject creditsPanel, padHints, keyHints;
     Image subtitleIcon;
+    RawImage subtitleBacking;
     Button beginButton;
     AudioSource uiAudio;
     bool interactive;
@@ -113,8 +114,10 @@ public class OpeningMenu : MonoBehaviour
         // Hang the line from its top edge, just under "THE CAPTAIN", so the two never overlap.
         subtitleLine.rectTransform.pivot = new Vector2(0.5f, 1f);
         subtitleLine.rectTransform.anchoredPosition = new Vector2(0f, -42f);
-        AddShadow(subtitleLine.gameObject, 0.85f);
-        AddShadow(subtitleSpeaker.gameObject, 0.7f);
+        // Over a bright sky or deck the cream line got lost: a dark outline, a drop shadow and a soft backing.
+        TextLegibility.Ink(subtitleLine);
+        TextLegibility.Ink(subtitleSpeaker, 1.4f, 0.7f);
+        subtitleBacking = TextLegibility.Backing(subtitleLine);
         subtitleGroup.alpha = 0f;
     }
 
@@ -516,6 +519,14 @@ public class OpeningMenu : MonoBehaviour
         if (string.IsNullOrEmpty(line)) yield break;
         subtitleSpeaker.text = speaker;
         subtitleLine.text = line;
+        // The backing reaches up over "THE CAPTAIN" too, and is never narrower than the name.
+        TextLegibility.Fit(subtitleBacking, subtitleLine, extraTop: 44f);
+        if (subtitleBacking != null)
+        {
+            var bs = subtitleBacking.rectTransform.sizeDelta;
+            bs.x = Mathf.Max(bs.x, subtitleSpeaker.preferredWidth + 260f);
+            subtitleBacking.rectTransform.sizeDelta = bs;
+        }
         subtitleIcon.enabled = overSpeaker && speakerIcon != null;
         // (Samprity) Just left of the speaker's name, however long it is ("SHIP'S SPEAKER" ran under a fixed spot).
         float nameHalf = Mathf.Min(subtitleSpeaker.preferredWidth, subtitleSpeaker.rectTransform.sizeDelta.x) * 0.5f;
