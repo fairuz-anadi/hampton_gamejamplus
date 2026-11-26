@@ -21,7 +21,11 @@ public class PlayerController : MonoBehaviour, ICrewActor, IInteractSource, IRoo
     /// <summary>Samprity's deck room volumes when the scene has them (Ship.unity), else the last RoomZone entered.</summary>
     public string RoomId => RoomVolume.All.Count > 0 ? RoomVolume.RoomAt(transform.position) : zoneRoom;
     string zoneRoom = "Unknown";
-    public bool IsLockedOut { get; private set; }
+    bool lockedOut;
+    /// <summary>Locked out by a muster vote, or gone overboard (no more orders either way).</summary>
+    public bool IsLockedOut { get => lockedOut || IsOverboard; private set => lockedOut = value; }
+    /// <summary>The Captain threw this player off the ship (MutinyWatch). They're out of the voyage for good.</summary>
+    public bool IsOverboard { get; private set; }
     public bool InteractHeld => interactAction.IsPressed();
     public float SteerInput => moveAction.ReadValue<Vector2>().x;
 
@@ -48,8 +52,33 @@ public class PlayerController : MonoBehaviour, ICrewActor, IInteractSource, IRoo
     void OnEnable() => CrewRegistry.Register(this);
     void OnDisable() => CrewRegistry.Unregister(this);
 
+    /// <summary>
+    /// Over the side (GameManager.ThrowOverboard, while crewmates are still aboard): no more orders from now, and after
+    /// a beat (the Captain's last word) a splash and they're gone from the deck. Their PlayerInput stays on, so their
+    /// controller stays claimed and pressing Start on it can't join a fresh player in their place.
+    /// </summary>
+    public void GoOverboard(float afterSeconds)
+    {
+        if (IsOverboard) return;
+        IsOverboard = true;
+        mover.SetMoveInput(Vector2.zero);
+        StartCoroutine(Over());
+
+        System.Collections.IEnumerator Over()
+        {
+            yield return new WaitForSeconds(afterSeconds);
+            MutinyWatch.RaiseThrownOverboard(Seat, transform.position);
+            foreach (var r in GetComponentsInChildren<Renderer>(true)) r.enabled = false;
+            foreach (var c in GetComponentsInChildren<Collider>(true)) c.enabled = false; // the CharacterController too
+            foreach (var b in GetComponentsInChildren<Behaviour>(true))
+                if (b != this && !(b is PlayerInput)) b.enabled = false; // mover, interactor, animator, name tag...
+            enabled = false; // OnDisable takes them off the crew list
+        }
+    }
+
     void Update()
     {
+        if (IsOverboard) return;
         // While steering the Wheel, the Move axis turns the ship instead of walking.
         bool steering = interactor != null && interactor.IsSteering;
         mover.SetMoveInput(steering ? Vector2.zero : moveAction.ReadValue<Vector2>());

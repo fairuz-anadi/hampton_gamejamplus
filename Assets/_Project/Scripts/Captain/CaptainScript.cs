@@ -144,6 +144,70 @@ public static class CaptainScript
         new[] { "It doesn't matter now." },
     };
 
+    // ---------- Two "no"s in a row: the warning (MutinyWatch.Warning). One more and they go over the side. ----------
+
+    /// <summary>Said instead of the usual refusal line when a player's refused twice running (by mood, 0-4).</summary>
+    public static readonly string[][] WarnRefuse =
+    {
+        new[]
+        {
+            "That's twice now, {seat}. Twice!\nI'm a patient man. But there's a lot of sea out there, and only one of you.",
+            "Two refusals in a row, {seat}. I've written them both down.\nThere's room on the page for one more. There's room in the sea for one more, too.",
+        },
+        new[]
+        {
+            "No again, {seat}? Let me be very clear, so even you understand.\nOne more 'no', and you'll be swimming to the Promised Port.",
+            "Twice, {seat}. That's my limit, give or take one.\nThe 'one' is you. Over the rail. Think about it.",
+        },
+        new[]
+        {
+            "Again?! {seat}, I have a plank. I have a sea. *hic*\nSay no once more and I'll introduce you to both.",
+            "Two NOs, {seat}. Two! I can count that high. Barely.\nOne more and you're going overboard. I mean it. Mostly. *hic*",
+        },
+        new[]
+        {
+            "TWICE! {seat}, you barnacle! You bilge rat!\nOne more 'no' and I throw you off this ship myself. With my own hands. *hic*",
+            "Do you know what we do with crew who say no, {seat}? Neither do I. We've never kept one long enough.\nOne more, and we'll find out together.",
+        },
+        new[]
+        {
+            "Twice, {seat}. I won't ask a third time.",
+        },
+    };
+
+    /// <summary>The same warning when the second "no" was an order left to run out.</summary>
+    public static readonly string[][] WarnExpired =
+    {
+        new[]
+        {
+            "Too slow again, {seat}. That's two you've let slip.\nLet one more go by, and I'll have you thrown over the side. Politely.",
+        },
+        new[]
+        {
+            "Asleep on my ship twice now, {seat}?\nOne more, and I'll wake you up. In the sea.",
+        },
+        new[]
+        {
+            "{seat}! Twice you've stood there doing nothing! *hic*\nDo nothing once more and you'll do it in the water.",
+        },
+        new[]
+        {
+            "I've seen anchors with more get-up-and-go, {seat}! Two orders, gone!\nOne more and you go the way of the anchor. Straight down. *hic*",
+        },
+        new[]
+        {
+            "Two orders gone, {seat}. One more and so are you.",
+        },
+    };
+
+    /// <summary>His last word to them, the third "no": one text box, it's on screen while the voyage ends.</summary>
+    public static readonly string[] LastWord =
+    {
+        "I did warn you, {seat}. Over you go.",
+        "Man overboard! ...No? Nobody? Good. Goodbye, {seat}.",
+        "I did say, {seat}. I did say. Over the side with you.",
+    };
+
     // ---------- He caught a fake (serious at every mood) ----------
 
     /// <summary>The Captain "noticed" a fake. There is no camera in that room.</summary>
@@ -316,12 +380,14 @@ public static class CaptainScript
     public const string EpilogueShipSaved = "So. About that speech.\nI was drunk. You all heard me. Very drunk.";
     public const string EpilogueManySaved = "Well. She's gone. But look at all those boats.\nI always said this was a lifeboat sort of ship.";
     public const string EpilogueShipLost = "I gave the orders. You're the ones who followed them.\nRemember that, when they ask.\nShe's never been worth more.";
+    public const string EpilogueOverboard = "Man overboard? No, no. Everyone's accounted for.\nEveryone who matters.";
 
     /// <summary>His last word for an ending. Anadi / Samprity: show this on the results screen.</summary>
     public static string EpilogueFor(Ending ending) => ending switch
     {
         Ending.WhatIf => EpilogueShipSaved,
         Ending.ManySaved => EpilogueManySaved,
+        Ending.Overboard => EpilogueOverboard,
         _ => EpilogueShipLost,
     };
 

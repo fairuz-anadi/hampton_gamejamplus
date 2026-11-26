@@ -12,7 +12,9 @@ public enum GameState { Menu, Part1, Part2, Part3, Iceberg, Results }
 /// <summary>How the bow met the iceberg. Head-on is within 10°, glancing 10-45°, scrape above 45°.</summary>
 public enum ImpactKind { HeadOn, Glancing, Scrape }
 
-public enum Ending { WhatIf, ManySaved, CaptainWins }
+/// <summary>Overboard: a player said no three times in a row and the Captain threw them off (MutinyWatch). Keep new
+/// endings at the end, the ending assets store these as numbers.</summary>
+public enum Ending { WhatIf, ManySaved, CaptainWins, Overboard }
 
 /// <summary>How much one choice moves each meter. Values are added, then clamped to 0..100.</summary>
 [System.Serializable]

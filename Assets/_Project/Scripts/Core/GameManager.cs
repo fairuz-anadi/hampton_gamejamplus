@@ -23,6 +23,10 @@ public class GameManager : MonoBehaviour
     [Tooltip("Used only while there is no IcebergSequence in the scene.")]
     [SerializeField] float placeholderIcebergSeconds = 5f;
     [SerializeField] string resultsScene = "Results";
+    [Tooltip("Real seconds between the Captain's 'I did warn you' and the Overboard film.")]
+    [SerializeField] float overboardBeat = 4f;
+    [Tooltip("Co-op: seconds after the Captain's last word before a thrown player splashes and leaves the deck.")]
+    [SerializeField] float splashAfter = 1.6f;
 
     public GameState State { get; private set; } = GameState.Menu;
 
@@ -38,6 +42,9 @@ public class GameManager : MonoBehaviour
 
     /// <summary>Rabib's IcebergSequence sets this so the placeholder timer doesn't run.</summary>
     public bool IcebergHandledExternally { get; set; }
+
+    /// <summary>A player is going over the side (MutinyWatch): the voyage is ending, nothing else should start.</summary>
+    public bool Overboard { get; private set; }
 
     void Awake()
     {
@@ -77,6 +84,7 @@ public class GameManager : MonoBehaviour
     public void StartRun()
     {
         StopAllCoroutines();
+        Overboard = false;
         RunRecord.Clear();
         MeterSystem.Instance?.ResetMeters();
         IceWarnings.Instance?.ResetAll();
@@ -95,7 +103,7 @@ public class GameManager : MonoBehaviour
 
     public void OnAllOrdersDone()
     {
-        if (State >= GameState.Iceberg) return;
+        if (State >= GameState.Iceberg || Overboard) return;
         StopAllCoroutines();
         StartCoroutine(TruthThenIceberg());
     }
@@ -126,7 +134,7 @@ public class GameManager : MonoBehaviour
 
     public void StartIceberg()
     {
-        if (State >= GameState.Iceberg) return;
+        if (State >= GameState.Iceberg || Overboard) return;
         StopAllCoroutines();
         OrderDirector.Instance?.Stop();
         SetState(GameState.Iceberg);
@@ -142,13 +150,50 @@ public class GameManager : MonoBehaviour
     /// <summary>Rabib's IcebergSequence calls this at impact with the angle in degrees.</summary>
     public void FinishIceberg(float impactAngle)
     {
-        if (State == GameState.Results) return;
+        if (State == GameState.Results || Overboard) return;
         StopAllCoroutines();
         OrderDirector.Instance?.Stop();
         var ending = EndingEvaluator.Resolve(impactAngle);
         Debug.Log($"[GameManager] Impact {RunRecord.Impact} ({impactAngle:0}°), Safety {RunRecord.FinalShipSafety}: {ending}");
         var stoker = CrewRegistry.Stoker;
         if (stoker != null) RunRecord.StokerSeat = stoker.Seat;
+        SetState(GameState.Results);
+        LoadScene(resultsScene);
+    }
+
+    /// <summary>
+    /// MutinyWatch calls this on a player's third "no" in a row; the Captain has his last word (CaptainDirector says
+    /// it from the same answer). With crewmates still aboard, only that player goes over the side and the rest sail
+    /// on. The last player aboard ends the voyage: the orders stop, and after a beat the Overboard film plays.
+    /// </summary>
+    public void ThrowOverboard(int seat)
+    {
+        if (Overboard || State < GameState.Part1 || State >= GameState.Iceberg) return;
+        if (RunRecord.ThrownOverboard.Contains(seat)) return;
+        RunRecord.ThrownOverboard.Add(seat);
+        RunRecord.OverboardSeat = seat;
+        if (!MutinyWatch.LastAboard(seat))
+        {
+            Debug.Log($"[GameManager] {CrewRegistry.SeatName(seat)} said no {MutinyWatch.Limit} times in a row: overboard. The rest sail on.");
+            if (CrewRegistry.BySeat(seat) is PlayerController player) player.GoOverboard(splashAfter);
+            return;
+        }
+        Overboard = true;
+        StopAllCoroutines();
+        OrderDirector.Instance?.Stop();
+        ChoiceFeedback.Dismiss();
+        Debug.Log($"[GameManager] {CrewRegistry.SeatName(seat)} said no {MutinyWatch.Limit} times in a row: overboard.");
+        StartCoroutine(OverboardThenResults(seat));
+    }
+
+    IEnumerator OverboardThenResults(int seat)
+    {
+        // Real time: a pause menu or a card mustn't stretch it, and his line is on screen meanwhile.
+        yield return new WaitForSecondsRealtime(overboardBeat);
+        EndingEvaluator.ResolveOverboard(seat);
+        var stoker = CrewRegistry.Stoker;
+        if (stoker != null) RunRecord.StokerSeat = stoker.Seat;
+        if (PauseMenu.Instance != null && PauseMenu.Instance.IsPaused) PauseMenu.Instance.Resume();
         SetState(GameState.Results);
         LoadScene(resultsScene);
     }

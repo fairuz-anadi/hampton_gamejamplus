@@ -7,7 +7,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-/// Plays the ending film for all three endings in the Results scene and photographs every shot. Owner: Samprity.
+/// Plays the ending film for all four endings in the Results scene and photographs every shot. Owner: Samprity.
 ///   Unity.exe -batchmode -projectPath . -executeMethod EndingChecks.RunBatch      (no -quit: it exits itself)
 /// For each ending: the film starts, runs 12-15 s through shots 1-3, then hands over to the results screen with the
 /// scene's own camera, lights and canvases back. No errors. Writes Logs/EndingChecks.txt and Logs/Ending_*.png.
@@ -15,7 +15,7 @@ using UnityEngine.SceneManagement;
 public static class EndingChecks
 {
     const string ResultsScenePath = "Assets/_Project/Scenes/Results.unity";
-    static readonly Ending[] Order = { Ending.WhatIf, Ending.ManySaved, Ending.CaptainWins };
+    static readonly Ending[] Order = { Ending.WhatIf, Ending.ManySaved, Ending.CaptainWins, Ending.Overboard };
     static readonly StringBuilder report = new StringBuilder();
     static readonly List<string> errors = new List<string>();
     static bool ok = true;
@@ -64,6 +64,7 @@ public static class EndingChecks
                 RunRecord.HasEnding = true;
                 RunRecord.Ending = Order[index];
                 RunRecord.FinalShipSafety = 60;
+                RunRecord.OverboardSeat = Order[index] == Ending.Overboard ? 1 : 0;
                 SceneManager.LoadScene("Results");
                 started = now;
                 lastShot = 0;

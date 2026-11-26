@@ -60,6 +60,10 @@ public static class RunRecord
     /// <summary>False until the iceberg has been hit and the ending decided.</summary>
     public static bool HasEnding;
     public static Ending Ending;
+    /// <summary>The last seat the Captain threw overboard (the one the Overboard film shows). 0 if nobody.</summary>
+    public static int OverboardSeat;
+    /// <summary>Every seat thrown overboard this run, in order. In co-op the others can sail on without them.</summary>
+    public static readonly List<int> ThrownOverboard = new List<int>(3);
 
     public static void Clear()
     {
@@ -73,6 +77,8 @@ public static class RunRecord
         IceWarningsDelivered = IceWarningsLost = IceWarningsHidden = 0;
         HasEnding = false;
         Ending = Ending.CaptainWins;
+        OverboardSeat = 0;
+        ThrownOverboard.Clear();
     }
 
     /// <summary>The most recent choice a given seat made, or null.</summary>

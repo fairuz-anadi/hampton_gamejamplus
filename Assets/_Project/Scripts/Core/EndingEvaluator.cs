@@ -5,6 +5,7 @@ using UnityEngine;
 ///   Rare "what if": head-on and Safety >= 60.
 ///   Many saved:     Safety >= 35, or head-on. Drops to Captain wins while the lifeboat store is locked.
 ///   Captain wins:   everything else.
+///   Overboard:      not decided here at the iceberg: MutinyWatch ends the voyage early (ResolveOverboard).
 /// </summary>
 public static class EndingEvaluator
 {
@@ -61,7 +62,18 @@ public static class EndingEvaluator
         return RunRecord.Ending;
     }
 
-    // ---------- "Endings found: 1/3", saved between sessions ----------
+    /// <summary>Called by GameManager when the Captain throws the last player aboard overboard: no iceberg, the voyage just ends.</summary>
+    public static Ending ResolveOverboard(int seat)
+    {
+        MeterSystem.Instance?.SnapshotToRecord();
+        RunRecord.OverboardSeat = seat;
+        RunRecord.Ending = Ending.Overboard;
+        RunRecord.HasEnding = true;
+        MarkFound(RunRecord.Ending);
+        return RunRecord.Ending;
+    }
+
+    // ---------- "Endings found: 1/4", saved between sessions ----------
 
     public static int EndingCount => System.Enum.GetValues(typeof(Ending)).Length;
 

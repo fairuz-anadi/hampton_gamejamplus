@@ -112,7 +112,15 @@ public class ResultsScreen : MonoBehaviour
     {
         string title = endingData != null ? endingData.title : RunRecord.Ending.ToString();
         Txt(title, titleFont, 92, Cream, new Vector2(W / 2, 106), TextAnchor.MiddleCenter, 760);
-        if (endingData != null) Txt(endingData.body, bodyFont, 30, Cream, new Vector2(W / 2, 204), TextAnchor.MiddleCenter, 1560);
+        string body = endingData != null ? endingData.body : "";
+        // Co-op: crewmates the Captain threw overboard on the way, while the others sailed on.
+        if (RunRecord.Ending != Ending.Overboard && RunRecord.ThrownOverboard.Count > 0)
+        {
+            var thrown = new List<string>();
+            foreach (int seat in RunRecord.ThrownOverboard) thrown.Add(CrewRegistry.SeatName(seat));
+            body += (body.Length > 0 ? "\n" : "") + $"Thrown overboard on the way: {string.Join(", ", thrown)}.";
+        }
+        if (body.Length > 0) Txt(body, bodyFont, 30, Cream, new Vector2(W / 2, 204), TextAnchor.MiddleCenter, 1560);
 
         Txt("The Voyage Chart", titleFont, 54, Ink, new Vector2(110, 300), TextAnchor.MiddleLeft, 600);
         Txt("Home", bodyFont, 28, Ink, new Vector2(270, 781), TextAnchor.MiddleLeft, 200);
@@ -137,8 +145,8 @@ public class ResultsScreen : MonoBehaviour
         Txt("Endings found", titleFont, 40, Ink, new Vector2(1705, 596), TextAnchor.MiddleCenter, 280);
         Txt($"{EndingEvaluator.FoundCount} of {EndingEvaluator.EndingCount}", bodyFont, 34, Ink, new Vector2(1705, 841), TextAnchor.MiddleCenter, 200);
         var all = (Ending[])System.Enum.GetValues(typeof(Ending));
-        for (int k = 0; k < all.Length && k < 3; k++)
-            if (!EndingEvaluator.IsFound(all[k])) Txt("?", titleFont, 54, C(150, 140, 120), new Vector2(1615 + k * 90, 730), TextAnchor.MiddleCenter, 60);
+        for (int k = 0; k < all.Length; k++)
+            if (!EndingEvaluator.IsFound(all[k])) Txt("?", titleFont, 54, C(150, 140, 120), new Vector2(BottleX(k, all.Length), 730), TextAnchor.MiddleCenter, 60);
 
         if (endingData != null && !string.IsNullOrEmpty(endingData.closingLine))
             Txt($"\"{endingData.closingLine}\"", bodyFont, 32, C(210, 220, 230), new Vector2(W / 2, 1030), TextAnchor.MiddleCenter, 1700);
@@ -194,7 +202,10 @@ public class ResultsScreen : MonoBehaviour
         }
 
         // Ribbon banner in the ending's colour.
-        var ribbon = RunRecord.Ending switch { Ending.WhatIf => C(200, 150, 56), Ending.CaptainWins => C(70, 74, 96), _ => C(196, 64, 50) };
+        var ribbon = RunRecord.Ending switch
+        {
+            Ending.WhatIf => C(200, 150, 56), Ending.CaptainWins => C(70, 74, 96), Ending.Overboard => C(46, 92, 104), _ => C(196, 64, 50),
+        };
         var tail = ribbon * 0.75f; tail.a = 1f;
         float bx = W / 2f, by = 70, bw = 760;
         p.Polygon(new[] { V(bx - bw / 2 - 70, by + 10), V(bx - bw / 2, by - 4), V(bx - bw / 2, by + 84), V(bx - bw / 2 - 70, by + 98), V(bx - bw / 2 - 40, by + 54) }, tail);
@@ -317,8 +328,20 @@ public class ResultsScreen : MonoBehaviour
             Ship(p, Cove + V(40, 85), 25f); // listing, going down
             for (int k = 0; k < 4; k++) p.Ellipse(Cove.x + 10 + k * 24, Cove.y + 132 + (k % 2) * 10, 9, 5, C(150, 110, 70)); // the lifeboats
         }
+        else if (RunRecord.Ending == Ending.Overboard)
+        {
+            // Thrown off where the last answer was given: the ship sails on along the route, a ring in the water behind.
+            var stops = RoutePoints();
+            var at = stops[stops.Count - 1];
+            p.Ring(at.x - 30, at.y + 52, 13, 3, C(70, 100, 120));
+            p.Ring(at.x - 30, at.y + 52, 6, 3, C(70, 100, 120));
+            Ship(p, at + V(48, 30), 0f);
+        }
         else Ship(p, Cove + V(40, 85), 55f); // gone down at his X
     }
+
+    /// <summary>Where ending bottle k of n sits on the "Endings found" paper (it's 290 wide, centred on 1705).</summary>
+    static float BottleX(int k, int n) => 1705f + (k - (n - 1) * 0.5f) * (n > 3 ? 66f : 90f);
 
     void Ship(EndingPainter p, Vector2 at, float tiltDeg)
     {
@@ -394,17 +417,19 @@ public class ResultsScreen : MonoBehaviour
     {
         Paper(p, 1560, 560, 1850, 885, Cream);
         var all = (Ending[])System.Enum.GetValues(typeof(Ending));
-        for (int k = 0; k < 3 && k < all.Length; k++)
+        int n = all.Length;
+        float hw = n > 3 ? 26f : 30f; // four bottles stand a little slimmer to fit the paper
+        for (int k = 0; k < n; k++)
         {
             bool found = EndingEvaluator.IsFound(all[k]);
-            float bx = 1615 + k * 90, by = 650;
-            p.RoundRect(bx - 30, by, bx + 30, by + 150, 26, found ? C(210, 232, 236) : C(230, 226, 216));
-            p.RoundRectOutline(bx - 30, by, bx + 30, by + 150, 26, 4, C(120, 150, 160));
+            float bx = BottleX(k, n), by = 650;
+            p.RoundRect(bx - hw, by, bx + hw, by + 150, hw - 4, found ? C(210, 232, 236) : C(230, 226, 216));
+            p.RoundRectOutline(bx - hw, by, bx + hw, by + 150, hw - 4, 4, C(120, 150, 160));
             p.RoundRect(bx - 10, by - 24, bx + 10, by + 4, 3, C(160, 120, 80));
             if (found)
             {
-                p.Polygon(new[] { V(bx - 20, by + 110), V(bx + 20, by + 110), V(bx + 12, by + 124), V(bx - 12, by + 124) }, C(90, 60, 40));
-                p.Polygon(new[] { V(bx, by + 60), V(bx, by + 108), V(bx + 18, by + 104) }, Cream);
+                p.Polygon(new[] { V(bx - 18, by + 110), V(bx + 18, by + 110), V(bx + 11, by + 124), V(bx - 11, by + 124) }, C(90, 60, 40));
+                p.Polygon(new[] { V(bx, by + 60), V(bx, by + 108), V(bx + 16, by + 104) }, Cream);
             }
         }
     }

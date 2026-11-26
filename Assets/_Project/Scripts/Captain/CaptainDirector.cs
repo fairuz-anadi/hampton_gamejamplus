@@ -101,6 +101,8 @@ public class CaptainDirector : MonoBehaviour
         && !queue.Exists(l => l.orderId == current.orderId);
     float nextAsideAt = float.MaxValue;
     bool monologueStarted;
+    /// <summary>He's said his last word to the last player aboard, going overboard (MutinyWatch): the voyage is ending.</summary>
+    bool saidLastWord;
     int lastMood;
     /// <summary>The final order's line until it has been spoken; the monologue opens with it if it hasn't.</summary>
     string unspokenFinalLine;
@@ -281,11 +283,12 @@ public class CaptainDirector : MonoBehaviour
     }
 
     /// <summary>For other systems (e.g. the muster vote): the Captain says it now.</summary>
-    public void SayStory(string text) => SayNow(text, Priority.Story);
+    public void SayStory(string text) { if (!saidLastWord) SayNow(text, Priority.Story); }
 
     /// <summary>For TutorialHints: said now, tied to that crew member's open order, which comes back after it.</summary>
     public void SayTutorial(string text, int seat = 0)
     {
+        if (saidLastWord) return; // nothing cuts over his last word to someone going overboard
         var order = OrderDirector.Instance != null ? OrderDirector.Instance.GetOrderFor(CrewRegistry.BySeat(seat)) : null;
         SayNow(text, Priority.Order, order != null ? order.Id : 0);
     }
@@ -308,6 +311,7 @@ public class CaptainDirector : MonoBehaviour
         {
             case GameState.Part1:
                 Silence();
+                saidLastWord = false;
                 monologueStarted = false;
                 lastMood = 0;
                 unspokenFinalLine = null;
@@ -375,6 +379,26 @@ public class CaptainDirector : MonoBehaviour
         int seat = o.Assignee?.Seat ?? 0;
         int mood = Mood;
         EndOrder(o.Id);
+        // MutinyWatch: the third "no" in a row is the last, the second gets a warning instead of the usual line.
+        if (MutinyWatch.IsLastStraw(o, choice))
+        {
+            if (saidLastWord) return;
+            // The last player aboard: the voyage ends on this line, so nothing may cut over it from here on.
+            if (MutinyWatch.LastAboard(seat)) { saidLastWord = true; Silence(); }
+            SayNow(Fill(Pick(CaptainScript.LastWord), seat, o), Priority.Story);
+            return;
+        }
+        // The voyage is ending on his last word: nothing else gets said.
+        if (saidLastWord || (GameManager.Instance != null && GameManager.Instance.Overboard)) return;
+        if (choice == Choice.Refuse || choice == Choice.Expired)
+        {
+            if (MutinyWatch.IsWarning(o, choice))
+            {
+                var warn = choice == Choice.Refuse ? CaptainScript.WarnRefuse : CaptainScript.WarnExpired;
+                SayNow(Fill(Pick(CaptainScript.ForMood(warn, mood)), seat, o), Priority.Order);
+                return;
+            }
+        }
         switch (choice)
         {
             case Choice.Obey:
@@ -397,6 +421,7 @@ public class CaptainDirector : MonoBehaviour
 
     void OnFakeNoticed(ActiveOrder o)
     {
+        if (saidLastWord) return;
         SayNow(Fill(Pick(CaptainScript.FakeNoticed), o.Assignee?.Seat ?? 0, o), Priority.Story);
     }
 

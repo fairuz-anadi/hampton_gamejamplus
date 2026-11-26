@@ -14,6 +14,16 @@ public class EndingSet : ScriptableObject
     public GameObject bottle;
     public GameObject iceberg;
 
+    [Header("Overboard: the throw (from the Quaternius UAL1 animation library, swapped in for that film only)")]
+    [Tooltip("The Captain's two-handed shove.")]
+    public AnimationClip shove;
+    [Tooltip("The player taking the shove in the chest.")]
+    public AnimationClip struck;
+    [Tooltip("The player flailing on the way down.")]
+    public AnimationClip falling;
+    [Tooltip("The player treading water in the ship's wake.")]
+    public AnimationClip treading;
+
     static EndingSet cached;
     public static EndingSet Load() => cached != null ? cached : (cached = Resources.Load<EndingSet>("EndingSet"));
 }

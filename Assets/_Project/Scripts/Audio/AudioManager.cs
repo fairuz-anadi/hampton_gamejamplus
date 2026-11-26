@@ -159,6 +159,7 @@ public class AudioManager : MonoBehaviour
         StokerBrain.Sabotaged += OnSabotaged;
         MusterVote.VoteStarted += OnVoteStarted;
         ChoiceFeedback.CardOpened += OnChoiceCard;
+        MutinyWatch.ThrownOverboard += OnThrownOverboard;
     }
 
     void OnDisable()
@@ -177,6 +178,7 @@ public class AudioManager : MonoBehaviour
         StokerBrain.Sabotaged -= OnSabotaged;
         MusterVote.VoteStarted -= OnVoteStarted;
         ChoiceFeedback.CardOpened -= OnChoiceCard;
+        MutinyWatch.ThrownOverboard -= OnThrownOverboard;
     }
 
     /// <summary>True while the real speaker static plays, so CaptainSubtitles skips its placeholder crackle.</summary>
@@ -273,6 +275,13 @@ public class AudioManager : MonoBehaviour
     {
         PlayUi(bank.paper, 0.75f);
         PlayUi(bank.orderBell, 0.4f, 0.75f);
+    }
+
+    /// <summary>Co-op: a player goes over the side while the rest sail on. A scuffle at the rail, then the splash.</summary>
+    void OnThrownOverboard(int seat, Vector3 at)
+    {
+        PlayAt(bank.impactWood, at, 0.5f, bank.sfx, spatial: 0.5f);
+        PlayAt(SplashSound.Clip, at + Vector3.down * 2f, 0.9f, bank.sfx, spatial: 0.4f);
     }
 
     void OnFakeNoticed(ActiveOrder o) => PlayVoice(bank.refuseHm, 0.9f, 0.9f);

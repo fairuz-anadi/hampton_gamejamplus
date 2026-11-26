@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8c265e251e224808936af351d13a2f67, type: 3}
+  m_Name: 04_Overboard
+  m_EditorClassIdentifier:
+  ending: 3
+  title: "Man Overboard"
+  body: "Three times you said no, and the Captain stopped asking. The ship sailed on without you. Below is every order you were given, and what it cost."
+  closingLine: "He never needed you to obey. Only to stay quiet."

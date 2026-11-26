@@ -14,6 +14,7 @@ public static class EndingStageBuilder
 {
     const string PrefabFolder = "Assets/_Project/Prefabs/Environment/Ending";
     const string SetPath = "Assets/_Project/Prefabs/Environment/Resources/EndingSet.asset";
+    const string AnimLibrary = "Assets/_Project/Art/ThirdParty/Quaternius/Animations/UAL1_Standard.fbx";
     const string MaterialFolder = "Assets/_Project/Art/Materials/Ending";
     const string MeshFolder = "Assets/_Project/Art/Models/Generated";
     const string IcebergPath = "Assets/_Project/Prefabs/Environment/Resources/Iceberg.prefab";
@@ -64,6 +65,13 @@ public static class EndingStageBuilder
         set.wreckerBoat = wrecker;
         set.bottle = bottle;
         set.cove = cove;
+        // The Overboard film's throw, from the animation library the crew and the Captain already use.
+        var clips = AssetDatabase.LoadAllAssetsAtPath(AnimLibrary).OfType<AnimationClip>().ToArray();
+        AnimationClip Clip(string n) => clips.FirstOrDefault(c => c.name == n || c.name.EndsWith("|" + n));
+        set.shove = Clip("Push_Loop");
+        set.struck = Clip("Hit_Chest");
+        set.falling = Clip("Jump_Loop");
+        set.treading = Clip("Swim_Idle_Loop");
         EditorUtility.SetDirty(set);
         AssetDatabase.SaveAssets();
         Debug.Log("[Ending] Built the ending stage and " + SetPath);

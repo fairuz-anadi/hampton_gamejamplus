@@ -17,6 +17,9 @@ using UnityEngine.UI;
 ///                 from high up, the ship goes dark and a sea of lanterns is left (too many witnesses).
 ///   Record Time:  the ship goes down bow first; in Grey Cove the Captain, sober, stands in the wreckers' boat and
 ///                 drops the bottle; the bottle bobs alone as the last light goes out.
+///   Overboard:    a player said no three times running: at the bow rail the Captain walks up, shoves them, and they
+///                 go backwards over the rail; from the water, they fall past the hull with a splash and he looks down
+///                 alone; the ship steams on, leaving them treading water by a small light.
 /// Enter / Space / Esc or A / Start skips it. When it ends it puts everything back and fades into the results.
 /// </summary>
 public class EndingCinematic : MonoBehaviour
@@ -104,6 +107,7 @@ public class EndingCinematic : MonoBehaviour
         {
             case Ending.WhatIf: yield return Dawn(); break;
             case Ending.ManySaved: yield return ManySaved(); break;
+            case Ending.Overboard: yield return Overboard(); break;
             default: yield return RecordTime(); break;
         }
         yield return Finish();
@@ -261,6 +265,187 @@ public class EndingCinematic : MonoBehaviour
             });
     }
 
+    /// <summary>
+    /// Man overboard (MutinyWatch): three "no"s in a row and the Captain threw them off. About 13 s.
+    ///   1. Night on the open bow, the player at the starboard rail looking out. The Captain walks up behind them; they
+    ///      turn round. "I did warn you." He shoves them (Push), they take it in the chest (Hit_Chest), hit the rail
+    ///      and tip backwards over it, flailing (Jump_Loop).
+    ///   2. From the water by the hull: they fall past the hull into the sea with a splash; the Captain looks down
+    ///      from the rail, alone.
+    ///   3. The ship steams on, lit up. They're left treading water (Swim_Idle_Loop) in her wake by a small light.
+    /// The clips come from EndingSet and are swapped into this film's two actors only (Swap): the Captain's Flinch
+    /// state plays the shove; the player's Fixing, Interact and Torch states play the hit, the fall and the swim.
+    /// The tip over the rail and the fall are moved in code, as the library has no throw clip.
+    /// </summary>
+    IEnumerator Overboard()
+    {
+        int seat = Mathf.Max(1, RunRecord.OverboardSeat);
+        string who = CrewRegistry.SeatName(seat);
+        Phase("Night", 0.35f);
+        mood.ApplyImmediate(2);
+        Ambience(Bank?.seaHull, 0.5f);
+        Loop(creakSound, Bank?.hullCreak, 0.3f);
+        Loop(floodSound, Bank?.wind, 0.25f);
+        yield return Black(0.5f);
+
+        // The open bow deck (z 72-76), starboard side: the rail runs along x 5.8, about 1 m high.
+        const float Z = 74.2f, RailX = 5.8f, RailTop = 1.0f;
+        var victim = Crew(seat - 1, new Vector3(5.1f, 0f, Z), 90f, null);
+        Swap(victim, ("Fixing_Kneeling", set.struck), ("Interact", set.falling));
+        var captain = Captain(new Vector3(2.5f, 0f, Z - 0.05f), 90f);
+        Swap(captain, ("Hit_Head", set.shove));
+        Play(captain, "Formal", 0f);
+
+        var capFrom = captain.transform.position;
+        var capTo = new Vector3(4.35f, 0f, Z);
+        var startAt = victim.transform.position;
+        var backAt = new Vector3(5.45f, 0f, Z);          // where the shove sends them: against the rail
+        var pivot = new Vector3(RailX, RailTop, Z);      // what they tip over
+        var facingOut = Quaternion.Euler(0f, 90f, 0f);
+        var facingIn = Quaternion.Euler(0f, 270f, 0f);   // turned round, back to the sea
+        int beat = 0;
+
+        // 1. At the rail. He walks up behind them, they turn, his line, the shove, and over they go.
+        const float S1 = 5f;
+        yield return Shot1(S1, new Vector3(1.0f, 1.7f, 75.4f), new Vector3(4.8f, 1.1f, Z), new Vector3(2.0f, 1.55f, 75.3f), new Vector3(5.1f, 1.0f, Z), 44f,
+            k =>
+            {
+                float t = k * S1;
+                // He walks (0.3-1.5 s), stops, and talks.
+                float walk = Mathf.InverseLerp(0.3f, 1.5f, t);
+                if (beat < 2) captain.transform.position = Vector3.Lerp(capFrom, capTo, walk);
+                SetSpeed(captain, walk > 0f && walk < 1f ? 1.4f : 0f);
+                if (beat == 0 && t > 1.5f) { beat = 1; Play(captain, "Talk"); }
+                // They hear him and turn round (1.4-2.0 s).
+                if (beat < 3) victim.transform.rotation = Quaternion.Slerp(facingOut, facingIn, Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(1.4f, 2.0f, t)));
+                Line(t > 1.3f && t < 3.2f, $"I did warn you, {who}.");
+                // The shove (3.2 s): he lunges a step; they take it in the chest and stagger back into the rail.
+                if (beat == 1 && t > 3.2f) { beat = 2; Play(captain, "Flinch", 0.08f); }
+                if (beat >= 2) captain.transform.position = Vector3.Lerp(capTo, capTo + Vector3.right * 0.3f, Mathf.InverseLerp(3.2f, 3.45f, t));
+                if (beat == 2 && t > 3.3f) { beat = 3; Play(victim, "Fixing", 0.06f); OneShot(Bank?.impactWood, 0.55f); }
+                if (beat == 3) victim.transform.position = Vector3.Lerp(startAt, backAt, Mathf.InverseLerp(3.3f, 3.55f, t));
+                // Over the rail (3.55 s on): they tip backwards round the rail top, faster and faster, flailing.
+                if (beat == 3 && t > 3.55f) { beat = 4; Play(victim, "Interact", 0.1f); OneShot(Bank?.clank, 0.4f); }
+                if (beat >= 4)
+                {
+                    float u = Mathf.InverseLerp(3.55f, 4.5f, t);
+                    var tip = Quaternion.AngleAxis(-125f * u * u, Vector3.forward); // head goes out over the sea (+x)
+                    var pos = pivot + tip * (backAt - pivot);
+                    // Then they drop clear of the rail.
+                    float drop = Mathf.Max(0f, t - 4.5f);
+                    pos += new Vector3(drop * 0.9f, -4.9f * drop * drop, 0f);
+                    victim.transform.SetPositionAndRotation(pos, tip * facingIn);
+                }
+            });
+        lineGroup.alpha = 0f;
+        var fallRot = victim.transform.rotation;
+
+        // 2. From the water: they come down past the hull, the splash, and the Captain alone at the rail looking down.
+        captain.transform.SetPositionAndRotation(new Vector3(5.2f, 0f, Z - 0.1f), facingOut);
+        Play(captain, "Formal", 0f);
+        SetSpeed(captain, 0f);
+        victim.transform.SetPositionAndRotation(new Vector3(6.6f, 0.6f, Z), fallRot);
+        var fallVel = new Vector3(0.5f, -1.2f, 0f);
+        var ripple = WaterLight(new Vector3(7.2f, SeaY + 0.3f, Z - 0.4f), new Color(0.75f, 0.85f, 1f), 3.5f, 0f);
+        float splashAt = -1f;
+        const float S2 = 3.6f;
+        yield return Shot2(S2, new Vector3(11f, SeaY + 0.7f, 69.5f), new Vector3(6.2f, 0.6f, Z), new Vector3(10.6f, SeaY + 0.8f, 70.6f), new Vector3(5.9f, 0.9f, Z), 46f,
+            k =>
+            {
+                float t = k * S2;
+                if (victim == null || t < 0.25f) return;
+                if (splashAt < 0f)
+                {
+                    // Falling, still turning over.
+                    fallVel += Vector3.down * 9.8f * Time.deltaTime;
+                    victim.transform.position += fallVel * Time.deltaTime;
+                    victim.transform.rotation = Quaternion.AngleAxis(-160f * Time.deltaTime, Vector3.forward) * victim.transform.rotation;
+                    if (victim.transform.position.y <= SeaY - 0.2f) { splashAt = t; OneShot(SplashSound.Clip, 0.95f); }
+                }
+                else
+                {
+                    // Under, and gone; the water glows white where they went in, then settles.
+                    float since = t - splashAt;
+                    victim.transform.position += Vector3.down * 2.5f * Time.deltaTime;
+                    ripple.intensity = 3.2f * Mathf.Exp(-since * 2.2f);
+                    if (since > 0.7f) { Destroy(victim); victim = null; }
+                }
+            });
+        if (victim != null) Destroy(victim);
+        Destroy(ripple.gameObject);
+
+        // 3. She steams on. They're left treading water by a small light in her wake, falling back into the dark.
+        var lamp = WaterLight(new Vector3(11f, SeaY + 0.5f, 62f), new Color(1f, 0.78f, 0.45f), 3.5f, 2.6f);
+        var lampFrom = lamp.transform.position;
+        var swimmer = Crew(seat - 1, new Vector3(11.4f, SeaY - SwimDepth, 62f), 270f, null);
+        Swap(swimmer, ("Idle_Torch_Loop", set.treading));
+        Play(swimmer, "Torch", 0f);
+        const float S3 = 4.4f;
+        yield return Shot3(S3, new Vector3(18f, 2.2f, 52f), new Vector3(4f, 3f, 68f), new Vector3(19f, 2.6f, 44f), new Vector3(4f, 3.5f, 64f), 46f,
+            k =>
+            {
+                // The ship holds still and the sea streams past, so "left behind" means sliding aft with the water.
+                float bob = Mathf.Sin(Time.time * 1.6f) * 0.05f;
+                var p = lampFrom + Vector3.back * (k * 13f);
+                p.y = lampFrom.y + bob;
+                lamp.transform.position = p;
+                lamp.intensity = Mathf.Lerp(2.6f, 0.9f, k);
+                swimmer.transform.position = new Vector3(p.x + 0.4f, SeaY - SwimDepth + bob, p.z);
+                Title(k > 0.4f);
+                Line(k > 0.55f, EndingData.For(Ending.Overboard)?.closingLine ?? "");
+            });
+    }
+
+    /// <summary>How far below the surface a treading-water swimmer's feet hang, so their head and shoulders show.</summary>
+    const float SwimDepth = 1.35f;
+
+    /// <summary>
+    /// Plays other clips in some of this actor's animator states, for this film only: a copy of its controller with
+    /// those clips swapped (matched by the end of the original clip's name). The shared controllers are untouched.
+    /// </summary>
+    static void Swap(GameObject who, params (string original, AnimationClip clip)[] swaps)
+    {
+        var anim = who != null ? who.GetComponentInChildren<Animator>() : null;
+        if (anim == null || anim.runtimeAnimatorController == null) return;
+        var aoc = new AnimatorOverrideController(anim.runtimeAnimatorController);
+        var list = new List<KeyValuePair<AnimationClip, AnimationClip>>(aoc.overridesCount);
+        aoc.GetOverrides(list);
+        for (int i = 0; i < list.Count; i++)
+            foreach (var (original, clip) in swaps)
+                if (clip != null && list[i].Key != null && list[i].Key.name.EndsWith(original))
+                    list[i] = new KeyValuePair<AnimationClip, AnimationClip>(list[i].Key, clip);
+        aoc.ApplyOverrides(list);
+        anim.runtimeAnimatorController = aoc;
+    }
+
+    static void Play(GameObject who, string state, float fade = 0.15f)
+    {
+        var anim = who != null ? who.GetComponentInChildren<Animator>() : null;
+        if (anim == null || !anim.HasState(0, Animator.StringToHash(state))) return;
+        if (fade <= 0f) anim.Play(state, 0, 0f);
+        else anim.CrossFadeInFixedTime(state, fade);
+    }
+
+    static void SetSpeed(GameObject who, float speed)
+    {
+        var anim = who != null ? who.GetComponentInChildren<Animator>() : null;
+        if (anim == null) return;
+        foreach (var p in anim.parameters)
+            if (p.name == "Speed" && p.type == AnimatorControllerParameterType.Float) { anim.SetFloat("Speed", speed); return; }
+    }
+
+    Light WaterLight(Vector3 at, Color color, float range, float intensity)
+    {
+        var l = new GameObject("WaterLight", typeof(Light)).GetComponent<Light>();
+        l.transform.SetParent(stage, false);
+        l.transform.position = at;
+        l.type = LightType.Point;
+        l.color = color;
+        l.range = range;
+        l.intensity = intensity;
+        return l;
+    }
+
     // ---------- Shots ----------
 
     IEnumerator Shot1(float seconds, Vector3 fromPos, Vector3 fromLook, Vector3 toPos, Vector3 toLook, float fov, System.Action<float> tick) => Move(1, seconds, fromPos, fromLook, toPos, toLook, fov, tick);
@@ -330,8 +515,9 @@ public class EndingCinematic : MonoBehaviour
         Strip(d);
         var seaTf = FindDeep(deck, "Sea");
         if (seaTf != null) { seaTf.SetParent(stage, true); sea = seaTf; }
-        // Dawn: she steams on, slowly. Otherwise she has stopped dead. (SeaScroll reads this once, as it wakes.)
-        bool underWay = RunRecord.Ending == Ending.WhatIf;
+        // Dawn: she steams on, slowly; Overboard: she never stops for them. Otherwise she has stopped dead.
+        // (SeaScroll reads this once, as it wakes.)
+        bool underWay = RunRecord.Ending == Ending.WhatIf || RunRecord.Ending == Ending.Overboard;
         foreach (var scroll in stage.GetComponentsInChildren<SeaScroll>(true)) scroll.forwardSpeed = underWay ? 2f : 0f;
         root.SetActive(true);
         // The water itself: the swell streams at the ship's speed, and at night the white caps are kept low (under the

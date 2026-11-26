@@ -130,6 +130,8 @@ public class ChoiceFeedback : MonoBehaviour
     {
         float now = Time.unscaledTime, dt = Time.unscaledDeltaTime;
         bool blocked = PauseMenu.Instance != null && PauseMenu.Instance.IsPaused || PartCard.IsShowing || IntroCard.IsShowing;
+        // Going overboard: no card may pause the game over the Captain's last word.
+        if (GameManager.Instance != null && GameManager.Instance.Overboard) { pendingCard = null; pendingOrder = null; }
 
         if (pendingCard != null && !IsShowing && !blocked && !ClueCloseUp.IsOpen && !ChartView.IsOpen)
         {
