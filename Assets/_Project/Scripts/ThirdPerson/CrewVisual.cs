@@ -196,15 +196,24 @@ public class CrewVisual : MonoBehaviour
             shovel = Instantiate(source).transform;
             shovel.name = "HeldShovel";
             foreach (var c in shovel.GetComponentsInChildren<Collider>()) Destroy(c);
-            // Placed in world space, then parented, so a scaled rig (bones in centimetres) can't shrink or blow it up.
-            var rot = hand.rotation * Quaternion.Euler(ShovelGripEuler);
-            // The prop's origin is the blade end; slide it so the hand closes round the handle.
-            var pos = hand.TransformPoint(Vector3.zero) + hand.rotation * ShovelGrip - rot * (Vector3.up * ShovelGripUpHandle);
-            shovel.SetPositionAndRotation(pos, rot);
-            shovel.localScale = source.transform.lossyScale;
-            shovel.SetParent(hand, true);
+            PlaceShovel(shovel, hand, source.transform.lossyScale);
         }
         shovel.gameObject.SetActive(true);
+    }
+
+    /// <summary>
+    /// Puts a shovel prop in a right hand (also used by WorkAnimationsPreview, so the preview shows the real grip).
+    /// Placed in world space, then parented, so a scaled rig (bones in centimetres) can't shrink or blow it up.
+    /// </summary>
+    public static void PlaceShovel(Transform shovel, Transform hand, Vector3 worldScale)
+    {
+        var rot = hand.rotation * Quaternion.Euler(ShovelGripEuler);
+        // The prop's origin is the blade end; slide it so the hand closes round the handle.
+        var pos = hand.position + hand.rotation * ShovelGrip - rot * (Vector3.up * ShovelGripUpHandle);
+        shovel.SetParent(null, true);
+        shovel.SetPositionAndRotation(pos, rot);
+        shovel.localScale = worldScale;
+        shovel.SetParent(hand, true);
     }
 
     static GameObject shovelSource;

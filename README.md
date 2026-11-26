@@ -111,9 +111,33 @@ The systems spawn on their own when `Ship.unity`, or any scene whose name ends i
 | The Grey Cove reveal | `UI/ShipReadout.cs` turns the "Port" row into a countdown to GREY COVE during the truth speech. `ShipReadout.RevealGreyCove()` forces it. |
 | The bridge chart | `UI/ChartView.cs`: "E Study the chart" at the chart table opens `Art/Textures/BridgeChart.png` full screen. |
 | A part's title card | `UI/PartCard.cs` listens to `GameEvents.StateChanged`, closes the screen in a circle, shows the part's card (`Art/UI/Resources/PartCards`) and freezes time. Check `PartCard.IsShowing` before starting anything a player should see (the Captain's director already waits for it). |
-| The upper decks | `ShipDeckBuilder` builds two cabin floors and an open top deck (lifeboats, second funnel, vents, deckhouse) over the deck you play on. They have no colliders. Each 8 m bay has a `RoofFade`, so the floors over the player and the camera cut away. |
+| The upper decks | `ShipDeckBuilder` builds two cabin floors and an open top deck (lifeboats, second funnel, vents, deckhouse) over the deck you play on. They have no colliders. Each 8 m bay has a `RoofFade`, so the floors over the player and the camera cut away. The follow camera can't see them (no colliders), so `Environment/ShipCeiling.cs` treats the superstructure as solid for `AutoFollowCamera` only, which stops it rising through the ceiling. Keep its numbers in step with `ShipDeckBuilder`. |
+| Work animations (Rabib) | `ThirdPerson/CrewVisual.cs` plays a loop that fits the job in the animator's "Push" state, through a per-actor override: shovel at the Boiler (with the boiler room's shovel in the right hand), lever pull at the Doors, hand over hand at the Wheel, Morse key at the Wireless, kneeling repair at anything broken, and loops for the bots' chores. The clips are in `Resources/WorkAnimations`, built by **Port → Build Work Animations** (`Editor/WorkAnimationsBuilder.cs`). The library has no shovel, lever, wheel or Morse clip, so those are keyed as humanoid muscles on top of the idle. **Port → Preview Work Animations** renders them to `Logs/WorkPreview/`. `Stations/Doors.cs` swings `Lever_A`/`Lever_B` on their bases while someone pulls. |
 
 The orders are `OrderData` assets in `Data/Resources/Orders`, issued in file-name order (`01_…` to `12_…`). Create new ones from **Create → Port → Order**.
+
+## Where we left off (Rabib, 26 Nov 2026)
+
+**Done and pushed**
+- **Man Overboard ending:** three ordinary orders refused or let run out in a row, a warning after two, off orders excused, and co-op players thrown off one at a time. The film has the Captain's shove and the fall into the sea. See the "Thrown overboard" row above.
+- **Readability and settings:** the cinematic subtitles have an outline, a drop shadow and a dark backing. The pause menu Settings are sliders. The trust card pops up with a sound.
+- **Camera:** it stays under the ceiling (`ShipCeiling`).
+- **Work animations and moving door levers:** first version (see the row above).
+
+**Broken right now: the work animations**
+- The shovel floats beside the player instead of sitting in their hand.
+- The keyed poses (shovel, lever, wheel, Morse) look wrong. They were written as muscle numbers without being able to watch them.
+
+**Next time, in this order**
+1. Open Unity. `WorkAnimationsPreview` runs by itself once (or use **Port → Preview Work Animations**) and writes contact sheets of each loop, plus library clips to borrow from and their muscle values (`muscles.txt`), to `Logs/WorkPreview/`.
+2. Rebuild the four keyed loops from real poses: take muscle values from library clips at chosen frames (`muscles.txt`), e.g. PickUp_Table's low bend for the scoop, Push_Loop's arms for the lever and the wheel, Interact's reach for the key. Then run **Port → Build Work Animations** and preview again.
+3. Fix the shovel grip: `ShovelGrip`, `ShovelGripEuler` and `ShovelGripUpHandle` at the top of `CrewVisual.cs`. The preview shows the grip on the shovel sheet.
+4. Play-test what's never been seen in Play mode:
+   - the Overboard film's framing (`RailX`, `RailTop` and `SwimDepth` in `EndingCinematic.Overboard()`)
+   - the lever swing (Doors Inspector: pull angle, seconds)
+   - the camera under the ceiling indoors
+   - a two-player run where one player gets thrown off
+5. Record the Captain's new lines (the warnings, his last word, the Overboard epilogue in `CaptainScript`). They're text only for now. A recorded splash could replace the generated one in `Audio/SplashSound.cs`.
 
 ## Debug keys (Editor and Development builds only)
 
