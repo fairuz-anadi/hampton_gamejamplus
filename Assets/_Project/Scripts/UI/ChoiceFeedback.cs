@@ -211,7 +211,8 @@ public class ChoiceFeedback : MonoBehaviour
             int v = values[i];
             cardValues[i].text = v == 0 ? $"<color={Flat}>no change</color>" : Signed(v);
         }
-        cardNote.text = Note(e.choice) + $"\n<color=#dcae57>{(Gamepad.current != null ? "TAB/VIEW" : "TAB")}</color> shows the meters any time.";
+        // No "Tab shows the meters" hint: since the simpler HUD the meters stay hidden, and Tab opens the order card.
+        cardNote.text = Note(e.choice);
         card.localScale = Vector3.one * 0.94f;
         cardOpenedAt = Time.unscaledTime;
         prevTimeScale = Time.timeScale > 0f ? Time.timeScale : 1f;
